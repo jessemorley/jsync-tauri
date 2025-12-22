@@ -22,17 +22,23 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
     info!("Getting Capture One session info");
 
     let script = r#"
-        tell application "Capture One"
-            if (count of documents) > 0 then
-                tell front document
-                    set sessionPath to path as text
-                    set sessionName to name as text
-                    return sessionPath & "|" & sessionName
-                end tell
-            else
-                return "NO_SESSION"
-            end if
-        end tell
+        if application "Capture One" is running then
+            tell application "Capture One"
+                if exists (front document) then
+                    try
+                        set docPath to path of front document
+                        set docName to name of front document
+                        return (POSIX path of docPath) & "|" & docName
+                    on error err
+                        return "ERROR|" & err
+                    end try
+                else
+                    return "NO_SESSION|None"
+                end if
+            end tell
+        else
+            return "NOT_RUNNING|None"
+        end if
     "#;
 
     let shell = app.shell();
@@ -47,35 +53,80 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
         })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    info!("AppleScript output: {}", stdout);
-
-    if stdout == "NO_SESSION" || stdout.is_empty() {
-        return Err("No active Capture One session".to_string());
-    }
+    info!("AppleScript raw output: {}", stdout);
 
     let parts: Vec<&str> = stdout.split('|').collect();
-    if parts.len() != 2 {
-        return Err("Invalid session response".to_string());
+    if parts.is_empty() {
+        return Err("Empty response from AppleScript".to_string());
     }
 
-    // Convert macOS path format (with colons) to POSIX
-    let mac_path = parts[0];
-    let session_name = parts[1].trim_end_matches(".cosessiondb").to_string();
+    match parts[0] {
+        "NO_SESSION" => return Err("No active Capture One session".to_string()),
+        "NOT_RUNNING" => return Err("Capture One is not running".to_string()),
+        "ERROR" => {
+            let err_msg = parts.get(1).unwrap_or(&"Unknown error");
+            error!("Capture One AppleScript error: {}", err_msg);
+            return Err(format!("Capture One error: {}", err_msg));
+        },
+        _ => {}
+    }
 
-    // Convert from "Macintosh HD:Users:..." to "/Users/..."
-    let posix_path = mac_path
-        .split(':')
-        .skip(1) // Skip "Macintosh HD" or similar
-        .collect::<Vec<&str>>()
-        .join("/");
-    let session_path = format!("/{}/{}", posix_path, session_name);
+    if parts.len() < 2 {
+        return Err("Invalid session response format".to_string());
+    }
+
+    let raw_path = parts[0];
+    let doc_name = parts[1];
+    
+    // Clean up session name (remove common extensions)
+    let session_name = doc_name
+        .trim_end_matches(".cosessiondb")
+        .trim_end_matches(".cocatalog")
+        .to_string();
+
+    let path_obj = std::path::Path::new(raw_path);
+    let mut session_folder = if path_obj.is_dir() {
+        // If it's a directory (like a Catalog), use it directly
+        raw_path.to_string()
+    } else {
+        // If it's a file (like a .cosessiondb), the session folder is its parent
+        path_obj.parent()
+            .and_then(|p| p.to_str())
+            .unwrap_or(raw_path)
+            .to_string()
+    };
+
+    // Heuristic: If the folder we found doesn't match the session name, 
+    // but there's a subfolder that DOES match the session name, use that.
+    // This handles cases where the .cosessiondb is sitting next to the session folder
+    // or when the user has a generic 'Capture One' parent folder.
+    let folder_name = std::path::Path::new(&session_folder)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+
+    if folder_name != session_name {
+        let subfolder = std::path::Path::new(&session_folder).join(&session_name);
+        if subfolder.is_dir() {
+            info!("Heuristic triggered: using subfolder matching session name: {:?}", subfolder);
+            if let Some(s) = subfolder.to_str() {
+                session_folder = s.to_string();
+            }
+        }
+    }
+
+    info!("Detected Session Name: {}", session_name);
+    info!("Detected Session Folder: {}", session_folder);
 
     // Calculate session size
-    let size = get_folder_size(&session_path).await.unwrap_or_else(|_| "Unknown".to_string());
+    let size = get_folder_size(&session_folder).await.unwrap_or_else(|e| {
+        error!("Size calculation error for {}: {}", session_folder, e);
+        "Unknown".to_string()
+    });
 
     Ok(SessionInfo {
         name: session_name,
-        path: session_path,
+        path: session_folder,
         size,
     })
 }
@@ -115,6 +166,7 @@ pub async fn get_session_contents(path: String) -> Result<Vec<SessionItem>, Stri
 }
 
 async fn get_folder_size(path: &str) -> Result<String, String> {
+    info!("Calculating size for path: '{}'", path);
     let output = tokio::process::Command::new("du")
         .args(["-sh", path])
         .output()
@@ -122,6 +174,7 @@ async fn get_folder_size(path: &str) -> Result<String, String> {
         .map_err(|e| format!("Failed to get folder size: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
+    info!("du output: {}", stdout.trim());
     let size = stdout.split_whitespace().next().unwrap_or("0B").to_string();
     Ok(size)
 }

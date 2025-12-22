@@ -25,11 +25,17 @@ export async function parseDestination(path: string): Promise<Destination> {
 // Backup commands
 export async function startBackup(
   sessionPath: string,
+  sessionName: string,
   destinations: Destination[],
   selectedPaths: string[]
 ): Promise<void> {
   return invoke('start_backup', {
-    request: { session_path: sessionPath, destinations, selected_paths: selectedPaths }
+    request: { 
+      session_path: sessionPath, 
+      session_name: sessionName,
+      destinations, 
+      selected_paths: selectedPaths 
+    }
   });
 }
 
@@ -48,6 +54,10 @@ export function onBackupComplete(callback: (result: BackupComplete) => void): Pr
 
 export function onBackupError(callback: (error: BackupComplete) => void): Promise<UnlistenFn> {
   return listen<BackupComplete>('backup-error', (event) => callback(event.payload));
+}
+
+export function onRefreshSession(callback: () => void): Promise<UnlistenFn> {
+  return listen('refresh-session', callback);
 }
 
 // Permissions

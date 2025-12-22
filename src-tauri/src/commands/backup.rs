@@ -30,6 +30,7 @@ pub struct BackupComplete {
 #[derive(Debug, Deserialize)]
 pub struct BackupRequest {
     pub session_path: String,
+    pub session_name: String,
     pub destinations: Vec<BackupDestination>,
     #[allow(dead_code)]
     pub selected_paths: Vec<String>,
@@ -53,9 +54,11 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
         return Err("No destinations enabled".to_string());
     }
 
-    for dest in enabled_destinations {
+    for (index, dest) in enabled_destinations.iter().enumerate() {
+        info!("Processing destination {}/{} (ID: {})", index + 1, enabled_destinations.len(), dest.id);
+        
         if BACKUP_CANCELLED.load(Ordering::SeqCst) {
-            info!("Backup cancelled by user");
+            info!("Backup cancellation detected before destination {}", dest.id);
             return Err("Backup cancelled".to_string());
         }
 
@@ -73,7 +76,17 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
         }
 
         info!("Running backup to destination: {}", dest.path);
-        if let Err(e) = run_rsync_backup(&app, &request.session_path, dest).await {
+        
+        // Create a subfolder in the destination for this session
+        let session_dest_path = std::path::Path::new(&dest.path).join(&request.session_name);
+        let session_dest_str = session_dest_path.to_str().unwrap_or(&dest.path);
+
+        if let Err(e) = run_rsync_backup(&app, &request.session_path, session_dest_str, dest.id).await {
+            if e == "Backup cancelled" {
+                info!("Backup loop aborted due to cancellation");
+                return Err("Backup cancelled".to_string());
+            }
+
             error!("Backup failed for {}: {}", dest.path, e);
             app.emit("backup-error", BackupComplete {
                 destination_id: dest.id,
@@ -90,100 +103,97 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
 
 #[tauri::command]
 pub fn cancel_backup() {
-    info!("Backup cancel requested");
+    info!("COMMAND: cancel_backup received");
     BACKUP_CANCELLED.store(true, Ordering::SeqCst);
+    info!("BACKUP_CANCELLED flag set to true");
 }
 
 async fn run_rsync_backup(
     app: &AppHandle,
     source: &str,
-    dest: &BackupDestination,
+    dest_path: &str,
+    dest_id: u64,
 ) -> Result<(), String> {
-    // Ensure source path ends with trailing slash for rsync
-    let source_with_slash = if source.ends_with('/') {
-        source.to_string()
-    } else {
-        format!("{}/", source)
-    };
+    // Ensure source and destination have trailing slashes so rsync mirrors the content
+    let src = format!("{}/", source.trim_end_matches('/'));
+    let dst = format!("{}/", dest_path.trim_end_matches('/'));
 
-    let dest_with_slash = format!("{}/", dest.path);
+    info!("Starting rsync: {} -> {}", src, dst);
 
-    let rsync_args = vec![
-        "-av",
-        "--delete",
-        "--progress",
-        "--stats",
-        &source_with_slash,
-        &dest_with_slash,
-    ];
-
-    info!("Executing rsync with args: {:?}", rsync_args);
+    // Ensure destination directory exists
+    std::fs::create_dir_all(dest_path).map_err(|e| format!("Failed to create destination: {}", e))?;
 
     let mut child = Command::new("rsync")
-        .args(&rsync_args)
+        .args(&["-av", "--delete", "--progress", "--stats", &src, &dst])
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .map_err(|e| {
-            error!("Failed to spawn rsync: {}", e);
-            format!("Failed to spawn rsync: {}", e)
-        })?;
+        .map_err(|e| format!("Failed to spawn rsync: {}", e))?;
 
-    let stdout = child.stdout.take().expect("Failed to capture stdout");
+    let stdout = child.stdout.take().unwrap();
     let mut reader = BufReader::new(stdout).lines();
 
     let progress_regex = Regex::new(r"(\d+)%").unwrap();
     let rate_regex = Regex::new(r"(\d+\.?\d*[KMG]B/s)").unwrap();
     let mut last_percent = 0.0;
 
-    while let Ok(Some(line)) = reader.next_line().await {
+    loop {
+        // Check for cancellation at the start of every loop iteration
         if BACKUP_CANCELLED.load(Ordering::SeqCst) {
-            child.kill().await.ok();
+            info!("Cancellation requested. Killing rsync process...");
+            let _ = child.kill().await;
+            let _ = child.wait().await; // Wait for it to actually die
             return Err("Backup cancelled".to_string());
         }
 
-        // Parse progress percentage
-        if let Some(caps) = progress_regex.captures(&line) {
-            if let Some(percent_str) = caps.get(1) {
-                if let Ok(percent) = percent_str.as_str().parse::<f64>() {
-                    // Only emit if progress changed significantly
-                    if (percent - last_percent).abs() > 1.0 {
-                        last_percent = percent;
+        tokio::select! {
+            line_result = reader.next_line() => {
+                match line_result {
+                    Ok(Some(line)) => {
+                        if let Some(caps) = progress_regex.captures(&line) {
+                            if let Ok(percent) = caps[1].parse::<f64>() {
+                                if (percent - last_percent).abs() >= 1.0 || percent == 100.0 {
+                                    last_percent = percent;
+                                    let rate = rate_regex.captures(&line)
+                                        .map(|c| c[1].to_string())
+                                        .unwrap_or_default();
 
-                        let rate = rate_regex.captures(&line)
-                            .and_then(|c| c.get(1))
-                            .map(|m| m.as_str().to_string())
-                            .unwrap_or_default();
-
-                        app.emit("backup-progress", BackupProgress {
-                            destination_id: dest.id,
-                            percent,
-                            current_file: String::new(),
-                            transfer_rate: rate,
-                            files_transferred: 0,
-                            total_files: 0,
-                        }).ok();
+                                    let _ = app.emit("backup-progress", BackupProgress {
+                                        destination_id: dest_id,
+                                        percent,
+                                        current_file: String::new(),
+                                        transfer_rate: rate,
+                                        files_transferred: 0,
+                                        total_files: 0,
+                                    });
+                                }
+                            }
+                        }
                     }
+                    Ok(None) => break, // Rsync finished output
+                    Err(e) => return Err(format!("Output error: {}", e)),
                 }
+            }
+            _ = tokio::time::sleep(std::time::Duration::from_millis(200)) => {
+                // Periodically wake up to check the cancellation flag even if no output
+                continue;
             }
         }
     }
 
-    let status = child.wait().await.map_err(|e| format!("rsync process error: {}", e))?;
-
-    if status.success() {
-        info!("Backup completed successfully for destination {}", dest.id);
-        app.emit("backup-complete", BackupComplete {
-            destination_id: dest.id,
-            success: true,
-            files_copied: 0, // Could parse from rsync stats if needed
-            size_transferred: "0".to_string(), // Could parse from rsync stats if needed
-            error: None,
-        }).ok();
-        Ok(())
-    } else {
-        let error_msg = format!("rsync exited with status: {}", status);
-        error!("{}", error_msg);
-        Err(error_msg)
+    let status = child.wait().await.map_err(|e| format!("rsync wait error: {}", e))?;
+    if !status.success() {
+        return Err(format!("rsync failed with status: {}", status));
     }
+
+    info!("Backup completed successfully for destination {}", dest_id);
+    let _ = app.emit("backup-complete", BackupComplete {
+        destination_id: dest_id,
+        success: true,
+        files_copied: 0,
+        size_transferred: "0".to_string(),
+        error: None,
+    });
+
+    Ok(())
 }

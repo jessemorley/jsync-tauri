@@ -37,6 +37,7 @@ import {
   onBackupComplete,
   onBackupError,
   sendBackupNotification,
+  onRefreshSession,
 } from './lib/tauri';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -48,6 +49,7 @@ function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasBackedUpOnce, setHasBackedUpOnce] = useState(false);
   const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [isHoveringSync, setIsHoveringSync] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
 
@@ -70,12 +72,37 @@ function App() {
     }
   }, [isEditingCustom]);
 
-  // Load session info on mount
-  useEffect(() => {
+  // Load session info
+  const refreshSession = useCallback(() => {
     getCaptureOneSession()
       .then(setSession)
-      .catch(err => console.error('Failed to get Capture One session:', err));
+      .catch(err => {
+        console.error('Failed to get Capture One session:', err);
+        setSession(null);
+      });
   }, []);
+
+  useEffect(() => {
+    refreshSession();
+    
+    // Poll for session changes every 30 seconds
+    const interval = setInterval(refreshSession, 30000);
+    
+    // Also refresh when the window becomes visible
+    const handleFocus = () => refreshSession();
+    window.addEventListener('focus', handleFocus);
+
+    let unlisten: () => void;
+    onRefreshSession(() => {
+      refreshSession();
+    }).then(u => unlisten = u);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      if (unlisten) unlisten();
+    };
+  }, [refreshSession]);
 
   // Setup backup event listeners
   useEffect(() => {
@@ -120,17 +147,36 @@ function App() {
   }, [notificationsEnabled]);
 
   const handleStartBackup = useCallback(async () => {
-    if (backupState === 'running' || enabledCount === 0 || !session) return;
+    if (enabledCount === 0 || !session) return;
+
+    if (backupState === 'running') {
+      console.log('User requested backup cancellation');
+      try {
+        await cancelBackup();
+        console.log('cancelBackup command sent to backend');
+        setBackupState('idle');
+        setGlobalProgress(0);
+      } catch (error) {
+        console.error('Failed to cancel backup:', error);
+      }
+      return;
+    }
 
     setBackupState('running');
     setGlobalProgress(0);
 
     try {
-      await startBackup(session.path, destinations, selectedPaths);
+      await startBackup(session.path, session.name, destinations, selectedPaths);
       updateLastBackup();
     } catch (error) {
-      console.error('Backup failed:', error);
-      setBackupState('error');
+      console.log('Backup error/cancel received:', error);
+      if (error === 'Backup cancelled') {
+        console.log('Setting state to idle due to cancellation');
+        setBackupState('idle');
+      } else {
+        console.error('Backup failed:', error);
+        setBackupState('error');
+      }
       setTimeout(() => {
         setBackupState('idle');
         setGlobalProgress(0);
@@ -264,7 +310,9 @@ function App() {
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex items-center gap-2 mb-1">
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        backupState === 'running' ? 'bg-blue-500 animate-pulse' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                        !session ? 'bg-gray-500' :
+                        backupState === 'running' ? 'bg-blue-500 animate-pulse' : 
+                        'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
                       }`} />
                       <h3 className="font-bold text-[13px] tracking-tight leading-none text-white truncate" title={sessionInfo.name}>
                         {truncateMiddle(sessionInfo.name)}
@@ -279,17 +327,19 @@ function App() {
 
                 <button
                   onClick={handleStartBackup}
-                  disabled={backupState === 'running' || enabledCount === 0}
+                  onMouseEnter={() => setIsHoveringSync(true)}
+                  onMouseLeave={() => setIsHoveringSync(false)}
+                  disabled={enabledCount === 0}
                   className={`flex-shrink-0 group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
                     backupState === 'running'
-                      ? 'bg-blue-500/20 border border-blue-500/50 text-blue-500 cursor-default shadow-[0_0_15px_rgba(59,130,246,0.2)]' :
+                      ? (isHoveringSync ? 'bg-red-500/20 border border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-blue-500/20 border border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]') :
                     backupState === 'success'
                       ? 'bg-green-600 border border-green-400 text-white shadow-lg' :
                     'bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 active:scale-95 active:bg-blue-500/30'
                   } disabled:opacity-30 disabled:grayscale`}
                 >
                   {backupState === 'running' ? (
-                    <RefreshCw size={18} className="animate-spin" />
+                    isHoveringSync ? <X size={18} /> : <RefreshCw size={18} className="animate-spin" />
                   ) : backupState === 'success' ? (
                     <CheckCircle2 size={18} />
                   ) : (
