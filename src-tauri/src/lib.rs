@@ -9,6 +9,7 @@ use log::info;
 
 mod commands;
 mod macos_window;
+mod macos_dialog;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -63,6 +64,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::session::get_capture_one_session,
             commands::session::get_session_contents,
+            commands::destinations::open_folder_picker,
             commands::destinations::parse_destination,
             commands::backup::start_backup,
             commands::backup::cancel_backup,

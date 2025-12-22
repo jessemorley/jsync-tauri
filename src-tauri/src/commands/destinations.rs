@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use log::info;
+use tauri::AppHandle;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Destination {
@@ -9,6 +10,17 @@ pub struct Destination {
     pub label: String,
     pub destination_type: String, // "external" | "cloud" | "local" | "network"
     pub enabled: bool,
+}
+
+#[tauri::command]
+pub async fn open_folder_picker(_app: AppHandle) -> Result<Option<String>, String> {
+    info!("Opening folder picker with custom NSOpenPanel");
+
+    // Use custom macOS implementation to avoid sheet dimming effect
+    let result = crate::macos_dialog::open_folder_picker().await;
+
+    info!("Folder selection result: {:?}", result);
+    Ok(result)
 }
 
 #[tauri::command]

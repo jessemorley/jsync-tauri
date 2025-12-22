@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
 import { load, Store } from '@tauri-apps/plugin-store';
 import { sendNotification, isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
@@ -16,11 +15,7 @@ export async function getSessionContents(path: string): Promise<SessionItem[]> {
 
 // Destination commands
 export async function openFolderPicker(): Promise<string | null> {
-  const result = await open({
-    directory: true,
-    multiple: false,
-  });
-  return result as string | null;
+  return invoke('open_folder_picker');
 }
 
 export async function parseDestination(path: string): Promise<Destination> {
