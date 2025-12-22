@@ -231,7 +231,7 @@ function App() {
   };
 
   return (
-    <div className="w-full h-full text-white font-sans selection:bg-blue-500/30">
+    <div className="w-full h-full text-white font-sans select-none">
       <style>{`
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
