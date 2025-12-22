@@ -284,7 +284,7 @@ function App() {
         input[type=number] { -moz-appearance: textfield; }
       `}</style>
 
-      <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden relative bg-[#1c1c1e]/98 backdrop-blur-2xl">
+      <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden relative bg-[#1c1c1e]">
 
         {/* VIEW: MAIN APP */}
         {view === 'main' && (

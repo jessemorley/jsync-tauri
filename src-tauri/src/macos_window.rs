@@ -10,6 +10,7 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64) {
         let _: () = msg_send![ns_window, setOpaque: false];
         let clear_color: id = msg_send![class!(NSColor), clearColor];
         let _: () = msg_send![ns_window, setBackgroundColor: clear_color];
+        let _: () = msg_send![ns_window, setAlphaValue: 1.0];
         
         // Disable native shadow and title bar related artifacts
         let _: () = msg_send![ns_window, setHasShadow: true];
