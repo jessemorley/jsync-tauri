@@ -1,24 +1,46 @@
-# Logs
-logs
-*.log
+# Node.js / Build
+node_modules/
+dist/
+dist-ssr/
+*.local
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Rust / Tauri
+/target/
+/src-tauri/target/
+/src-tauri/gen/schemas/
 
-# Editor directories and files
+# IDE / Editors
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS / System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Screenshots and Testing
+/screenshots/
+/playwright-report/
+/test-results/
+
+# Project Specific
+/Planning and documents/
