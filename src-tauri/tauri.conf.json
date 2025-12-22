@@ -20,7 +20,7 @@
         "height": 500,
         "visible": false,
         "decorations": false,
-        "shadow": false,
+        "shadow": true,
         "hiddenTitle": true,
         "transparent": true,
         "alwaysOnTop": true,
