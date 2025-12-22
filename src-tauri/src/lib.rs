@@ -49,12 +49,14 @@ pub fn run() {
 
             Ok(())
         })
-        .on_window_event(|window, event| match event {
-            tauri::WindowEvent::Focused(is_focused) => {
-                // Hide window when it loses focus
-                if !is_focused {
-                    let _ = window.hide();
-                }
+        .on_window_event(|_window, event| match event {
+            tauri::WindowEvent::Focused(_is_focused) => {
+                // TODO: Re-enable auto-hide after fixing dialog interaction
+                // The issue is that opening a file dialog causes focus loss
+                // which triggers auto-hide before the dialog can be used
+                // if !is_focused {
+                //     let _ = window.hide();
+                // }
             }
             _ => {}
         })

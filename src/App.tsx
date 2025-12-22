@@ -191,7 +191,7 @@ function App() {
     const path = await openFolderPicker();
     if (path) {
       const destination = await parseDestination(path);
-      setDestinations([...destinations, destination]);
+      setDestinations(prev => [...prev, destination]);
     }
   };
 
