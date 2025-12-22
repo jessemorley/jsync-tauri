@@ -31,6 +31,7 @@ pub struct BackupComplete {
 pub struct BackupRequest {
     pub session_path: String,
     pub destinations: Vec<BackupDestination>,
+    #[allow(dead_code)]
     pub selected_paths: Vec<String>,
 }
 
