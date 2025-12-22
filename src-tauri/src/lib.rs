@@ -67,6 +67,7 @@ pub fn run() {
             commands::backup::start_backup,
             commands::backup::cancel_backup,
             commands::permissions::check_full_disk_access,
+            commands::quit_app,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

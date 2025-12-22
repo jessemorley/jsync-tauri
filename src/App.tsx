@@ -21,7 +21,8 @@ import {
   Check,
   Minus,
   Folder,
-  FileCode
+  FileCode,
+  Power
 } from 'lucide-react';
 import './App.css';
 import type { Destination, SessionInfo } from './lib/types';
@@ -37,6 +38,7 @@ import {
   onBackupError,
   sendBackupNotification,
 } from './lib/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 function App() {
   // Application State
@@ -541,9 +543,17 @@ function App() {
                 view === 'prefs' ? 'text-blue-400' : 'text-gray-500 hover:text-blue-400'
               }`}
             >
-               <Settings size={12} />
-               <span>{view === 'prefs' ? 'Done' : 'Prefs'}</span>
+               {view === 'main' && <Settings size={12} />}
+               <span>{view === 'prefs' ? 'Done' : 'Settings'}</span>
             </button>
+            {view === 'main' && (
+              <button
+                onClick={() => invoke('quit_app')}
+                className="text-[10px] uppercase font-bold tracking-[0.1em] text-gray-500 hover:text-red-500 transition-colors"
+              >
+                Quit
+              </button>
+            )}
           </div>
         </div>
       </div>
