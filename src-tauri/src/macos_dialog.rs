@@ -20,6 +20,7 @@ pub async fn open_folder_picker() -> Option<String> {
             let _: () = msg_send![open_panel, setCanChooseFiles: NO];
             let _: () = msg_send![open_panel, setCanChooseDirectories: YES];
             let _: () = msg_send![open_panel, setAllowsMultipleSelection: NO];
+            let _: () = msg_send![open_panel, setCanCreateDirectories: YES];
 
             // Set title
             let title = NSString::alloc(nil).init_str("Select Backup Destination");
