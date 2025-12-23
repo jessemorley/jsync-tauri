@@ -643,19 +643,19 @@ function App() {
                                   </div>
                                 </div>
                               ) : (
-                                // OPTIONS ROW (1x4, 54px height maintained)
-                                <div className="flex gap-1.5 p-0.5 w-full h-full">
+                                // OPTIONS ROW - Vertical Dividers (icons + text)
+                                <div className="flex h-full w-full">
                                   {/* Set/Unset Default */}
                                   <button
                                     onClick={() => toggleDefault(dest.id)}
-                                    className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border transition-all ${
+                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-white/10 transition-all ${
                                       isDefault(dest.id)
-                                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]'
-                                        : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-blue-400'
+                                        ? 'text-blue-400'
+                                        : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
                                     }`}
                                   >
                                     <Check size={10} strokeWidth={3} />
-                                    <span className="text-[8px] font-bold uppercase tracking-wide">
+                                    <span className={`text-[9px] uppercase tracking-wide ${isDefault(dest.id) ? 'font-bold' : ''}`}>
                                       {isDefault(dest.id) ? 'Default' : 'Set Default'}
                                     </span>
                                   </button>
@@ -666,24 +666,24 @@ function App() {
                                       removeDestination(dest.id);
                                       setShowingOptionsFor(null);
                                     }}
-                                    className="flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border bg-white/5 border-white/10 text-gray-400 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all"
+                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-white/10 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                   >
                                     <Trash2 size={10} />
-                                    <span className="text-[8px] font-bold uppercase tracking-wide">Remove</span>
+                                    <span className="text-[9px] uppercase tracking-wide">Remove</span>
                                   </button>
 
                                   {/* Delete Backup */}
                                   <button
                                     onClick={() => setConfirmDeleteBackupFor(dest.id)}
                                     disabled={!dest.has_existing_backup}
-                                    className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border transition-all ${
+                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-white/10 transition-all ${
                                       dest.has_existing_backup
-                                        ? 'bg-white/5 border-white/10 text-gray-400 hover:bg-amber-500/20 hover:border-amber-500/50 hover:text-amber-400'
-                                        : 'bg-black/20 border-white/5 text-gray-600 opacity-50 cursor-not-allowed'
+                                        ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/10'
+                                        : 'text-gray-600 opacity-50 cursor-not-allowed'
                                     }`}
                                   >
                                     <Database size={10} />
-                                    <span className="text-[8px] font-bold uppercase tracking-wide">
+                                    <span className="text-[9px] uppercase tracking-wide">
                                       {dest.has_existing_backup ? 'Delete' : 'None'}
                                     </span>
                                   </button>
@@ -691,10 +691,10 @@ function App() {
                                   {/* Return */}
                                   <button
                                     onClick={() => setShowingOptionsFor(null)}
-                                    className="flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border bg-white/5 border-white/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 transition-all"
+                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
                                   >
                                     <X size={10} />
-                                    <span className="text-[8px] font-bold uppercase tracking-wide">Return</span>
+                                    <span className="text-[9px] uppercase tracking-wide">Return</span>
                                   </button>
                                 </div>
                               )
