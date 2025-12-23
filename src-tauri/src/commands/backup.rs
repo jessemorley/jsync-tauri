@@ -100,7 +100,38 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
         let session_dest_path = std::path::Path::new(&dest.path).join(&request.session_name);
         let session_dest_str = session_dest_path.to_str().unwrap_or(&dest.path);
 
-        if let Err(e) = run_rclone_backup(&app, &request.session_path, session_dest_str, dest.id).await {
+        // Generate filters based on selected_paths
+        let mut filters = Vec::new();
+        let session_path_obj = std::path::Path::new(&request.session_path);
+        
+        let mut sync_all = false;
+        
+        // If selected_paths contains the session root, we sync everything (no filters needed)
+        for path_str in &request.selected_paths {
+            if path_str == &request.session_path {
+                sync_all = true;
+                break;
+            }
+        }
+        
+        if !sync_all && !request.selected_paths.is_empty() {
+            for path_str in &request.selected_paths {
+                let p = std::path::Path::new(path_str);
+                if let Ok(rel) = p.strip_prefix(session_path_obj) {
+                    let rel_str = rel.to_string_lossy().replace("\\", "/");
+                    if !rel_str.is_empty() {
+                        filters.push(format!("+ /{}", rel_str));
+                        filters.push(format!("+ /{}/**", rel_str));
+                    }
+                }
+            }
+            // If we added any specific includes, we must exclude everything else
+            if !filters.is_empty() {
+                 filters.push("- /**".to_string());
+            }
+        }
+
+        if let Err(e) = run_rclone_backup(&app, &request.session_path, session_dest_str, dest.id, filters).await {
             if e == "Backup cancelled" {
                 info!("Backup loop aborted due to cancellation");
                 return Err("Backup cancelled".to_string());
@@ -149,12 +180,16 @@ async fn run_rclone_backup(
     source: &str,
     dest_path: &str,
     dest_id: u64,
+    filters: Vec<String>,
 ) -> Result<(), String> {
     // Ensure source and destination have trailing slashes for rclone sync
     let src = format!("{}/", source.trim_end_matches('/'));
     let dst = format!("{}/", dest_path.trim_end_matches('/'));
 
     info!("Starting rclone sync: {} -> {}", src, dst);
+    if !filters.is_empty() {
+        info!("Applying filters: {:?}", filters);
+    }
 
     // Ensure destination directory exists
     std::fs::create_dir_all(dest_path).map_err(|e| format!("Failed to create destination: {}", e))?;
@@ -165,18 +200,26 @@ async fn run_rclone_backup(
 
     info!("Resolved rclone path: {:?}", rclone_cmd);
 
+    let mut args = vec![
+        "sync".to_string(),
+        src.clone(),
+        dst,
+        "--check-first".to_string(),
+        "--use-json-log".to_string(),
+        "--create-empty-src-dirs".to_string(),
+        "--stats".to_string(), "500ms".to_string(),
+        "--stats-log-level".to_string(), "NOTICE".to_string(),
+        "--transfers".to_string(), "4".to_string(),
+        "--checkers".to_string(), "8".to_string(),
+    ];
+
+    for filter in filters {
+        args.push("--filter".to_string());
+        args.push(filter);
+    }
+
     let mut child = Command::new(rclone_cmd)
-        .args([
-            "sync",
-            &src,
-            &dst,
-            "--check-first",
-            "--use-json-log",
-            "--stats", "500ms",
-            "--stats-log-level", "NOTICE",
-            "--transfers", "4",
-            "--checkers", "8",
-        ])
+        .args(args)
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::piped())
         .spawn()

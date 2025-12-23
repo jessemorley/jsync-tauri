@@ -25,11 +25,12 @@ import {
   Image
 } from 'lucide-react';
 import './App.css';
-import type { Destination, SessionInfo } from './lib/types';
+import type { Destination, SessionInfo, SessionItem } from './lib/types';
 import { usePersistedState } from './hooks/useStore';
 import { useScheduler } from './hooks/useScheduler';
 import {
   getCaptureOneSession,
+  getSessionContents,
   openFolderPicker,
   parseDestination,
   startBackup,
@@ -77,6 +78,7 @@ function App() {
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
+  const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
 
   // Reset backup status when session changes
   useEffect(() => {
@@ -84,15 +86,22 @@ function App() {
     setHasBackedUpOnce(false);
   }, [session?.path]);
 
+  // Fetch session contents when session path changes
+  useEffect(() => {
+    if (session?.path) {
+      getSessionContents(session.path)
+        .then(setSessionItems)
+        .catch(console.error);
+    } else {
+      setSessionItems([]);
+    }
+  }, [session?.path]);
+
   // Persisted State
   const [scheduledBackup, setScheduledBackup] = usePersistedState('scheduledBackup', true);
   const [intervalMinutes, setIntervalMinutes] = usePersistedState('intervalMinutes', 15);
   const [destinations, setDestinations] = usePersistedState<Destination[]>('destinations', []);
-  const [selectedPaths, setSelectedPaths] = usePersistedState<string[]>('selectedPaths', [
-    'session',
-    'session/Capture',
-    'session/Selects',
-  ]);
+  const [selectedPaths, setSelectedPaths] = usePersistedState<string[]>('selectedPaths', []);
   const [notificationsEnabled, setNotificationsEnabled] = usePersistedState('notificationsEnabled', true);
   const notificationsEnabledRef = useRef(notificationsEnabled);
   const sessionRef = useRef(session);
@@ -109,6 +118,14 @@ function App() {
   useEffect(() => {
     destinationsRef.current = destinations;
   }, [destinations]);
+
+  // Initialize selectedPaths if empty and session exists
+  useEffect(() => {
+    if (session?.path && sessionItems.length > 0 && selectedPaths.length === 0) {
+      // Default to selecting the root session path (which implies everything)
+      setSelectedPaths([session.path]);
+    }
+  }, [session?.path, sessionItems.length]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -272,17 +289,16 @@ function App() {
     lastSyncLabel: hasBackedUpOnce ? "Last sync just now" : "Never synced"
   };
 
-  // Mock tree - in production this would come from getSessionContents
+  // Dynamic tree from session items
   const sessionTree = {
-    id: 'session',
+    id: session?.path || 'session',
     label: session?.name || 'Session',
     type: 'root',
-    children: [
-      { id: 'session/Capture', label: 'Capture', type: 'folder' },
-      { id: 'session/Selects', label: 'Selects', type: 'folder' },
-      { id: 'session/Output', label: 'Output', type: 'folder' },
-      { id: 'session/Trash', label: 'Trash', type: 'folder' },
-    ]
+    children: sessionItems.map(item => ({
+      id: item.id,
+      label: item.label,
+      type: item.item_type
+    }))
   };
 
   const truncateMiddle = (str: string, startLen = 18, endLen = 8) => {
@@ -323,35 +339,71 @@ function App() {
     }
   };
 
-  const isSelected = (id: string) => selectedPaths.includes(id);
+  const isSelected = (id: string) => {
+    const rootPath = session?.path || '';
+    // If root is selected, everything is implicitly selected
+    if (selectedPaths.includes(rootPath)) return true;
+    return selectedPaths.includes(id);
+  };
 
   const getFolderStatus = (folderId: string) => {
-    if (folderId === 'session') {
-      const children = sessionTree.children.map(c => c.id);
-      const selectedChildren = children.filter(id => selectedPaths.includes(id));
+    const rootPath = session?.path || '';
+    if (folderId === rootPath) {
+      if (selectedPaths.includes(rootPath)) return 'all';
+      
+      const childrenIds = sessionItems.map(i => i.id);
+      if (childrenIds.length === 0) return 'none';
+      
+      const selectedChildren = childrenIds.filter(id => selectedPaths.includes(id));
+      
       if (selectedChildren.length === 0) return 'none';
-      if (selectedChildren.length === children.length) return 'all';
+      if (selectedChildren.length === childrenIds.length) return 'all';
       return 'mixed';
     }
     return isSelected(folderId) ? 'all' : 'none';
   };
 
   const togglePath = (id: string) => {
-    if (id === 'session') {
-      const status = getFolderStatus('session');
-      if (status === 'all') {
-        setSelectedPaths([]);
-      } else {
-        setSelectedPaths(['session', ...sessionTree.children.map(c => c.id)]);
-      }
-      return;
-    }
+    const rootPath = session?.path || '';
+    const allChildrenIds = sessionItems.map(i => i.id);
 
     setSelectedPaths(prev => {
-      const newPaths = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id];
-      const hasAny = sessionTree.children.some(c => newPaths.includes(c.id));
-      if (hasAny && !newPaths.includes('session')) return [...newPaths, 'session'];
-      if (!hasAny && newPaths.includes('session')) return newPaths.filter(p => p !== 'session');
+      const isRoot = id === rootPath;
+
+      if (isRoot) {
+        // If root is currently selected (directly or via all children), deselect everything
+        if (getFolderStatus(rootPath) === 'all') {
+          return [];
+        } else {
+          // Select only the root (which implies all children)
+          return [rootPath];
+        }
+      }
+
+      // Toggling a child
+      let newPaths = [...prev];
+      const isRootSelected = newPaths.includes(rootPath);
+      
+      if (isRootSelected) {
+        // If root was selected, we are now deselecting one child.
+        // We must switch from "root only" to "all children minus this one".
+        newPaths = allChildrenIds.filter(childId => childId !== id);
+      } else {
+        // Root not selected, just toggle the child normally
+        if (newPaths.includes(id)) {
+          newPaths = newPaths.filter(p => p !== id);
+        } else {
+          newPaths.push(id);
+        }
+
+        // Check if all children are now selected
+        const allSelected = allChildrenIds.length > 0 && 
+                            allChildrenIds.every(childId => newPaths.includes(childId));
+        if (allSelected) {
+          return [rootPath];
+        }
+      }
+      
       return newPaths;
     });
   };

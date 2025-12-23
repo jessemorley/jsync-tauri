@@ -12,8 +12,18 @@
     - App could create config file in session?
 
 - [ ] Add way for user to delete an actual backup, as well as the backup location
+
+- [ ] Determine behavior for unticked items on subsequent syncs (should they be removed from destination backups?)
+
+
+
 # Completed
+
+- [x] Dynamic session content selection in preferences and selection-based backups using rclone filters.
+
 - [x] Image total subtitle doesn't accurately reflect no of images in capture folder (and subfolders). The number is too low.
+
+
 - [x] Progress bar completion polish
 - [x] BUG: If a backup has been made to a location, that location shows blue for backed up, even if the session changes or the backup is deleted
 - [x] If the location section is collapsed during backup, the completion outline should show around the window
