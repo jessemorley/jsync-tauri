@@ -41,6 +41,27 @@ import {
 } from './lib/tauri';
 import { invoke } from '@tauri-apps/api/core';
 
+const completionAnimations = `
+  @keyframes completion-pulse {
+    0% { border-color: rgba(59, 130, 246, 0.2); }
+    25% { border-color: rgba(37, 99, 235, 1); }
+    100% { border-color: rgba(255, 255, 255, 0.1); }
+  }
+
+  @keyframes fill-fade-out {
+    0%, 20% { opacity: 0.4; width: 100%; }
+    100% { opacity: 0; width: 100%; }
+  }
+
+  .animate-completion-pulse {
+    animation: completion-pulse 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  .animate-fill-fade {
+    animation: fill-fade-out 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+`;
+
 function App() {
   // Application State
   const [view, setView] = useState<'main' | 'prefs'>('main');
@@ -48,6 +69,7 @@ function App() {
   const [globalProgress, setGlobalProgress] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasBackedUpOnce, setHasBackedUpOnce] = useState(false);
+  const [backedUpDestinations, setBackedUpDestinations] = useState<Set<number>>(new Set());
   const [isEditingCustom, setIsEditingCustom] = useState(false);
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +126,14 @@ function App() {
     };
   }, [refreshSession]);
 
+  // Inject completion animations CSS
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = completionAnimations;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   // Setup backup event listeners
   useEffect(() => {
     const setupListeners = async () => {
@@ -113,7 +143,11 @@ function App() {
 
       const unlistenComplete = await onBackupComplete((result) => {
         if (result.success) {
+          // Add destination to backed-up set
+          setBackedUpDestinations(prev => new Set([...prev, result.destination_id]));
+
           setBackupState('success');
+          setGlobalProgress(100); // Ensure 100% before animations start
           setHasBackedUpOnce(true);
           if (notificationsEnabled) {
             sendBackupNotification('Backup Complete', `Backup completed successfully`);
@@ -233,6 +267,11 @@ function App() {
 
   const removeDestination = (id: number) => {
     setDestinations(prev => prev.filter(d => d.id !== id));
+    setBackedUpDestinations(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
   };
 
   const addDefaultLocation = async () => {
@@ -291,10 +330,12 @@ function App() {
           <>
             {/* Header */}
             <div className="relative flex flex-col bg-white/5">
-              {backupState === 'running' && isCollapsed && (
+              {(backupState === 'running' || backupState === 'success') && isCollapsed && (
                 <div
-                  className="absolute inset-0 bg-blue-500/15 transition-all duration-300 ease-linear z-0"
-                  style={{ width: `${globalProgress}%` }}
+                  className={`absolute inset-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
+                    backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
+                  }`}
+                  style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
                 />
               )}
 
@@ -311,7 +352,8 @@ function App() {
                     <div className="flex items-center gap-2 mb-1">
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                         !session ? 'bg-gray-500' :
-                        backupState === 'running' ? 'bg-blue-500 animate-pulse' : 
+                        backupState === 'running' ? 'bg-blue-500 animate-pulse' :
+                        backupState === 'success' ? 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]' :
                         'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
                       }`} />
                       <h3 className="font-bold text-[13px] tracking-tight leading-none text-white truncate" title={sessionInfo.name}>
@@ -334,7 +376,7 @@ function App() {
                     backupState === 'running'
                       ? (isHoveringSync ? 'bg-red-500/20 border border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-blue-500/20 border border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]') :
                     backupState === 'success'
-                      ? 'bg-green-600 border border-green-400 text-white shadow-lg' :
+                      ? 'bg-blue-600 border border-blue-400 text-white shadow-lg' :
                     'bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 active:scale-95 active:bg-blue-500/30'
                   } disabled:opacity-30 disabled:grayscale`}
                 >
@@ -367,13 +409,24 @@ function App() {
                   <div className="space-y-2">
                     {destinations.length > 0 ? (
                       destinations.map((dest) => {
-                        const isBackingUp = backupState === 'running' && dest.enabled;
+                        const isBackingUp = (backupState === 'running' || backupState === 'success') && dest.enabled;
+                        const hasBackup = backedUpDestinations.has(dest.id) && dest.enabled;
+                        const shouldPulse = backupState === 'success' && !isCollapsed && dest.enabled;
                         return (
                           <div key={dest.id} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all relative overflow-hidden h-[54px] ${
-                            dest.enabled ? 'bg-white/5 border-white/10 shadow-sm' : 'bg-black/20 border-white/[0.08] opacity-50'
-                          }`}>
+                            !dest.enabled
+                              ? 'bg-black/20 border-white/[0.08] opacity-50'
+                              : hasBackup
+                                ? 'bg-blue-500/10 border-blue-500/20'
+                                : 'bg-white/5 border-white/10 shadow-sm'
+                          } ${shouldPulse ? 'animate-completion-pulse' : ''}`}>
                             {isBackingUp && (
-                              <div className="absolute inset-y-0 left-0 bg-blue-500/10 transition-all duration-300 ease-linear z-0" style={{ width: `${globalProgress}%` }} />
+                              <div
+                                className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
+                                  backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
+                                }`}
+                                style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
+                              />
                             )}
 
                             <button
