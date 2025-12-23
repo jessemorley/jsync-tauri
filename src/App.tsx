@@ -102,6 +102,7 @@ function App() {
   const [intervalMinutes, setIntervalMinutes] = usePersistedState('intervalMinutes', 15);
   const [destinations, setDestinations] = usePersistedState<Destination[]>('destinations', []);
   const [selectedPaths, setSelectedPaths] = usePersistedState<string[]>('selectedPaths', []);
+  const [lastSessionPath, setLastSessionPath] = usePersistedState<string | null>('lastSessionPath', null);
   const [notificationsEnabled, setNotificationsEnabled] = usePersistedState('notificationsEnabled', true);
   const notificationsEnabledRef = useRef(notificationsEnabled);
   const sessionRef = useRef(session);
@@ -119,13 +120,14 @@ function App() {
     destinationsRef.current = destinations;
   }, [destinations]);
 
-  // Initialize selectedPaths if empty and session exists
+  // Initialize selectedPaths if it's a new session
   useEffect(() => {
-    if (session?.path && sessionItems.length > 0 && selectedPaths.length === 0) {
-      // Default to selecting the root session path (which implies everything)
+    if (session?.path && session.path !== lastSessionPath) {
+      // New session detected, default to selecting everything (root path)
       setSelectedPaths([session.path]);
+      setLastSessionPath(session.path);
     }
-  }, [session?.path, sessionItems.length]);
+  }, [session?.path, lastSessionPath]);
 
   // Request notification permission on mount
   useEffect(() => {
