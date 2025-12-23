@@ -613,7 +613,7 @@ function App() {
                         const hasBackup = backedUpDestinations.has(dest.id) && dest.enabled;
                         const shouldPulse = backupState === 'success' && !isCollapsed && dest.enabled;
                         return (
-                          <div key={dest.id} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all relative overflow-hidden h-[54px] ${
+                          <div key={dest.id} className={`flex items-center gap-3 ${showingOptionsFor === dest.id ? '' : 'p-2.5'} rounded-xl border transition-all relative overflow-hidden h-[54px] ${
                             !dest.enabled
                               ? 'bg-black/20 border-white/[0.08] opacity-50'
                               : hasBackup
@@ -623,7 +623,7 @@ function App() {
                             {showingOptionsFor === dest.id ? (
                               confirmDeleteBackupFor === dest.id ? (
                                 // CONFIRMATION UI (54px height maintained)
-                                <div className="flex flex-col gap-1.5 p-1.5 justify-center h-full">
+                                <div className="flex flex-col gap-1.5 p-2.5 justify-center h-full w-full">
                                   <p className="text-[9px] text-gray-300 font-bold text-center">
                                     Delete backup at this location?
                                   </p>
