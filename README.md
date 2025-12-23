@@ -8,7 +8,8 @@ A lightweight macOS menubar application for automatically backing up Capture One
 - **Smart Destination Detection** - Automatically identifies drive types (external, cloud, network, local)
 - **Scheduled Backups** - Configure automatic backups at custom intervals (5m, 15m, 30m, or custom)
 - **Multiple Destinations** - Backup to multiple locations simultaneously
-- **Progress Tracking** - Real-time backup progress with visual feedback
+- **Progress Tracking** - Real-time backup progress with accurate file counts and transfer rates
+- **Parallel Transfers** - Multi-threaded backups using rclone (4 concurrent file transfers)
 - **Selective Sync** - Choose which session folders to include in backups
 - **System Notifications** - Optional alerts when backups complete
 - **Auto-hide** - Window automatically hides when clicking away
@@ -73,7 +74,7 @@ Click the circular arrow button in the header to trigger an immediate backup to 
 
 - **Frontend**: React + TypeScript + Tailwind CSS
 - **Backend**: Rust + Tauri 2.0
-- **Backup Engine**: rsync with progress tracking
+- **Backup Engine**: rclone (bundled sidecar) with parallel transfers and real-time progress
 - **Session Detection**: AppleScript integration for Capture One
 
 ### Key Components
@@ -82,6 +83,7 @@ Click the circular arrow button in the header to trigger an immediate backup to 
 - **Dispatch Queue**: Main thread execution for modal dialogs
 - **Auto-hide**: Focus-loss detection for menubar UX
 - **Persistent State**: Tauri plugin-store for settings and destinations
+- **rclone Integration**: Bundled sidecar binary for efficient, parallel file transfers with accurate progress tracking
 
 ### File Structure
 
@@ -98,17 +100,30 @@ jsync-tauri/
 ├── src-tauri/             # Rust backend
 │   ├── src/
 │   │   ├── commands/     # Tauri commands
-│   │   │   ├── backup.rs        # Backup logic
+│   │   │   ├── backup.rs        # rclone backup logic
 │   │   │   ├── destinations.rs  # Folder picker & parsing
 │   │   │   ├── session.rs       # Capture One session info
 │   │   │   └── permissions.rs   # macOS permissions
 │   │   ├── macos_window.rs      # Native window styling
 │   │   └── macos_dialog.rs      # Custom NSOpenPanel
+│   ├── binaries/
+│   │   └── rclone-aarch64-apple-darwin  # Bundled rclone binary
 │   └── Cargo.toml
 └── Planning and documents/ # Design mockups and planning docs
 ```
 
 ## Development Notes
+
+### rclone Backup Implementation
+
+The app uses rclone as a bundled Tauri sidecar binary for file synchronization:
+- **Parallel transfers**: 4 concurrent file transfers with 8 concurrent file checkers
+- **Real-time progress**: Updates every 500ms with accurate percentage, file counts, and transfer rates
+- **Sync behavior**: Mirrors source to destination, deleting extraneous files at the destination
+- **Cancellation support**: Atomic boolean flag allows immediate backup cancellation
+- **Progress parsing**: Regex-based parsing of rclone's plain-text stdout for progress updates
+
+Command: `rclone sync <source> <dest> --check-first -P --stats 500ms --stats-log-level NOTICE --transfers 4 --checkers 8`
 
 ### macOS Dialog Implementation
 
