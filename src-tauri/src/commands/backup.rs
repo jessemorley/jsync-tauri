@@ -169,6 +169,7 @@ async fn run_rclone_backup(
             "--check-first",
             "-P",  // Progress flag - shows real-time stats
             "--stats", "500ms",  // Update every 500ms for more frequent progress
+            "--stats-log-level", "NOTICE",  // Filter out noisy DEBUG/INFO logs
             "--transfers", "4",
             "--checkers", "8",
         ])
@@ -187,8 +188,6 @@ async fn run_rclone_backup(
     let mut last_percent = 0.0;
     let mut total_files = 0u32;
     let mut files_transferred = 0u32;
-    let mut total_bytes = 0u64;
-    let mut transferred_bytes = 0u64;
 
     // Regex for parsing plain text progress
     // "Transferred:   	    1.278 GiB / 2.398 GiB, 53%, 0 B/s, ETA -"
@@ -213,9 +212,8 @@ async fn run_rclone_backup(
         tokio::select! {
             stderr_line = stderr_reader.next_line() => {
                 match stderr_line {
-                    Ok(Some(line)) => {
-                        info!("rclone stderr: {}", line);
-                        // JSON logs come here but we parse stdout for progress
+                    Ok(Some(_line)) => {
+                        // Stderr output (errors/notices) - mostly ignored
                     }
                     Ok(None) => break, // stderr closed
                     Err(e) => error!("stderr read error: {}", e),
@@ -224,31 +222,21 @@ async fn run_rclone_backup(
             stdout_line = stdout_reader.next_line() => {
                 match stdout_line {
                     Ok(Some(line)) => {
-                        info!("rclone stdout: {}", line);
-
                         // Parse percentage from bytes line: "Transferred:   1.278 GiB / 2.398 GiB, 53%, ..."
-                        if line.contains("Transferred:") && line.contains("GiB") {
-                            info!("Attempting to parse bytes progress from: {}", line);
-                            if let Some(caps) = bytes_progress_regex.captures(&line) {
-                                info!("Regex matched! Captured: {:?}", caps);
-                                if let Ok(percent) = caps.get(1).unwrap().as_str().parse::<f64>() {
-                                    info!("Parsed percent: {}%", percent);
-                                    if (percent - last_percent).abs() >= 0.1 || percent == 100.0 {
-                                        last_percent = percent;
+                        if let Some(caps) = bytes_progress_regex.captures(&line) {
+                            if let Ok(percent) = caps.get(1).unwrap().as_str().parse::<f64>() {
+                                if (percent - last_percent).abs() >= 0.1 || percent == 100.0 {
+                                    last_percent = percent;
 
-                                        let _ = app.emit("backup-progress", BackupProgress {
-                                            destination_id: dest_id,
-                                            percent,
-                                            current_file: String::new(),
-                                            transfer_rate: String::new(),
-                                            files_transferred,
-                                            total_files,
-                                        });
-                                        info!("Emitted progress event: {}%", percent);
-                                    }
+                                    let _ = app.emit("backup-progress", BackupProgress {
+                                        destination_id: dest_id,
+                                        percent,
+                                        current_file: String::new(),
+                                        transfer_rate: String::new(),
+                                        files_transferred,
+                                        total_files,
+                                    });
                                 }
-                            } else {
-                                info!("Regex did NOT match");
                             }
                         }
 
@@ -256,7 +244,6 @@ async fn run_rclone_backup(
                         if let Some(caps) = files_progress_regex.captures(&line) {
                             files_transferred = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
                             total_files = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
-                            info!("Parsed file counts: {}/{}", files_transferred, total_files);
                         }
                     }
                     Ok(None) => break, // stdout closed
