@@ -139,26 +139,24 @@ pub async fn get_session_contents(path: String) -> Result<Vec<SessionItem>, Stri
         .map_err(|e| format!("Failed to read directory: {}", e))?;
 
     let mut items = Vec::new();
-    for entry in entries {
-        if let Ok(entry) = entry {
-            let file_name = entry.file_name().to_string_lossy().to_string();
-            let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+    for entry in entries.flatten() {
+        let file_name = entry.file_name().to_string_lossy().to_string();
+        let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
 
-            // Filter for standard C1 structures
-            let is_standard = matches!(
-                file_name.as_str(),
-                "Capture" | "Selects" | "Output" | "Trash"
-            );
+        // Filter for standard C1 structures
+        let is_standard = matches!(
+            file_name.as_str(),
+            "Capture" | "Selects" | "Output" | "Trash"
+        );
 
-            let is_session_db = file_name.ends_with(".cosessiondb");
+        let is_session_db = file_name.ends_with(".cosessiondb");
 
-            if is_standard || is_session_db || is_dir {
-                items.push(SessionItem {
-                    id: format!("{}/{}", path, file_name),
-                    label: file_name,
-                    item_type: if is_dir { "folder".to_string() } else { "file".to_string() },
-                });
-            }
+        if is_standard || is_session_db || is_dir {
+            items.push(SessionItem {
+                id: format!("{}/{}", path, file_name),
+                label: file_name,
+                item_type: if is_dir { "folder".to_string() } else { "file".to_string() },
+            });
         }
     }
 
@@ -178,14 +176,14 @@ async fn get_folder_size(path: &str) -> Result<String, String> {
     let raw_size = stdout.split_whitespace().next().unwrap_or("0B");
     
     // Format the size from du output (e.g. 4.4G -> 4.4 GB)
-    let formatted_size = if raw_size.ends_with('G') {
-        format!("{} GB", &raw_size[..raw_size.len()-1])
-    } else if raw_size.ends_with('M') {
-        format!("{} MB", &raw_size[..raw_size.len()-1])
-    } else if raw_size.ends_with('K') {
-        format!("{} KB", &raw_size[..raw_size.len()-1])
-    } else if raw_size.ends_with('B') {
-        format!("{} B", &raw_size[..raw_size.len()-1])
+    let formatted_size = if let Some(s) = raw_size.strip_suffix('G') {
+        format!("{} GB", s)
+    } else if let Some(s) = raw_size.strip_suffix('M') {
+        format!("{} MB", s)
+    } else if let Some(s) = raw_size.strip_suffix('K') {
+        format!("{} KB", s)
+    } else if let Some(s) = raw_size.strip_suffix('B') {
+        format!("{} B", s)
     } else {
         raw_size.to_string()
     };

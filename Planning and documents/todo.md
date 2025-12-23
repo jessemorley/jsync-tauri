@@ -5,15 +5,21 @@
 - [ ] Cancel transfer button doesn't seem to tbe working
 
 ## UI
-- If the location section is collapsed during backup, the completion outline should show around the window
+
+- [ ] Add sync information to backup completion notification
+    - "Backup Complete. Session successfully backed up to (4) location/s. Total session size: 4.1 GB"
 
 
 - [ ] On session change, actually check to see if backups exist at the defined locations when setting location state (backed up or not)
     - May entail a way of storing backup locations on a session-by-session basis. (Store in session folder?) or setting default backup locations
+    - App could create config file in session?
 
+- [ ] Add way for user to delete an actual backup, as well as the backup location
 
+- [ ] When no session is connected: "No Session" (No change) and "Open a session in Capture One to begin backup" (Replacing the session size subtitle)
 
 
 # Completed
 - [x] Progress bar completion polish
 - [x] BUG: If a backup has been made to a location, that location shows blue for backed up, even if the session changes or the backup is deleted
+- [x] If the location section is collapsed during backup, the completion outline should show around the window

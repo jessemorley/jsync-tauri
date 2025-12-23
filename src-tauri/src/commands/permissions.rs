@@ -13,11 +13,9 @@ pub fn check_full_disk_access() -> bool {
 
     for path in test_paths {
         if let Ok(metadata) = fs::metadata(&path) {
-            if metadata.is_dir() {
-                if let Ok(_) = fs::read_dir(&path) {
-                    info!("Full Disk Access granted (verified via {})", path);
-                    return true;
-                }
+            if metadata.is_dir() && fs::read_dir(&path).is_ok() {
+                info!("Full Disk Access granted (verified via {})", path);
+                return true;
             }
         }
     }

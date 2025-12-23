@@ -158,6 +158,10 @@ Grant this in: **System Settings → Privacy & Security → Full Disk Access**
 
 Copyright © 2024 Jesse Morley
 
+## AI Agent Onboarding
+
+If you are an AI assistant working on this project, please refer to [AI_MEMORY.md](./AI_MEMORY.md) for a summarized context of the architecture, recent changes, and ongoing tasks.
+
 ## Credits
 
 Built with:

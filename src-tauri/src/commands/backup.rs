@@ -128,22 +128,6 @@ pub fn cancel_backup() {
 }
 
 // Helper functions for formatting
-fn format_bytes(bytes: u64) -> String {
-    const KB: u64 = 1024;
-    const MB: u64 = KB * 1024;
-    const GB: u64 = MB * 1024;
-
-    if bytes >= GB {
-        format!("{:.2} GB", bytes as f64 / GB as f64)
-    } else if bytes >= MB {
-        format!("{:.2} MB", bytes as f64 / MB as f64)
-    } else if bytes >= KB {
-        format!("{:.2} KB", bytes as f64 / KB as f64)
-    } else {
-        format!("{} B", bytes)
-    }
-}
-
 fn format_speed(bytes_per_sec: f64) -> String {
     const KB: f64 = 1024.0;
     const MB: f64 = KB * 1024.0;
@@ -182,7 +166,7 @@ async fn run_rclone_backup(
     info!("Resolved rclone path: {:?}", rclone_cmd);
 
     let mut child = Command::new(rclone_cmd)
-        .args(&[
+        .args([
             "sync",
             &src,
             &dst,
@@ -204,7 +188,6 @@ async fn run_rclone_backup(
 
     let mut last_percent = 0.0;
     let mut total_files = 0u32;
-    let mut files_transferred = 0u32;
 
     loop {
         // Check for cancellation
@@ -232,7 +215,7 @@ async fn run_rclone_backup(
                                 };
 
                                 total_files = stats.total_transfers + stats.total_checks;
-                                files_transferred = stats.transfers + stats.checks;
+                                let files_transferred = stats.transfers + stats.checks;
 
                                 if (percent - last_percent).abs() >= 0.1 || percent == 100.0 {
                                     last_percent = percent;

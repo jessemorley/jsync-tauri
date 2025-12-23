@@ -50,14 +50,13 @@ pub fn run() {
 
             Ok(())
         })
-        .on_window_event(|window, event| match event {
-            tauri::WindowEvent::Focused(is_focused) => {
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Focused(is_focused) = event {
                 // Auto-hide when window loses focus
                 if !is_focused {
                     let _ = window.hide();
                 }
             }
-            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             commands::session::get_capture_one_session,
@@ -90,12 +89,11 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
         .show_menu_on_left_click(false)
-        .on_menu_event(|app, event| match event.id.as_ref() {
-            "quit" => {
+        .on_menu_event(|app, event| {
+            if event.id.as_ref() == "quit" {
                 info!("Quit menu item clicked");
                 app.exit(0);
             }
-            _ => {}
         })
         .on_tray_icon_event(move |tray, event| {
             tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);

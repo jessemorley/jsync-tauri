@@ -2,7 +2,6 @@ pub mod session;
 pub mod destinations;
 pub mod backup;
 pub mod permissions;
-use tauri_plugin_notification::NotificationExt;
 
 #[tauri::command]
 pub fn quit_app(app: tauri::AppHandle) {
