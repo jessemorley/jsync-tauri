@@ -93,10 +93,20 @@ function App() {
   ]);
   const [notificationsEnabled, setNotificationsEnabled] = usePersistedState('notificationsEnabled', true);
   const notificationsEnabledRef = useRef(notificationsEnabled);
+  const sessionRef = useRef(session);
+  const destinationsRef = useRef(destinations);
 
   useEffect(() => {
     notificationsEnabledRef.current = notificationsEnabled;
   }, [notificationsEnabled]);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  useEffect(() => {
+    destinationsRef.current = destinations;
+  }, [destinations]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -174,7 +184,12 @@ function App() {
           setHasBackedUpOnce(true);
           
           if (notificationsEnabledRef.current) {
-            sendBackupNotification('Backup Complete', `Backup completed successfully`);
+            const enabledCount = destinationsRef.current.filter(d => d.enabled).length;
+            const size = sessionRef.current?.size || "Unknown size";
+            sendBackupNotification(
+              'Backup Complete', 
+              `Session successfully backed up to ${enabledCount} ${enabledCount === 1 ? 'location' : 'locations'}. Total session size: ${size}`
+            );
           }
           
           setTimeout(() => {
