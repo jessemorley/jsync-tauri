@@ -22,7 +22,8 @@ import {
   Minus,
   Folder,
   FileCode,
-  Image
+  Image,
+  CornerDownLeft
 } from 'lucide-react';
 import './App.css';
 import type { Destination, SessionInfo, SessionItem, SessionConfig } from './lib/types';
@@ -648,14 +649,14 @@ function App() {
                                   {/* Set/Unset Default */}
                                   <button
                                     onClick={() => toggleDefault(dest.id)}
-                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-white/10 transition-all ${
+                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
                                       isDefault(dest.id)
                                         ? 'text-blue-400'
                                         : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
                                     }`}
                                   >
                                     <Check size={10} strokeWidth={3} />
-                                    <span className={`text-[9px] uppercase tracking-wide ${isDefault(dest.id) ? 'font-bold' : ''}`}>
+                                    <span className={`text-[9px] tracking-wide text-center ${isDefault(dest.id) ? 'font-bold' : ''}`}>
                                       {isDefault(dest.id) ? 'Default' : 'Set Default'}
                                     </span>
                                   </button>
@@ -666,35 +667,35 @@ function App() {
                                       removeDestination(dest.id);
                                       setShowingOptionsFor(null);
                                     }}
-                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-white/10 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
                                   >
                                     <Trash2 size={10} />
-                                    <span className="text-[9px] uppercase tracking-wide">Remove</span>
+                                    <span className="text-[9px] tracking-wide text-center">Remove Location</span>
                                   </button>
 
                                   {/* Delete Backup */}
                                   <button
                                     onClick={() => setConfirmDeleteBackupFor(dest.id)}
                                     disabled={!dest.has_existing_backup}
-                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 border-r border-white/10 transition-all ${
+                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
                                       dest.has_existing_backup
-                                        ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-500/10'
+                                        ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
                                         : 'text-gray-600 opacity-50 cursor-not-allowed'
                                     }`}
                                   >
                                     <Database size={10} />
-                                    <span className="text-[9px] uppercase tracking-wide">
-                                      {dest.has_existing_backup ? 'Delete' : 'None'}
+                                    <span className="text-[9px] tracking-wide text-center">
+                                      {dest.has_existing_backup ? 'Delete Backup' : 'None'}
                                     </span>
                                   </button>
 
                                   {/* Return */}
                                   <button
                                     onClick={() => setShowingOptionsFor(null)}
-                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
+                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
                                   >
-                                    <X size={10} />
-                                    <span className="text-[9px] uppercase tracking-wide">Return</span>
+                                    <CornerDownLeft size={10} />
+                                    <span className="text-[9px] tracking-wide text-center">Return</span>
                                   </button>
                                 </div>
                               )
