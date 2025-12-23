@@ -4,7 +4,7 @@
 - [ ] Cancel transfer button doesn't seem to tbe working
 
 ## UI
-- When no destination added: hover state should only be for plus button
+- [ ] When no destination added: hover state should only be for plus button
 
 ## Functionality
 
@@ -13,10 +13,7 @@
     - Option to remove location
     - Option to delete backup at this location
 
-- [ ] Add way for user to delete an actual backup, as well as the backup location
-
 - [ ] Determine behavior for unticked items on subsequent syncs (should they be removed from destination backups?)
-
 
 
 # Completed
@@ -25,13 +22,7 @@
 
 - [x] Dynamic session content selection in preferences and selection-based backups using rclone filters.
 
-- [x] Image total subtitle doesn't accurately reflect no of images in capture folder (and subfolders). The number is too low.
-
-
-
-
-
-
+- [x] Image total subtitle doesn't accurately reflect no of images in capture folder (and subfolders)
 
 - [x] Progress bar completion polish
 
