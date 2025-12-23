@@ -6,11 +6,12 @@ A lightweight macOS menubar application for automatically backing up Capture One
 
 - **Menubar Interface** - Compact, always-accessible menubar app with no dock icon
 - **Smart Destination Detection** - Automatically identifies drive types (external, cloud, network, local)
+- **Portable Session Settings** - Stores preferences, selections, and destination history in a `.jsync` sidecar file within the session folder.
+- **Granular Sync** - Choose which session folders (Capture, Selects, Output, etc.) to include in backups using absolute path selection.
 - **Scheduled Backups** - Configure automatic backups at custom intervals (5m, 15m, 30m, or custom)
 - **Multiple Destinations** - Backup to multiple locations simultaneously
 - **Progress Tracking** - Real-time backup progress with accurate file counts and transfer rates
 - **Parallel Transfers** - Multi-threaded backups using rclone (4 concurrent file transfers)
-- **Selective Sync** - Choose which session folders to include in backups
 - **System Notifications** - Optional alerts when backups complete
 - **Auto-hide** - Window automatically hides when clicking away
 
@@ -57,12 +58,8 @@ npm run tauri build
 ### Managing Session Contents
 
 1. Click "Settings" in the footer
-2. Select which folders to include in your backups:
-   - Session root
-   - Capture folder
-   - Selects folder
-   - Output folder
-   - Other custom folders
+2. Select which folders to include in your backups.
+3. Selections are saved automatically to the session's `.jsync` file and will persist even if you move the session folder or switch to another computer.
 
 ### Manual Backup
 
@@ -76,14 +73,17 @@ Click the circular arrow button in the header to trigger an immediate backup to 
 - **Backend**: Rust + Tauri 2.0
 - **Backup Engine**: rclone (bundled sidecar) with parallel transfers and real-time progress
 - **Session Detection**: AppleScript integration for Capture One
+- **Persistence**: Hybrid approach using `.jsync` sidecar files for session-specific settings and `tauri-plugin-store` for global application settings.
 
 ### Key Components
 
+- **Session Sidecar (.jsync)**: A JSON-formatted metadata file stored in the session root. It tracks selected paths, backup destinations, and last sync timestamps, making settings portable across machines.
+- **rclone Filtering**: Uses `--filter` rules (e.g., `+ /Capture/**`, `- /**`) to implement granular file selection based on the frontend tree view.
 - **Custom NSOpenPanel**: Direct macOS Cocoa bindings for native folder picker (eliminates sheet dimming effect).
 - **Singleton Dialog**: Uses a warm-up strategy and singleton pattern to ensure the file picker opens instantly without UI flashing.
 - **Dispatch Queue**: Main thread execution for modal dialogs.
 - **Auto-hide**: Focus-loss detection for menubar UX.
-- **Persistent State**: Tauri plugin-store for settings and destinations.
+- **Persistent State**: Tauri plugin-store for global settings (intervals, notifications).
 - **rclone Integration**: Bundled sidecar binary for efficient, parallel file transfers with accurate progress tracking.
 
 ### File Structure
