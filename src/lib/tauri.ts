@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { load, Store } from '@tauri-apps/plugin-store';
-import { sendNotification, isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
+import { isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import type { Destination, SessionInfo, SessionItem, BackupProgress, BackupComplete } from './types';
 
@@ -96,7 +96,7 @@ let store: Store | null = null;
 
 export async function getStore(): Promise<Store> {
   if (!store) {
-    store = await load('jsync-settings.json', { autoSave: true });
+    store = await load('jsync-settings.json', { autoSave: true, defaults: {} });
   }
   return store;
 }

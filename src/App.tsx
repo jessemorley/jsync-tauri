@@ -21,8 +21,7 @@ import {
   Check,
   Minus,
   Folder,
-  FileCode,
-  Power
+  FileCode
 } from 'lucide-react';
 import './App.css';
 import type { Destination, SessionInfo } from './lib/types';
@@ -33,6 +32,7 @@ import {
   openFolderPicker,
   parseDestination,
   startBackup,
+  cancelBackup,
   onBackupProgress,
   onBackupComplete,
   onBackupError,
@@ -75,6 +75,12 @@ function App() {
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
+
+  // Reset backup status when session changes
+  useEffect(() => {
+    setBackedUpDestinations(new Set());
+    setHasBackedUpOnce(false);
+  }, [session?.path]);
 
   // Persisted State
   const [scheduledBackup, setScheduledBackup] = usePersistedState('scheduledBackup', true);
@@ -144,7 +150,7 @@ function App() {
     const style = document.createElement('style');
     style.textContent = completionAnimations;
     document.head.appendChild(style);
-    return () => document.head.removeChild(style);
+    return () => { document.head.removeChild(style); };
   }, []);
 
   // Setup backup event listeners
@@ -247,7 +253,7 @@ function App() {
   const sessionInfo = {
     name: session?.name || "No Session",
     size: session?.size || "0B",
-    lastSyncLabel: hasBackedUpOnce ? "Last sync just now" : "Last sync 4 minutes ago"
+    lastSyncLabel: hasBackedUpOnce ? "Last sync just now" : "Never synced"
   };
 
   // Mock tree - in production this would come from getSessionContents
