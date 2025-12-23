@@ -323,7 +323,9 @@ function App() {
         input[type=number] { -moz-appearance: textfield; }
       `}</style>
 
-      <div className="w-full h-full rounded-2xl border border-white/10 overflow-hidden relative bg-[#1c1c1e]">
+      <div className={`w-full h-full rounded-2xl border overflow-hidden relative bg-[#1c1c1e] transition-all duration-300 ${
+        backupState === 'success' && isCollapsed ? 'animate-completion-pulse' : 'border-white/10'
+      }`}>
 
         {/* VIEW: MAIN APP */}
         {view === 'main' && (
