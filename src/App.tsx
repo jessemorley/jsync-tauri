@@ -73,6 +73,7 @@ function App() {
   const [hasBackedUpOnce, setHasBackedUpOnce] = useState(false);
   const [backedUpDestinations, setBackedUpDestinations] = useState<Set<number>>(new Set());
   const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [customValue, setCustomValue] = useState('');
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -120,7 +121,6 @@ function App() {
   useEffect(() => {
     if (isEditingCustom && customInputRef.current) {
       customInputRef.current.focus();
-      customInputRef.current.select();
     }
   }, [isEditingCustom]);
 
@@ -556,14 +556,28 @@ function App() {
                               ref={customInputRef}
                               type="number"
                               min="1"
-                              value={intervalMinutes}
-                              onChange={(e) => setIntervalMinutes(parseInt(e.target.value) || 1)}
-                              onBlur={() => setIsEditingCustom(false)}
+                              value={customValue}
+                              onChange={(e) => setCustomValue(e.target.value)}
+                              onBlur={() => {
+                                const val = parseInt(customValue);
+                                if (!isNaN(val) && val > 0) {
+                                  setIntervalMinutes(val);
+                                }
+                                setIsEditingCustom(false);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  customInputRef.current?.blur();
+                                }
+                              }}
                               className="w-full py-1.5 text-[9px] text-center rounded-lg border bg-blue-600/20 border-blue-500 text-blue-400 font-bold focus:outline-none"
                             />
                           ) : (
                             <button
-                              onClick={() => setIsEditingCustom(true)}
+                              onClick={() => {
+                                setCustomValue('');
+                                setIsEditingCustom(true);
+                              }}
                               className={`w-full py-1.5 text-[9px] rounded-lg border transition-all ${
                                 ! [5, 15, 30].includes(intervalMinutes)
                                   ? 'bg-blue-600 border-blue-500 text-white font-bold shadow-md'

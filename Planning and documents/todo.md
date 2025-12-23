@@ -13,7 +13,7 @@
 
 - [ ] Add way for user to delete an actual backup, as well as the backup location
 
-- [x] When no session is connected: "No Session" (No change) and "Open a session in Capture One to begin backup" (Replacing the session size subtitle)
+
 
 
 # Completed
@@ -22,3 +22,4 @@
 - [x] If the location section is collapsed during backup, the completion outline should show around the window
 - [x] Add sync information to backup completion notification
     - "Backup Complete. Session successfully backed up to 4 locations. Total session size: 4.1 GB"
+- [x] When no session is connected: "No Session" (No change) and "Open a session in Capture One to begin backup" (Replacing the session size subtitle)
