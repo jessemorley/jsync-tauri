@@ -73,7 +73,6 @@ function App() {
   const [backupState, setBackupState] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
   const [globalProgress, setGlobalProgress] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [hasBackedUpOnce, setHasBackedUpOnce] = useState(false);
   const [backedUpDestinations, setBackedUpDestinations] = useState<Set<number>>(new Set());
   const [isEditingCustom, setIsEditingCustom] = useState(false);
   const [customValue, setCustomValue] = useState('');
@@ -130,7 +129,6 @@ function App() {
       setDestinations(config.destinations);
       setSelectedPaths(config.selected_paths);
       setLastSynced(config.last_synced);
-      setHasBackedUpOnce(!!config.last_synced);
     } catch (err) {
       console.error('Failed to load session data:', err);
     } finally {
@@ -154,8 +152,21 @@ function App() {
   // Reset backup status when session changes
   useEffect(() => {
     setBackedUpDestinations(new Set());
-    setHasBackedUpOnce(false);
   }, [session?.path]);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if (notificationsEnabled) {
+      requestNotificationPermission();
+    }
+  }, []);
+
+  // Focus input when entering custom mode
+  useEffect(() => {
+    if (isEditingCustom && customInputRef.current) {
+      customInputRef.current.focus();
+    }
+  }, [isEditingCustom]);
 
   // Load session info
   const refreshSession = useCallback(() => {
@@ -229,7 +240,7 @@ function App() {
 
           setBackupState('success');
           setGlobalProgress(100); // Ensure 100% before animations start
-          setHasBackedUpOnce(true);
+          setLastSynced(new Date().toISOString());
           
           if (notificationsEnabledRef.current) {
             const enabledCount = destinationsRef.current.filter(d => d.enabled).length;
