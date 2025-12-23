@@ -175,6 +175,20 @@ async fn get_folder_size(path: &str) -> Result<String, String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     info!("du output: {}", stdout.trim());
-    let size = stdout.split_whitespace().next().unwrap_or("0B").to_string();
-    Ok(size)
+    let raw_size = stdout.split_whitespace().next().unwrap_or("0B");
+    
+    // Format the size from du output (e.g. 4.4G -> 4.4 GB)
+    let formatted_size = if raw_size.ends_with('G') {
+        format!("{} GB", &raw_size[..raw_size.len()-1])
+    } else if raw_size.ends_with('M') {
+        format!("{} MB", &raw_size[..raw_size.len()-1])
+    } else if raw_size.ends_with('K') {
+        format!("{} KB", &raw_size[..raw_size.len()-1])
+    } else if raw_size.ends_with('B') {
+        format!("{} B", &raw_size[..raw_size.len()-1])
+    } else {
+        raw_size.to_string()
+    };
+
+    Ok(formatted_size.trim().to_string())
 }

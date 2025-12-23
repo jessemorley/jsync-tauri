@@ -5,7 +5,7 @@
 - [ ] Cancel transfer button doesn't seem to tbe working
 
 ## UI
-- [ ] Progress bar completion polish
+- [x] Progress bar completion polish
 - If the location section is collapsed during backup, the completion outline should show around the window
 
 
