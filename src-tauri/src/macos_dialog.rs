@@ -1,109 +1,115 @@
-#[cfg(target_os = "macos")]
-use cocoa::base::{id, nil, YES, NO};
-use cocoa::foundation::NSString;
-use objc::{class, msg_send, sel, sel_impl};
-use objc::runtime::Object;
-use std::sync::atomic::{AtomicPtr, Ordering};
 use log::info;
 
 #[cfg(target_os = "macos")]
-static PANEL_INSTANCE: AtomicPtr<Object> = AtomicPtr::new(std::ptr::null_mut());
+mod macos_impl {
+    use super::*;
+    use cocoa::base::{id, nil, YES, NO};
+    use cocoa::foundation::NSString;
+    use objc::{class, msg_send, sel, sel_impl};
+    use objc::runtime::Object;
+    use std::sync::atomic::{AtomicPtr, Ordering};
 
-#[cfg(target_os = "macos")]
-unsafe fn get_shared_panel() -> id {
-    let ptr = PANEL_INSTANCE.load(Ordering::SeqCst);
-    if !ptr.is_null() {
-        return ptr as id;
+    static PANEL_INSTANCE: AtomicPtr<Object> = AtomicPtr::new(std::ptr::null_mut());
+
+    unsafe fn get_shared_panel() -> id {
+        let ptr = PANEL_INSTANCE.load(Ordering::SeqCst);
+        if !ptr.is_null() {
+            return ptr as id;
+        }
+
+        // Create new instance
+        let panel: id = msg_send![class!(NSOpenPanel), openPanel];
+        
+        // Retain it so it persists globally (openPanel usually returns autoreleased)
+        let _: () = msg_send![panel, retain];
+
+        // Configure persistent settings
+        let _: () = msg_send![panel, setCanChooseFiles: NO];
+        let _: () = msg_send![panel, setCanChooseDirectories: YES];
+        let _: () = msg_send![panel, setAllowsMultipleSelection: NO];
+        let _: () = msg_send![panel, setCanCreateDirectories: YES];
+
+        // Set title
+        let title = NSString::alloc(nil).init_str("Select Backup Destination");
+        let _: () = msg_send![panel, setTitle: title];
+
+        // Set prompt button text
+        let prompt = NSString::alloc(nil).init_str("Select");
+        let _: () = msg_send![panel, setPrompt: prompt];
+
+        PANEL_INSTANCE.store(panel as *mut Object, Ordering::SeqCst);
+        panel
     }
 
-    // Create new instance
-    let panel: id = msg_send![class!(NSOpenPanel), openPanel];
-    
-    // Retain it so it persists globally (openPanel usually returns autoreleased)
-    let _: () = msg_send![panel, retain];
+    pub fn warm_up() {
+        info!("Warming up macOS dialog components");
+        dispatch::Queue::main().exec_async(move || {
+            unsafe {
+                let _ = get_shared_panel();
+            }
+        });
+    }
 
-    // Configure persistent settings
-    let _: () = msg_send![panel, setCanChooseFiles: NO];
-    let _: () = msg_send![panel, setCanChooseDirectories: YES];
-    let _: () = msg_send![panel, setAllowsMultipleSelection: NO];
-    let _: () = msg_send![panel, setCanCreateDirectories: YES];
+    pub async fn open_folder_picker() -> Option<String> {
+        info!("Opening native macOS folder picker");
 
-    // Set title
-    let title = NSString::alloc(nil).init_str("Select Backup Destination");
-    let _: () = msg_send![panel, setTitle: title];
+        let (tx, rx) = tokio::sync::oneshot::channel();
 
-    // Set prompt button text
-    let prompt = NSString::alloc(nil).init_str("Select");
-    let _: () = msg_send![panel, setPrompt: prompt];
+        // Use dispatch to run on main queue
+        dispatch::Queue::main().exec_async(move || {
+            unsafe {
+                // Get shared panel instance
+                let open_panel = get_shared_panel();
 
-    PANEL_INSTANCE.store(panel as *mut Object, Ordering::SeqCst);
-    panel
-}
+                // Run modal - safe on main thread
+                let response: isize = msg_send![open_panel, runModal];
 
-#[cfg(target_os = "macos")]
-pub fn warm_up() {
-    info!("Warming up macOS dialog components");
-    dispatch::Queue::main().exec_async(move || {
-        unsafe {
-            let _ = get_shared_panel();
-        }
-    });
-}
+                info!("Dialog response: {:?}", response);
 
-#[cfg(not(target_os = "macos"))]
-pub fn warm_up() {}
+                let result = if response == 1 { // NSModalResponseOK = 1
+                    let urls: id = msg_send![open_panel, URLs];
+                    let count: usize = msg_send![urls, count];
 
-#[cfg(target_os = "macos")]
-pub async fn open_folder_picker() -> Option<String> {
-    info!("Opening native macOS folder picker");
+                    info!("Selected URLs count: {}", count);
 
-    let (tx, rx) = tokio::sync::oneshot::channel();
+                    if count > 0 {
+                        let url: id = msg_send![urls, objectAtIndex: 0usize];
+                        let path: id = msg_send![url, path];
 
-    // Use dispatch to run on main queue
-    dispatch::Queue::main().exec_async(move || {
-        unsafe {
-            // Get shared panel instance
-            let open_panel = get_shared_panel();
+                        // Convert NSString to Rust String
+                        let utf8: *const i8 = msg_send![path, UTF8String];
+                        let path_str = std::ffi::CStr::from_ptr(utf8)
+                            .to_string_lossy()
+                            .into_owned();
 
-            // Run modal - safe on main thread
-            let response: isize = msg_send![open_panel, runModal];
-
-            info!("Dialog response: {:?}", response);
-
-            let result = if response == 1 { // NSModalResponseOK = 1
-                let urls: id = msg_send![open_panel, URLs];
-                let count: usize = msg_send![urls, count];
-
-                info!("Selected URLs count: {}", count);
-
-                if count > 0 {
-                    let url: id = msg_send![urls, objectAtIndex: 0usize];
-                    let path: id = msg_send![url, path];
-
-                    // Convert NSString to Rust String
-                    let utf8: *const i8 = msg_send![path, UTF8String];
-                    let path_str = std::ffi::CStr::from_ptr(utf8)
-                        .to_string_lossy()
-                        .into_owned();
-
-                    info!("Selected path: {}", path_str);
-                    Some(path_str)
+                        info!("Selected path: {}", path_str);
+                        Some(path_str)
+                    } else {
+                        None
+                    }
                 } else {
                     None
-                }
-            } else {
-                None
-            };
+                };
 
-            let _ = tx.send(result);
-        }
-    });
+                let _ = tx.send(result);
+            }
+        });
 
-    // Wait for completion
-    rx.await.ok().flatten()
+        // Wait for completion
+        rx.await.ok().flatten()
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub use macos_impl::*;
+
+#[cfg(not(target_os = "macos"))]
+mod other_impl {
+    pub fn warm_up() {}
+    pub async fn open_folder_picker() -> Option<String> {
+        None
+    }
 }
 
 #[cfg(not(target_os = "macos"))]
-pub async fn open_folder_picker() -> Option<String> {
-    None
-}
+pub use other_impl::*;
