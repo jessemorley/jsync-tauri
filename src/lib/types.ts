@@ -10,6 +10,7 @@ export interface SessionInfo {
   name: string;
   path: string;
   size: string;
+  image_count: number;
 }
 
 export interface SessionItem {

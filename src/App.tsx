@@ -21,7 +21,8 @@ import {
   Check,
   Minus,
   Folder,
-  FileCode
+  FileCode,
+  Image
 } from 'lucide-react';
 import './App.css';
 import type { Destination, SessionInfo } from './lib/types';
@@ -267,7 +268,7 @@ function App() {
 
   const sessionInfo = {
     name: session?.name || "No Session",
-    size: session?.size || "0B",
+    size: session ? session.size : "Open Capture One to begin backup",
     lastSyncLabel: hasBackedUpOnce ? "Last sync just now" : "Never synced"
   };
 
@@ -392,19 +393,21 @@ function App() {
 
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        !session ? 'bg-gray-500' :
-                        backupState === 'running' ? 'bg-blue-500 animate-pulse' :
-                        backupState === 'success' ? 'bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]' :
-                        'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'
-                      }`} />
-                      <h3 className="font-bold text-[13px] tracking-tight leading-none text-white truncate" title={sessionInfo.name}>
+                      <h3 className={`font-bold text-[13px] tracking-tight leading-none truncate ${!session ? 'text-gray-500' : 'text-white'}`} title={sessionInfo.name}>
                         {truncateMiddle(sessionInfo.name)}
                       </h3>
                     </div>
                     <div className="flex items-center gap-1.5 text-gray-400 opacity-80">
-                      <Database size={10} className="flex-shrink-0" />
-                      <p className="text-[10px] font-bold tracking-wide uppercase">{sessionInfo.size}</p>
+                      {session && <Database size={10} className="flex-shrink-0" />}
+                      <p className={`text-[10px] ${session ? 'font-bold tracking-wide uppercase' : 'font-medium'}`}>
+                        {sessionInfo.size}
+                      </p>
+                      {session && (
+                        <div className="flex items-center gap-1.5 ml-1">
+                          <Image size={10} className="flex-shrink-0" />
+                          <p className="text-[10px] font-bold tracking-wide uppercase">{session.image_count} Images</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

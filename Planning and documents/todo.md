@@ -5,6 +5,7 @@
 - [ ] Cancel transfer button doesn't seem to tbe working
 
 ## UI
+- When no destination added: hover state should only be for plus button
 
 - [ ] On session change, actually check to see if backups exist at the defined locations when setting location state (backed up or not)
     - May entail a way of storing backup locations on a session-by-session basis. (Store in session folder?) or setting default backup locations
@@ -12,7 +13,7 @@
 
 - [ ] Add way for user to delete an actual backup, as well as the backup location
 
-- [ ] When no session is connected: "No Session" (No change) and "Open a session in Capture One to begin backup" (Replacing the session size subtitle)
+- [x] When no session is connected: "No Session" (No change) and "Open a session in Capture One to begin backup" (Replacing the session size subtitle)
 
 
 # Completed

@@ -8,6 +8,7 @@ pub struct SessionInfo {
     pub name: String,
     pub path: String,
     pub size: String,
+    pub image_count: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -124,10 +125,14 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
         "Unknown".to_string()
     });
 
+    // Get image count
+    let image_count = get_image_count(&session_folder).await;
+
     Ok(SessionInfo {
         name: session_name,
         path: session_folder,
         size,
+        image_count,
     })
 }
 
@@ -165,28 +170,57 @@ pub async fn get_session_contents(path: String) -> Result<Vec<SessionItem>, Stri
 
 async fn get_folder_size(path: &str) -> Result<String, String> {
     info!("Calculating size for path: '{}'", path);
+    // Use du -sk for kilobytes to handle formatting ourselves
     let output = tokio::process::Command::new("du")
-        .args(["-sh", path])
+        .args(["-sk", path])
         .output()
         .await
         .map_err(|e| format!("Failed to get folder size: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     info!("du output: {}", stdout.trim());
-    let raw_size = stdout.split_whitespace().next().unwrap_or("0B");
     
-    // Format the size from du output (e.g. 4.4G -> 4.4 GB)
-    let formatted_size = if let Some(s) = raw_size.strip_suffix('G') {
-        format!("{} GB", s)
-    } else if let Some(s) = raw_size.strip_suffix('M') {
-        format!("{} MB", s)
-    } else if let Some(s) = raw_size.strip_suffix('K') {
-        format!("{} KB", s)
-    } else if let Some(s) = raw_size.strip_suffix('B') {
-        format!("{} B", s)
-    } else {
-        raw_size.to_string()
-    };
+    // Output format: "123456\t/path/to/folder"
+    let kb_str = stdout.split_whitespace().next().unwrap_or("0");
+    let kb: f64 = kb_str.parse().unwrap_or(0.0);
 
-    Ok(formatted_size.trim().to_string())
+    if kb > 1024.0 * 1024.0 {
+        Ok(format!("{:.2} GB", kb / (1024.0 * 1024.0)))
+    } else if kb > 1024.0 {
+        Ok(format!("{:.2} MB", kb / 1024.0))
+    } else {
+        Ok(format!("{:.0} KB", kb))
+    }
+}
+
+async fn get_image_count(session_path: &str) -> u32 {
+    let capture_path = std::path::Path::new(session_path).join("Capture");
+    if !capture_path.exists() {
+        return 0;
+    }
+
+    // Common raw extensions + standard image formats
+    let extensions = [
+        "cr3", "cr2", "nef", "arw", "raf", "dng", "iiq", "eip", 
+        "jpg", "jpeg", "tif", "tiff", "mos", "3fr", "ari", "sr2", "srf", "rw2"
+    ];
+
+    let mut count = 0;
+    
+    // Using std::fs::read_dir since this is a local quick operation
+    if let Ok(entries) = std::fs::read_dir(capture_path) {
+        for entry in entries.flatten() {
+            if let Ok(file_type) = entry.file_type() {
+                if file_type.is_file() {
+                    let path = entry.path();
+                    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                         if extensions.contains(&ext.to_lowercase().as_str()) {
+                             count += 1;
+                         }
+                    }
+                }
+            }
+        }
+    }
+    count
 }
