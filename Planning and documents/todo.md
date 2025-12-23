@@ -13,57 +13,21 @@
     - Option to remove location
     - Option to delete backup at this location
 
-- [ ] On session change, actually check to see if backups exist at the defined locations when setting location state (backed up or not)
-    - May entail a way of storing backup locations on a session-by-session basis. (Store in session folder?) or setting default backup locations
-    - App could create config file in session?
-
 - [ ] Add way for user to delete an actual backup, as well as the backup location
 
 - [ ] Determine behavior for unticked items on subsequent syncs (should they be removed from destination backups?)
 
 
 
-## Session Sidecar (.jsync) Implementation
-
-
-
-- [x] Create `SessionConfig` struct in Rust backend for serialization
-
-
-
-- [x] Implement `load_session_config` and `save_session_config` commands in Rust
-
-
-
-- [x] Update frontend `App.tsx` to handle loading/saving from `.jsync` file
-
-
-
-- [x] Migrate `selectedPaths` and `destinations` from global `usePersistedState` to session-specific logic
-
-
-
-- [x] Add "Existing Backup Check" logic to populate `has_existing_backup` in sidecar
-
-
-
-- [x] Implement auto-save trigger on any session-specific state change
-
-
-
-
-
-
-
 # Completed
 
-
+- [x] Portable Session Settings (.jsync sidecar): Implemented session-specific storage for selections and destinations, including auto-verification of existing backups on session change.
 
 - [x] Dynamic session content selection in preferences and selection-based backups using rclone filters.
 
-
-
 - [x] Image total subtitle doesn't accurately reflect no of images in capture folder (and subfolders). The number is too low.
+
+
 
 
 
