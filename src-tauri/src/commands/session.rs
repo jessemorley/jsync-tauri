@@ -205,13 +205,22 @@ async fn get_image_count(session_path: &str) -> u32 {
         "jpg", "jpeg", "tif", "tiff", "mos", "3fr", "ari", "sr2", "srf", "rw2"
     ];
 
+    // Offload the recursive counting to a blocking thread to avoid blocking the async runtime
+    tokio::task::spawn_blocking(move || {
+        count_images_recursive(&capture_path, &extensions)
+    })
+    .await
+    .unwrap_or(0)
+}
+
+fn count_images_recursive(dir: &std::path::Path, extensions: &[&str]) -> u32 {
     let mut count = 0;
-    
-    // Using std::fs::read_dir since this is a local quick operation
-    if let Ok(entries) = std::fs::read_dir(capture_path) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             if let Ok(file_type) = entry.file_type() {
-                if file_type.is_file() {
+                if file_type.is_dir() {
+                    count += count_images_recursive(&entry.path(), extensions);
+                } else if file_type.is_file() {
                     let path = entry.path();
                     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                          if extensions.contains(&ext.to_lowercase().as_str()) {
