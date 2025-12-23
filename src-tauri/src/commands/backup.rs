@@ -42,6 +42,26 @@ pub struct BackupDestination {
     pub enabled: bool,
 }
 
+#[derive(Debug, Deserialize)]
+struct RcloneStats {
+    bytes: u64,
+    #[serde(rename = "totalBytes")]
+    total_bytes: u64,
+    transfers: u32,
+    #[serde(rename = "totalTransfers")]
+    total_transfers: u32,
+    checks: u32,
+    #[serde(rename = "totalChecks")]
+    total_checks: u32,
+    speed: f64,
+}
+
+#[derive(Debug, Deserialize)]
+struct RcloneJsonLog {
+    stats: Option<RcloneStats>,
+    msg: Option<String>,
+}
+
 #[tauri::command]
 pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), String> {
     info!("Starting backup for session: {}", request.session_path);
@@ -167,38 +187,24 @@ async fn run_rclone_backup(
             &src,
             &dst,
             "--check-first",
-            "-P",  // Progress flag - shows real-time stats
-            "--stats", "500ms",  // Update every 500ms for more frequent progress
-            "--stats-log-level", "NOTICE",  // Filter out noisy DEBUG/INFO logs
+            "--use-json-log",
+            "--stats", "500ms",
+            "--stats-log-level", "NOTICE",
             "--transfers", "4",
             "--checkers", "8",
         ])
-        .stdout(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::piped())
         .spawn()
         .map_err(|e| format!("Failed to spawn rclone: {}", e))?;
 
-    // Read both stderr (JSON logs) and stdout
+    // Read stderr (JSON logs)
     let stderr = child.stderr.take().unwrap();
     let mut stderr_reader = BufReader::new(stderr).lines();
-
-    let stdout = child.stdout.take().unwrap();
-    let mut stdout_reader = BufReader::new(stdout).lines();
 
     let mut last_percent = 0.0;
     let mut total_files = 0u32;
     let mut files_transferred = 0u32;
-
-    // Regex for parsing plain text progress
-    // "Transferred:   	    1.278 GiB / 2.398 GiB, 53%, 0 B/s, ETA -"
-    let bytes_progress_regex = regex::Regex::new(
-        r"Transferred:\s+[\d.]+\s*\w+\s*/\s*[\d.]+\s*\w+,\s*(\d+)%"
-    ).unwrap();
-
-    // "Transferred:          504 / 504, 100%"
-    let files_progress_regex = regex::Regex::new(
-        r"Transferred:\s+(\d+)\s*/\s*(\d+),\s*\d+%"
-    ).unwrap();
 
     loop {
         // Check for cancellation
@@ -212,19 +218,22 @@ async fn run_rclone_backup(
         tokio::select! {
             stderr_line = stderr_reader.next_line() => {
                 match stderr_line {
-                    Ok(Some(_line)) => {
-                        // Stderr output (errors/notices) - mostly ignored
-                    }
-                    Ok(None) => break, // stderr closed
-                    Err(e) => error!("stderr read error: {}", e),
-                }
-            }
-            stdout_line = stdout_reader.next_line() => {
-                match stdout_line {
                     Ok(Some(line)) => {
-                        // Parse percentage from bytes line: "Transferred:   1.278 GiB / 2.398 GiB, 53%, ..."
-                        if let Some(caps) = bytes_progress_regex.captures(&line) {
-                            if let Ok(percent) = caps.get(1).unwrap().as_str().parse::<f64>() {
+                        if let Ok(log) = serde_json::from_str::<RcloneJsonLog>(&line) {
+                            if let Some(stats) = log.stats {
+                                let percent = if stats.total_bytes > 0 {
+                                    (stats.bytes as f64 / stats.total_bytes as f64) * 100.0
+                                } else if stats.total_checks > 0 {
+                                    (stats.checks as f64 / stats.total_checks as f64) * 100.0
+                                } else if stats.total_transfers > 0 {
+                                    (stats.transfers as f64 / stats.total_transfers as f64) * 100.0
+                                } else {
+                                    100.0
+                                };
+
+                                total_files = stats.total_transfers + stats.total_checks;
+                                files_transferred = stats.transfers + stats.checks;
+
                                 if (percent - last_percent).abs() >= 0.1 || percent == 100.0 {
                                     last_percent = percent;
 
@@ -232,22 +241,29 @@ async fn run_rclone_backup(
                                         destination_id: dest_id,
                                         percent,
                                         current_file: String::new(),
-                                        transfer_rate: String::new(),
+                                        transfer_rate: format_speed(stats.speed),
                                         files_transferred,
                                         total_files,
                                     });
                                 }
+                            } else if let Some(msg) = log.msg {
+                                if !msg.is_empty() {
+                                    let trimmed = msg.trim();
+                                    if !trimmed.is_empty() {
+                                        info!("rclone: {}", trimmed);
+                                    }
+                                }
+                            }
+                        } else {
+                            // If it's not JSON, it might be a raw message
+                            let trimmed = line.trim();
+                            if !trimmed.is_empty() {
+                                info!("rclone raw: {}", trimmed);
                             }
                         }
-
-                        // Parse file counts: "Transferred:          504 / 504, 100%"
-                        if let Some(caps) = files_progress_regex.captures(&line) {
-                            files_transferred = caps.get(1).unwrap().as_str().parse().unwrap_or(0);
-                            total_files = caps.get(2).unwrap().as_str().parse().unwrap_or(0);
-                        }
                     }
-                    Ok(None) => break, // stdout closed
-                    Err(e) => error!("stdout read error: {}", e),
+                    Ok(None) => break, // stderr closed
+                    Err(e) => error!("stderr read error: {}", e),
                 }
             }
             _ = tokio::time::sleep(std::time::Duration::from_millis(200)) => {
