@@ -2,18 +2,50 @@
 use cocoa::base::{id, nil, YES, NO};
 use cocoa::foundation::NSString;
 use objc::{class, msg_send, sel, sel_impl};
+use objc::runtime::Object;
+use std::sync::atomic::{AtomicPtr, Ordering};
 use log::info;
+
+#[cfg(target_os = "macos")]
+static PANEL_INSTANCE: AtomicPtr<Object> = AtomicPtr::new(std::ptr::null_mut());
+
+#[cfg(target_os = "macos")]
+unsafe fn get_shared_panel() -> id {
+    let ptr = PANEL_INSTANCE.load(Ordering::SeqCst);
+    if !ptr.is_null() {
+        return ptr as id;
+    }
+
+    // Create new instance
+    let panel: id = msg_send![class!(NSOpenPanel), openPanel];
+    
+    // Retain it so it persists globally (openPanel usually returns autoreleased)
+    let _: () = msg_send![panel, retain];
+
+    // Configure persistent settings
+    let _: () = msg_send![panel, setCanChooseFiles: NO];
+    let _: () = msg_send![panel, setCanChooseDirectories: YES];
+    let _: () = msg_send![panel, setAllowsMultipleSelection: NO];
+    let _: () = msg_send![panel, setCanCreateDirectories: YES];
+
+    // Set title
+    let title = NSString::alloc(nil).init_str("Select Backup Destination");
+    let _: () = msg_send![panel, setTitle: title];
+
+    // Set prompt button text
+    let prompt = NSString::alloc(nil).init_str("Select");
+    let _: () = msg_send![panel, setPrompt: prompt];
+
+    PANEL_INSTANCE.store(panel as *mut Object, Ordering::SeqCst);
+    panel
+}
 
 #[cfg(target_os = "macos")]
 pub fn warm_up() {
     info!("Warming up macOS dialog components");
-    // Run a dummy task on the main queue to initialize dispatch and the Objective-C runtime for NSOpenPanel
     dispatch::Queue::main().exec_async(move || {
         unsafe {
-            // Actually instantiate the panel to force connection to the Powerbox service and framework loading
-            let open_panel: id = msg_send![class!(NSOpenPanel), openPanel];
-            // Set a property to ensure the object is fully realized
-            let _: () = msg_send![open_panel, setCanChooseFiles: NO];
+            let _ = get_shared_panel();
         }
     });
 }
@@ -30,22 +62,8 @@ pub async fn open_folder_picker() -> Option<String> {
     // Use dispatch to run on main queue
     dispatch::Queue::main().exec_async(move || {
         unsafe {
-            // Create NSOpenPanel
-            let open_panel: id = msg_send![class!(NSOpenPanel), openPanel];
-
-            // Configure panel for directory selection
-            let _: () = msg_send![open_panel, setCanChooseFiles: NO];
-            let _: () = msg_send![open_panel, setCanChooseDirectories: YES];
-            let _: () = msg_send![open_panel, setAllowsMultipleSelection: NO];
-            let _: () = msg_send![open_panel, setCanCreateDirectories: YES];
-
-            // Set title
-            let title = NSString::alloc(nil).init_str("Select Backup Destination");
-            let _: () = msg_send![open_panel, setTitle: title];
-
-            // Set prompt button text
-            let prompt = NSString::alloc(nil).init_str("Select");
-            let _: () = msg_send![open_panel, setPrompt: prompt];
+            // Get shared panel instance
+            let open_panel = get_shared_panel();
 
             // Run modal - safe on main thread
             let response: isize = msg_send![open_panel, runModal];
