@@ -38,6 +38,7 @@ import {
   onBackupError,
   sendBackupNotification,
   onRefreshSession,
+  requestNotificationPermission,
 } from './lib/tauri';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -85,6 +86,18 @@ function App() {
     'session/Selects',
   ]);
   const [notificationsEnabled, setNotificationsEnabled] = usePersistedState('notificationsEnabled', true);
+  const notificationsEnabledRef = useRef(notificationsEnabled);
+
+  useEffect(() => {
+    notificationsEnabledRef.current = notificationsEnabled;
+  }, [notificationsEnabled]);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if (notificationsEnabled) {
+      requestNotificationPermission();
+    }
+  }, []);
 
   // Focus input when entering custom mode
   useEffect(() => {
@@ -136,12 +149,16 @@ function App() {
 
   // Setup backup event listeners
   useEffect(() => {
+    let unlistenProgress: (() => void) | undefined;
+    let unlistenComplete: (() => void) | undefined;
+    let unlistenError: (() => void) | undefined;
+
     const setupListeners = async () => {
-      const unlistenProgress = await onBackupProgress((progress) => {
+      unlistenProgress = await onBackupProgress((progress) => {
         setGlobalProgress(progress.percent);
       });
 
-      const unlistenComplete = await onBackupComplete((result) => {
+      unlistenComplete = await onBackupComplete((result) => {
         if (result.success) {
           // Add destination to backed-up set
           setBackedUpDestinations(prev => new Set([...prev, result.destination_id]));
@@ -149,9 +166,11 @@ function App() {
           setBackupState('success');
           setGlobalProgress(100); // Ensure 100% before animations start
           setHasBackedUpOnce(true);
-          if (notificationsEnabled) {
+          
+          if (notificationsEnabledRef.current) {
             sendBackupNotification('Backup Complete', `Backup completed successfully`);
           }
+          
           setTimeout(() => {
             setBackupState('idle');
             setGlobalProgress(0);
@@ -159,9 +178,9 @@ function App() {
         }
       });
 
-      const unlistenError = await onBackupError((error) => {
+      unlistenError = await onBackupError((error) => {
         setBackupState('error');
-        if (notificationsEnabled && error.error) {
+        if (notificationsEnabledRef.current && error.error) {
           sendBackupNotification('Backup Failed', error.error);
         }
         setTimeout(() => {
@@ -169,16 +188,16 @@ function App() {
           setGlobalProgress(0);
         }, 3000);
       });
-
-      return () => {
-        unlistenProgress();
-        unlistenComplete();
-        unlistenError();
-      };
     };
 
     setupListeners();
-  }, [notificationsEnabled]);
+
+    return () => {
+      if (unlistenProgress) unlistenProgress();
+      if (unlistenComplete) unlistenComplete();
+      if (unlistenError) unlistenError();
+    };
+  }, []); // Empty dependency array, using refs for dynamic state
 
   const handleStartBackup = useCallback(async () => {
     if (enabledCount === 0 || !session) return;

@@ -65,15 +65,29 @@ export async function checkFullDiskAccess(): Promise<boolean> {
   return invoke('check_full_disk_access');
 }
 
+export async function requestNotificationPermission(): Promise<boolean> {
+  try {
+    let granted = await isPermissionGranted();
+    if (!granted) {
+      const permission = await requestPermission();
+      granted = permission === 'granted';
+    }
+    return granted;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Notifications
 export async function sendBackupNotification(title: string, body: string): Promise<void> {
-  let granted = await isPermissionGranted();
-  if (!granted) {
-    const permission = await requestPermission();
-    granted = permission === 'granted';
-  }
-  if (granted) {
-    await sendNotification({ title, body });
+  try {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      // Call our direct Rust command instead of the JS plugin for reliability on macOS
+      await invoke('send_notification', { title, body });
+    }
+  } catch (error) {
+    // Silent fail for notifications
   }
 }
 
