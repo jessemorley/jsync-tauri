@@ -12,10 +12,6 @@
     - App could create config file in session?
 
 - [ ] Add way for user to delete an actual backup, as well as the backup location
-
-
-
-
 # Completed
 - [x] Image total subtitle doesn't accurately reflect no of images in capture folder (and subfolders). The number is too low.
 - [x] Progress bar completion polish

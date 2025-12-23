@@ -30,9 +30,11 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 - Supports cancellation via an `AtomicBool` flag that kills the sidecar process.
 
 ## Recent Significant Changes (Dec 2025)
+- **Performance Optimization**: Implemented a singleton `NSOpenPanel` in `macos_dialog.rs`. The panel is "warmed up" (instantiated) at app launch on the main thread. This eliminates the 1-2 second delay and UI flickering previously observed when opening the destination picker.
+- **Image Counting**: Updated `src-tauri/src/commands/session.rs` to recursively count images in the "Capture" folder. This ensures accurate counts for sessions using subdirectories.
+- **Refactoring**: Simplified `macos_dialog.rs` structure by grouping platform-specific code into unified `cfg` blocks.
 - **Session-Aware Status**: Fixed a bug where "backed up" status (blue highlight) would persist even after switching to a different Capture One session.
 - **TypeScript Stability**: Resolved several type errors related to `tauri-plugin-store` (missing `defaults`) and `useEffect` return types.
-- **Progress Reporting**: Switched to `--use-json-log` for rclone to get more reliable progress data.
 
 ## Ongoing Work & Known Issues
 - **Cancel Button**: Needs verification for immediate responsiveness during high-IO transfers.

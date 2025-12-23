@@ -79,11 +79,12 @@ Click the circular arrow button in the header to trigger an immediate backup to 
 
 ### Key Components
 
-- **Custom NSOpenPanel**: Direct macOS Cocoa bindings for native folder picker (eliminates sheet dimming effect)
-- **Dispatch Queue**: Main thread execution for modal dialogs
-- **Auto-hide**: Focus-loss detection for menubar UX
-- **Persistent State**: Tauri plugin-store for settings and destinations
-- **rclone Integration**: Bundled sidecar binary for efficient, parallel file transfers with accurate progress tracking
+- **Custom NSOpenPanel**: Direct macOS Cocoa bindings for native folder picker (eliminates sheet dimming effect).
+- **Singleton Dialog**: Uses a warm-up strategy and singleton pattern to ensure the file picker opens instantly without UI flashing.
+- **Dispatch Queue**: Main thread execution for modal dialogs.
+- **Auto-hide**: Focus-loss detection for menubar UX.
+- **Persistent State**: Tauri plugin-store for settings and destinations.
+- **rclone Integration**: Bundled sidecar binary for efficient, parallel file transfers with accurate progress tracking.
 
 ### File Structure
 
@@ -102,10 +103,10 @@ jsync-tauri/
 │   │   ├── commands/     # Tauri commands
 │   │   │   ├── backup.rs        # rclone backup logic
 │   │   │   ├── destinations.rs  # Folder picker & parsing
-│   │   │   ├── session.rs       # Capture One session info
+│   │   │   ├── session.rs       # Capture One session info & image counting
 │   │   │   └── permissions.rs   # macOS permissions
 │   │   ├── macos_window.rs      # Native window styling
-│   │   └── macos_dialog.rs      # Custom NSOpenPanel
+│   │   └── macos_dialog.rs      # Singleton NSOpenPanel implementation
 │   ├── binaries/
 │   │   └── rclone-aarch64-apple-darwin  # Bundled rclone binary
 │   └── Cargo.toml
@@ -127,7 +128,14 @@ Command: `rclone sync <source> <dest> --check-first -P --stats 500ms --stats-log
 
 ### macOS Dialog Implementation
 
-The app uses a custom NSOpenPanel implementation via Cocoa/objc bindings to avoid the native sheet dimming effect that occurs with standard Tauri dialog plugin. This provides a cleaner UX for menubar apps.
+The app uses a custom `NSOpenPanel` implementation via Cocoa/objc bindings.
+- **Singleton Pattern**: The panel is instantiated and "warmed up" on app launch to load necessary frameworks.
+- **Thread Safety**: Access is managed via a thread-safe singleton to prevent UI flashing and ensure configuration persistence.
+- **UX**: This avoids the native sheet dimming effect and ensures instant responsiveness.
+
+### Image Counting
+
+The app recursively scans the "Capture" folder of the active session to provide an accurate count of all images, including those in subdirectories. This process is offloaded to a blocking thread to keep the UI responsive.
 
 ### Permissions
 
