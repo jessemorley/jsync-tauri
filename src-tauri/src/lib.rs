@@ -37,6 +37,9 @@ pub fn run() {
                 use tauri::ActivationPolicy;
                 app.set_activation_policy(ActivationPolicy::Accessory);
                 info!("Set activation policy to Accessory (no dock icon)");
+                
+                // Pre-initialize dialog components to reduce wait time on first use
+                macos_dialog::warm_up();
             }
 
             // Setup system tray

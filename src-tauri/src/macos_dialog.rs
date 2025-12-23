@@ -5,6 +5,23 @@ use objc::{class, msg_send, sel, sel_impl};
 use log::info;
 
 #[cfg(target_os = "macos")]
+pub fn warm_up() {
+    info!("Warming up macOS dialog components");
+    // Run a dummy task on the main queue to initialize dispatch and the Objective-C runtime for NSOpenPanel
+    dispatch::Queue::main().exec_async(move || {
+        unsafe {
+            // Actually instantiate the panel to force connection to the Powerbox service and framework loading
+            let open_panel: id = msg_send![class!(NSOpenPanel), openPanel];
+            // Set a property to ensure the object is fully realized
+            let _: () = msg_send![open_panel, setCanChooseFiles: NO];
+        }
+    });
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn warm_up() {}
+
+#[cfg(target_os = "macos")]
 pub async fn open_folder_picker() -> Option<String> {
     info!("Opening native macOS folder picker");
 
