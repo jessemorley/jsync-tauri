@@ -43,7 +43,3 @@ const { chromium } = require('playwright');
 *   **Black Outline**: Fixed by setting `"shadow": false` in `tauri.conf.json`.
 *   **Transparency Gaps**: Fixed by explicitly calling `setBackgroundColor` and `setOpaque: false` in the native macOS code (`macos_window.rs`).
 *   **Container Leaks**: Fixed by ensuring the root React `div` uses `h-full` to prevent the background from trailing off if the content is short.
-
-## 5. Remaining Issue to Debug
-**"Faint square shape behind the bottom corners"**:
-The interaction between the `rounded-2xl` on the React container and the `set_window_corner_radius` in Rust needs investigation. If the webview itself or the `html/body` tag has a non-transparent background color, it will show up as a square "ghost" behind the rounded React UI.

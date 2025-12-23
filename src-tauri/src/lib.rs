@@ -68,6 +68,7 @@ pub fn run() {
             commands::session::save_session_config,
             commands::destinations::open_folder_picker,
             commands::destinations::parse_destination,
+            commands::destinations::delete_backup_folder,
             commands::backup::start_backup,
             commands::backup::cancel_backup,
             commands::permissions::check_full_disk_access,

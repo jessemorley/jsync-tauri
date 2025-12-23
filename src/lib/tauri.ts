@@ -30,6 +30,10 @@ export async function parseDestination(path: string): Promise<Destination> {
   return invoke('parse_destination', { path });
 }
 
+export async function deleteBackupFolder(destinationPath: string, sessionName: string): Promise<void> {
+  return invoke('delete_backup_folder', { destinationPath, sessionName });
+}
+
 // Backup commands
 export async function startBackup(
   sessionPath: string,

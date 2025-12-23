@@ -35,6 +35,7 @@ import {
   saveSessionConfig,
   openFolderPicker,
   parseDestination,
+  deleteBackupFolder,
   startBackup,
   cancelBackup,
   onBackupProgress,
@@ -87,8 +88,13 @@ function App() {
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
 
+  // Options Menu State
+  const [showingOptionsFor, setShowingOptionsFor] = useState<number | null>(null);
+  const [confirmDeleteBackupFor, setConfirmDeleteBackupFor] = useState<number | null>(null);
+
   // Persisted Global State
   const [scheduledBackup, setScheduledBackup] = usePersistedState('scheduledBackup', true);
+  const [defaultDestinationIds, setDefaultDestinationIds] = usePersistedState<number[]>('defaultDestinations', []);
   const [intervalMinutes, setIntervalMinutes] = usePersistedState('intervalMinutes', 15);
   const [notificationsEnabled, setNotificationsEnabled] = usePersistedState('notificationsEnabled', true);
   
@@ -120,6 +126,10 @@ function App() {
 
   // Load Session and its Config
   const loadSessionData = useCallback(async (newSession: SessionInfo) => {
+    // Reset options menu when session changes
+    setShowingOptionsFor(null);
+    setConfirmDeleteBackupFor(null);
+
     setIsLoadingConfig(true);
     try {
       const items = await getSessionContents(newSession.path);
@@ -282,6 +292,10 @@ function App() {
   const handleStartBackup = useCallback(async () => {
     if (enabledCount === 0 || !session) return;
 
+    // Close any open options menus
+    setShowingOptionsFor(null);
+    setConfirmDeleteBackupFor(null);
+
     if (backupState === 'running') {
       console.log('User requested backup cancellation');
       try {
@@ -383,6 +397,36 @@ function App() {
       newSet.delete(id);
       return newSet;
     });
+  };
+
+  const isDefault = (id: number) => defaultDestinationIds.includes(id);
+
+  const toggleDefault = (id: number) => {
+    setDefaultDestinationIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(dId => dId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleConfirmDeleteBackup = async (dest: Destination) => {
+    if (!session) return;
+
+    try {
+      await deleteBackupFolder(dest.path, session.name);
+
+      // Update destination state
+      setDestinations(prev => prev.map(d =>
+        d.id === dest.id ? { ...d, has_existing_backup: false } : d
+      ));
+
+      setConfirmDeleteBackupFor(null);
+      setShowingOptionsFor(null);
+    } catch (error) {
+      console.error('Failed to delete backup:', error);
+    }
   };
 
   const addDefaultLocation = async () => {
@@ -576,37 +620,123 @@ function App() {
                                 ? 'bg-blue-500/10 border-blue-500/20'
                                 : 'bg-white/5 border-white/10 shadow-sm'
                           } ${shouldPulse ? 'animate-completion-pulse' : ''}`}>
-                            {isBackingUp && (
-                              <div
-                                className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
-                                  backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
-                                }`}
-                                style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
-                              />
+                            {showingOptionsFor === dest.id ? (
+                              confirmDeleteBackupFor === dest.id ? (
+                                // CONFIRMATION UI (54px height maintained)
+                                <div className="flex flex-col gap-1.5 p-1.5 justify-center h-full">
+                                  <p className="text-[9px] text-gray-300 font-bold text-center">
+                                    Delete backup at this location?
+                                  </p>
+                                  <div className="flex gap-1.5">
+                                    <button
+                                      onClick={() => handleConfirmDeleteBackup(dest)}
+                                      className="flex-1 py-1 rounded-lg border bg-red-600 border-red-500 text-white hover:bg-red-700 text-[9px] font-bold uppercase"
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmDeleteBackupFor(null)}
+                                      className="flex-1 py-1 rounded-lg border bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 text-[9px] font-bold uppercase"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // OPTIONS ROW (1x4, 54px height maintained)
+                                <div className="flex gap-1.5 p-0.5 w-full h-full">
+                                  {/* Set/Unset Default */}
+                                  <button
+                                    onClick={() => toggleDefault(dest.id)}
+                                    className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border transition-all ${
+                                      isDefault(dest.id)
+                                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]'
+                                        : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-blue-400'
+                                    }`}
+                                  >
+                                    <Check size={10} strokeWidth={3} />
+                                    <span className="text-[8px] font-bold uppercase tracking-wide">
+                                      {isDefault(dest.id) ? 'Default' : 'Set Default'}
+                                    </span>
+                                  </button>
+
+                                  {/* Remove Location */}
+                                  <button
+                                    onClick={() => {
+                                      removeDestination(dest.id);
+                                      setShowingOptionsFor(null);
+                                    }}
+                                    className="flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border bg-white/5 border-white/10 text-gray-400 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all"
+                                  >
+                                    <Trash2 size={10} />
+                                    <span className="text-[8px] font-bold uppercase tracking-wide">Remove</span>
+                                  </button>
+
+                                  {/* Delete Backup */}
+                                  <button
+                                    onClick={() => setConfirmDeleteBackupFor(dest.id)}
+                                    disabled={!dest.has_existing_backup}
+                                    className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border transition-all ${
+                                      dest.has_existing_backup
+                                        ? 'bg-white/5 border-white/10 text-gray-400 hover:bg-amber-500/20 hover:border-amber-500/50 hover:text-amber-400'
+                                        : 'bg-black/20 border-white/5 text-gray-600 opacity-50 cursor-not-allowed'
+                                    }`}
+                                  >
+                                    <Database size={10} />
+                                    <span className="text-[8px] font-bold uppercase tracking-wide">
+                                      {dest.has_existing_backup ? 'Delete' : 'None'}
+                                    </span>
+                                  </button>
+
+                                  {/* Return */}
+                                  <button
+                                    onClick={() => setShowingOptionsFor(null)}
+                                    className="flex-1 py-1.5 flex flex-col items-center justify-center gap-0 rounded-lg border bg-white/5 border-white/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 transition-all"
+                                  >
+                                    <X size={10} />
+                                    <span className="text-[8px] font-bold uppercase tracking-wide">Return</span>
+                                  </button>
+                                </div>
+                              )
+                            ) : (
+                              // NORMAL CARD CONTENT (existing implementation)
+                              <>
+                                {isBackingUp && (
+                                  <div
+                                    className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
+                                      backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
+                                    }`}
+                                    style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
+                                  />
+                                )}
+
+                                <button
+                                  onClick={() => toggleDestination(dest.id)}
+                                  disabled={backupState === 'running'}
+                                  className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                    dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
+                                  } disabled:cursor-default`}
+                                >
+                                  {getDestinationIcon(dest.destination_type, dest.enabled)}
+                                </button>
+
+                                <div className="z-10 flex-1 min-w-0">
+                                  <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                  <p className="text-[9.5px] font-mono truncate text-gray-500 mt-1">{dest.path}</p>
+                                </div>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowingOptionsFor(dest.id);
+                                  }}
+                                  disabled={backupState === 'running'}
+                                  className="z-10 p-1 transition-colors disabled:opacity-0 text-gray-600 hover:text-blue-400"
+                                >
+                                  <Settings size={12} />
+                                </button>
+                              </>
                             )}
-
-                            <button
-                              onClick={() => toggleDestination(dest.id)}
-                              disabled={backupState === 'running'}
-                              className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
-                                dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
-                              } disabled:cursor-default`}
-                            >
-                              {getDestinationIcon(dest.destination_type, dest.enabled)}
-                            </button>
-
-                            <div className="z-10 flex-1 min-w-0">
-                              <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
-                              <p className="text-[9.5px] font-mono truncate text-gray-500 mt-1">{dest.path}</p>
-                            </div>
-
-                            <button
-                              onClick={() => removeDestination(dest.id)}
-                              disabled={backupState === 'running'}
-                              className="z-10 p-1 transition-colors disabled:opacity-0 text-gray-600 hover:text-red-400"
-                            >
-                              <Trash2 size={12} />
-                            </button>
                           </div>
                         );
                       })
@@ -619,7 +749,7 @@ function App() {
                           <Plus size={16} />
                         </div>
                         <div className="text-left flex-1 min-w-0">
-                          <p className="text-[11px] font-bold leading-none text-gray-400">No destinations added</p>
+                          <p className="text-[11px] font-bold leading-none text-gray-400">No Destinations Added</p>
                           <p className="text-[9.5px] truncate mt-1 text-gray-600">Click to add a drive or cloud folder</p>
                         </div>
                       </button>
