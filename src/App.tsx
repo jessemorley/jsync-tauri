@@ -25,12 +25,14 @@ import {
   Image
 } from 'lucide-react';
 import './App.css';
-import type { Destination, SessionInfo, SessionItem } from './lib/types';
+import type { Destination, SessionInfo, SessionItem, SessionConfig } from './lib/types';
 import { usePersistedState } from './hooks/useStore';
 import { useScheduler } from './hooks/useScheduler';
 import {
   getCaptureOneSession,
   getSessionContents,
+  loadSessionConfig,
+  saveSessionConfig,
   openFolderPicker,
   parseDestination,
   startBackup,
@@ -77,36 +79,25 @@ function App() {
   const [customValue, setCustomValue] = useState('');
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
+  
+  // Session State
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
 
-  // Reset backup status when session changes
-  useEffect(() => {
-    setBackedUpDestinations(new Set());
-    setHasBackedUpOnce(false);
-  }, [session?.path]);
-
-  // Fetch session contents when session path changes
-  useEffect(() => {
-    if (session?.path) {
-      getSessionContents(session.path)
-        .then(setSessionItems)
-        .catch(console.error);
-    } else {
-      setSessionItems([]);
-    }
-  }, [session?.path]);
-
-  // Persisted State
+  // Persisted Global State
   const [scheduledBackup, setScheduledBackup] = usePersistedState('scheduledBackup', true);
   const [intervalMinutes, setIntervalMinutes] = usePersistedState('intervalMinutes', 15);
-  const [destinations, setDestinations] = usePersistedState<Destination[]>('destinations', []);
-  const [selectedPaths, setSelectedPaths] = usePersistedState<string[]>('selectedPaths', []);
-  const [lastSessionPath, setLastSessionPath] = usePersistedState<string | null>('lastSessionPath', null);
   const [notificationsEnabled, setNotificationsEnabled] = usePersistedState('notificationsEnabled', true);
+  
   const notificationsEnabledRef = useRef(notificationsEnabled);
   const sessionRef = useRef(session);
   const destinationsRef = useRef(destinations);
+  const selectedPathsRef = useRef(selectedPaths);
+  const lastSyncedRef = useRef(lastSynced);
 
   useEffect(() => {
     notificationsEnabledRef.current = notificationsEnabled;
@@ -120,38 +111,75 @@ function App() {
     destinationsRef.current = destinations;
   }, [destinations]);
 
-  // Initialize selectedPaths if it's a new session
   useEffect(() => {
-    if (session?.path && session.path !== lastSessionPath) {
-      // New session detected, default to selecting everything (root path)
-      setSelectedPaths([session.path]);
-      setLastSessionPath(session.path);
-    }
-  }, [session?.path, lastSessionPath]);
+    selectedPathsRef.current = selectedPaths;
+  }, [selectedPaths]);
 
-  // Request notification permission on mount
   useEffect(() => {
-    if (notificationsEnabled) {
-      requestNotificationPermission();
+    lastSyncedRef.current = lastSynced;
+  }, [lastSynced]);
+
+  // Load Session and its Config
+  const loadSessionData = useCallback(async (newSession: SessionInfo) => {
+    setIsLoadingConfig(true);
+    try {
+      const items = await getSessionContents(newSession.path);
+      setSessionItems(items);
+
+      const config = await loadSessionConfig(newSession.path, newSession.name);
+      setDestinations(config.destinations);
+      setSelectedPaths(config.selected_paths);
+      setLastSynced(config.last_synced);
+      setHasBackedUpOnce(!!config.last_synced);
+    } catch (err) {
+      console.error('Failed to load session data:', err);
+    } finally {
+      setIsLoadingConfig(false);
     }
   }, []);
 
-  // Focus input when entering custom mode
+  // Auto-save Config
   useEffect(() => {
-    if (isEditingCustom && customInputRef.current) {
-      customInputRef.current.focus();
+    if (session && !isLoadingConfig) {
+      const config: SessionConfig = {
+        version: 1,
+        last_synced: lastSynced,
+        selected_paths: selectedPaths,
+        destinations: destinations,
+      };
+      saveSessionConfig(session.path, session.name, config).catch(console.error);
     }
-  }, [isEditingCustom]);
+  }, [session, destinations, selectedPaths, lastSynced, isLoadingConfig]);
+
+  // Reset backup status when session changes
+  useEffect(() => {
+    setBackedUpDestinations(new Set());
+    setHasBackedUpOnce(false);
+  }, [session?.path]);
 
   // Load session info
   const refreshSession = useCallback(() => {
     getCaptureOneSession()
-      .then(setSession)
+      .then(newSession => {
+        if (!sessionRef.current || newSession.path !== sessionRef.current.path) {
+          setSession(newSession);
+          loadSessionData(newSession);
+        } else {
+          // Just update volatile info like size/image count
+          setSession(prev => prev ? { ...prev, size: newSession.size, image_count: newSession.image_count } : newSession);
+        }
+      })
       .catch(err => {
-        console.error('Failed to get Capture One session:', err);
-        setSession(null);
+        if (sessionRef.current) {
+          console.error('Failed to get Capture One session:', err);
+          setSession(null);
+          setSessionItems([]);
+          setDestinations([]);
+          setSelectedPaths([]);
+          setLastSynced(null);
+        }
       });
-  }, []);
+  }, [loadSessionData]);
 
   useEffect(() => {
     refreshSession();
@@ -285,10 +313,23 @@ function App() {
     handleStartBackup
   );
 
+  const formatLastSync = (iso: string | null) => {
+    if (!iso) return "Never synced";
+    const date = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "Last sync just now";
+    if (diffMins < 60) return `Last sync ${diffMins}m ago`;
+    
+    return `Last sync ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
   const sessionInfo = {
     name: session?.name || "No Session",
     size: session ? session.size : "Open Capture One to begin backup",
-    lastSyncLabel: hasBackedUpOnce ? "Last sync just now" : "Never synced"
+    lastSyncLabel: formatLastSync(lastSynced)
   };
 
   // Dynamic tree from session items
@@ -337,7 +378,12 @@ function App() {
     const path = await openFolderPicker();
     if (path) {
       const destination = await parseDestination(path);
-      setDestinations(prev => [...prev, destination]);
+      // Backend parse_destination doesn't know about our sidecar extension yet
+      const newDest: Destination = {
+        ...destination,
+        has_existing_backup: false // Will be checked on next session load
+      };
+      setDestinations(prev => [...prev, newDest]);
     }
   };
 

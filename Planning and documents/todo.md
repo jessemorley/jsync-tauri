@@ -22,11 +22,52 @@
 - [ ] Determine behavior for unticked items on subsequent syncs (should they be removed from destination backups?)
 
 
+
+## Session Sidecar (.jsync) Implementation
+
+
+
+- [x] Create `SessionConfig` struct in Rust backend for serialization
+
+
+
+- [x] Implement `load_session_config` and `save_session_config` commands in Rust
+
+
+
+- [x] Update frontend `App.tsx` to handle loading/saving from `.jsync` file
+
+
+
+- [x] Migrate `selectedPaths` and `destinations` from global `usePersistedState` to session-specific logic
+
+
+
+- [x] Add "Existing Backup Check" logic to populate `has_existing_backup` in sidecar
+
+
+
+- [x] Implement auto-save trigger on any session-specific state change
+
+
+
+
+
+
+
 # Completed
+
+
 
 - [x] Dynamic session content selection in preferences and selection-based backups using rclone filters.
 
+
+
 - [x] Image total subtitle doesn't accurately reflect no of images in capture folder (and subfolders). The number is too low.
+
+
+
+
 
 - [x] Progress bar completion polish
 

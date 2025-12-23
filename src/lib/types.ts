@@ -4,6 +4,14 @@ export interface Destination {
   label: string;
   destination_type: 'external' | 'cloud' | 'local' | 'network';
   enabled: boolean;
+  has_existing_backup: boolean;
+}
+
+export interface SessionConfig {
+  version: number;
+  last_synced: string | null;
+  selected_paths: string[];
+  destinations: Destination[];
 }
 
 export interface SessionInfo {

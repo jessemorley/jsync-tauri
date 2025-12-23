@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { load, Store } from '@tauri-apps/plugin-store';
 import { isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import type { Destination, SessionInfo, SessionItem, BackupProgress, BackupComplete } from './types';
+import type { Destination, SessionInfo, SessionItem, BackupProgress, BackupComplete, SessionConfig } from './types';
 
 // Session commands
 export async function getCaptureOneSession(): Promise<SessionInfo> {
@@ -11,6 +11,14 @@ export async function getCaptureOneSession(): Promise<SessionInfo> {
 
 export async function getSessionContents(path: string): Promise<SessionItem[]> {
   return invoke('get_session_contents', { path });
+}
+
+export async function loadSessionConfig(sessionPath: string, sessionName: string): Promise<SessionConfig> {
+  return invoke('load_session_config', { sessionPath, sessionName });
+}
+
+export async function saveSessionConfig(sessionPath: string, sessionName: string, config: SessionConfig): Promise<void> {
+  return invoke('save_session_config', { sessionPath, sessionName, config });
 }
 
 // Destination commands

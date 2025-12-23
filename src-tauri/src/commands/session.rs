@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 use tauri_plugin_shell::ShellExt;
 use log::{info, error};
+use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionInfo {
@@ -16,6 +17,68 @@ pub struct SessionItem {
     pub id: String,
     pub label: String,
     pub item_type: String, // "folder" | "file"
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BackupDestinationConfig {
+    pub id: u64,
+    pub path: String,
+    pub label: String,
+    pub destination_type: String, // 'external' | 'cloud' | 'local' | 'network'
+    pub enabled: bool,
+    pub has_existing_backup: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SessionConfig {
+    pub version: u32,
+    pub last_synced: Option<String>,
+    pub selected_paths: Vec<String>,
+    pub destinations: Vec<BackupDestinationConfig>,
+}
+
+#[tauri::command]
+pub async fn load_session_config(session_path: String, session_name: String) -> Result<SessionConfig, String> {
+    let config_path = Path::new(&session_path).join(format!("{}.jsync", session_name));
+    
+    if !config_path.exists() {
+        info!("No session config found at {:?}, returning default", config_path);
+        return Ok(SessionConfig {
+            version: 1,
+            last_synced: None,
+            selected_paths: vec![session_path.clone()], // Default to all selected
+            destinations: Vec::new(),
+        });
+    }
+
+    info!("Loading session config from {:?}", config_path);
+    let content = std::fs::read_to_string(&config_path)
+        .map_err(|e| format!("Failed to read session config: {}", e))?;
+    
+    let mut config: SessionConfig = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse session config: {}", e))?;
+
+    // Verify if backups exist at destinations
+    for dest in &mut config.destinations {
+        let dest_session_path = Path::new(&dest.path).join(&session_name);
+        dest.has_existing_backup = dest_session_path.exists() && dest_session_path.is_dir();
+    }
+
+    Ok(config)
+}
+
+#[tauri::command]
+pub async fn save_session_config(session_path: String, session_name: String, config: SessionConfig) -> Result<(), String> {
+    let config_path = Path::new(&session_path).join(format!("{}.jsync", session_name));
+    
+    info!("Saving session config to {:?}", config_path);
+    let content = serde_json::to_string_pretty(&config)
+        .map_err(|e| format!("Failed to serialize session config: {}", e))?;
+    
+    std::fs::write(&config_path, content)
+        .map_err(|e| format!("Failed to write session config: {}", e))?;
+    
+    Ok(())
 }
 
 #[tauri::command]

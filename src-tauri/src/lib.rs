@@ -64,6 +64,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::session::get_capture_one_session,
             commands::session::get_session_contents,
+            commands::session::load_session_config,
+            commands::session::save_session_config,
             commands::destinations::open_folder_picker,
             commands::destinations::parse_destination,
             commands::backup::start_backup,
