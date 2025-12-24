@@ -725,12 +725,12 @@ function App() {
                                   <div className="flex items-center gap-2">
                                     <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
                                     {isDefault(dest.id) && (
-                                      <span className="text-[7px] font-black uppercase tracking-tighter px-1 rounded-sm bg-blue-500/20 text-blue-400 border border-blue-500/30 leading-tight">
+                                      <span className="text-[7px] font-black uppercase tracking-tighter px-1 py-[2px] rounded-sm text-blue-400 border border-blue-500/30 leading-none translate-y-[1px]">
                                         Default
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-[9.5px] font-mono truncate text-gray-500 mt-1">{dest.path}</p>
+                                  <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
                                 </div>
 
                                 <div className="z-10 w-px self-stretch bg-white/10 -my-2.5" />
