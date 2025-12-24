@@ -692,10 +692,9 @@ function App() {
                                   {/* Return */}
                                   <button
                                     onClick={() => setShowingOptionsFor(null)}
-                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
+                                    className="flex items-center justify-center px-3.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
                                   >
-                                    <CornerDownLeft size={10} />
-                                    <span className="text-[9px] tracking-wide text-center">Return</span>
+                                    <CornerDownLeft size={12} />
                                   </button>
                                 </div>
                               )
