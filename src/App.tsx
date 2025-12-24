@@ -244,17 +244,21 @@ function App() {
         setGlobalProgress(progress.percent);
       });
 
-      unlistenComplete = await onBackupComplete((result) => {
-        if (result.success) {
-          // Add destination to backed-up set
-          setBackedUpDestinations(prev => new Set([...prev, result.destination_id]));
-
-          setBackupState('success');
-          setGlobalProgress(100); // Ensure 100% before animations start
-          setLastSynced(new Date().toISOString());
-          
-          if (notificationsEnabledRef.current) {
-            const enabledCount = destinationsRef.current.filter(d => d.enabled).length;
+                      unlistenComplete = await onBackupComplete((result) => {
+                        if (result.success) {
+                          // Add destination to backed-up set for pulse animation
+                          setBackedUpDestinations(prev => new Set([...prev, result.destination_id]));
+              
+                          // Update destinations to mark that they have a backup now (persists to .jsync)
+                          setDestinations(prev => prev.map(d => 
+                            d.id === result.destination_id ? { ...d, has_existing_backup: true } : d
+                          ));
+              
+                          setBackupState('success');
+                          setGlobalProgress(100); // Ensure 100% before animations start
+                          setLastSynced(new Date().toISOString());
+                          
+                          if (notificationsEnabledRef.current) {            const enabledCount = destinationsRef.current.filter(d => d.enabled).length;
             const size = sessionRef.current?.size || "Unknown size";
             sendBackupNotification(
               'Backup Complete', 
@@ -310,11 +314,11 @@ function App() {
       return;
     }
 
-    setBackupState('running');
-    setGlobalProgress(0);
-
-    try {
-      await startBackup(session.path, session.name, destinations, selectedPaths);
+          setBackupState('running');
+          setGlobalProgress(0);
+          setBackedUpDestinations(new Set());
+    
+          try {      await startBackup(session.path, session.name, destinations, selectedPaths);
       updateLastBackup();
     } catch (error) {
       console.log('Backup error/cancel received:', error);
@@ -609,12 +613,11 @@ function App() {
 
                   <div className="space-y-2">
                     {destinations.length > 0 ? (
-                      destinations.map((dest) => {
-                        const isBackingUp = (backupState === 'running' || backupState === 'success') && dest.enabled;
-                        const hasBackup = backedUpDestinations.has(dest.id) && dest.enabled;
-                        const shouldPulse = backupState === 'success' && !isCollapsed && dest.enabled;
-                        return (
-                          <div key={dest.id} className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
+                                                destinations.map((dest) => {
+                                                  const isBackingUp = (backupState === 'running' || backupState === 'success') && dest.enabled;
+                                                  const hasBackup = dest.has_existing_backup && dest.enabled;
+                                                  const shouldPulse = backupState === 'success' && !isCollapsed && backedUpDestinations.has(dest.id);
+                                                  return (                          <div key={dest.id} className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
                             !dest.enabled
                               ? 'bg-black/20 border-white/[0.08] opacity-50'
                               : hasBackup
