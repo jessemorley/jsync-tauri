@@ -644,88 +644,94 @@ function App() {
                               </div>
                             ) : (
                               <>
-                                <div className="flex-1 flex items-center h-full min-w-0">
-                                  {showingOptionsFor === dest.id ? (
-                                    // OPTIONS ROW - Vertical Dividers (icons + text)
-                                    <div className="flex h-full w-full">
-                                      {/* Set/Unset Default */}
-                                      <button
-                                        onClick={() => toggleDefault(dest.id)}
-                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
-                                          isDefault(dest.id)
-                                            ? 'text-blue-400'
-                                            : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
+                                <div className="flex-1 relative h-full min-w-0 overflow-hidden">
+                                  {/* OPTIONS ROW */}
+                                  <div className={`absolute inset-0 flex h-full w-full transition-all duration-300 ease-in-out ${
+                                    showingOptionsFor === dest.id 
+                                      ? 'translate-x-0 opacity-100' 
+                                      : '-translate-x-full opacity-0'
+                                  }`}>
+                                    {/* Set/Unset Default */}
+                                    <button
+                                      onClick={() => toggleDefault(dest.id)}
+                                      className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
+                                        isDefault(dest.id)
+                                          ? 'text-blue-400'
+                                          : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
+                                      }`}
+                                    >
+                                      <Check size={10} strokeWidth={3} />
+                                      <span className={`text-[9px] tracking-wide text-center ${isDefault(dest.id) ? 'font-bold' : ''}`}>
+                                        {isDefault(dest.id) ? 'Default' : 'Set Default'}
+                                      </span>
+                                    </button>
+
+                                    {/* Remove Location */}
+                                    <button
+                                      onClick={() => {
+                                        removeDestination(dest.id);
+                                        setShowingOptionsFor(null);
+                                      }}
+                                      className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+                                    >
+                                      <Trash2 size={10} />
+                                      <span className="text-[9px] tracking-wide text-center">Remove Location</span>
+                                    </button>
+
+                                    {/* Delete Backup */}
+                                    <button
+                                      onClick={() => setConfirmDeleteBackupFor(dest.id)}
+                                      disabled={!dest.has_existing_backup}
+                                      className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all ${
+                                        dest.has_existing_backup
+                                          ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                                          : 'text-gray-600 opacity-50 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      <Database size={10} />
+                                      <span className="text-[9px] tracking-wide text-center">
+                                        Delete Backup
+                                      </span>
+                                    </button>
+                                  </div>
+
+                                  {/* NORMAL CARD CONTENT */}
+                                  <div className={`absolute inset-0 flex items-center gap-3 p-2.5 h-full w-full transition-all duration-300 ease-in-out ${
+                                    showingOptionsFor === dest.id 
+                                      ? 'translate-x-full opacity-0' 
+                                      : 'translate-x-0 opacity-100'
+                                  }`}>
+                                    {isBackingUp && (
+                                      <div
+                                        className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
+                                          backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
                                         }`}
-                                      >
-                                        <Check size={10} strokeWidth={3} />
-                                        <span className={`text-[9px] tracking-wide text-center ${isDefault(dest.id) ? 'font-bold' : ''}`}>
-                                          {isDefault(dest.id) ? 'Default' : 'Set Default'}
-                                        </span>
-                                      </button>
+                                        style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
+                                      />
+                                    )}
 
-                                      {/* Remove Location */}
-                                      <button
-                                        onClick={() => {
-                                          removeDestination(dest.id);
-                                          setShowingOptionsFor(null);
-                                        }}
-                                        className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
-                                      >
-                                        <Trash2 size={10} />
-                                        <span className="text-[9px] tracking-wide text-center">Remove Location</span>
-                                      </button>
+                                    <button
+                                      onClick={() => toggleDestination(dest.id)}
+                                      disabled={backupState === 'running'}
+                                      className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                        dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
+                                      } disabled:cursor-default`}
+                                    >
+                                      {getDestinationIcon(dest.destination_type, dest.enabled)}
+                                    </button>
 
-                                      {/* Delete Backup */}
-                                      <button
-                                        onClick={() => setConfirmDeleteBackupFor(dest.id)}
-                                        disabled={!dest.has_existing_backup}
-                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all ${
-                                          dest.has_existing_backup
-                                            ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
-                                            : 'text-gray-600 opacity-50 cursor-not-allowed'
-                                        }`}
-                                      >
-                                        <Database size={10} />
-                                        <span className="text-[9px] tracking-wide text-center">
-                                          Delete Backup
-                                        </span>
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    // NORMAL CARD CONTENT (existing implementation)
-                                    <div className="flex items-center gap-3 p-2.5 h-full w-full">
-                                      {isBackingUp && (
-                                        <div
-                                          className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
-                                            backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
-                                          }`}
-                                          style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
-                                        />
-                                      )}
-
-                                      <button
-                                        onClick={() => toggleDestination(dest.id)}
-                                        disabled={backupState === 'running'}
-                                        className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
-                                          dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
-                                        } disabled:cursor-default`}
-                                      >
-                                        {getDestinationIcon(dest.destination_type, dest.enabled)}
-                                      </button>
-
-                                      <div className="z-10 flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
-                                          {isDefault(dest.id) && (
-                                            <span className="text-[7px] font-black uppercase tracking-tighter px-1 py-[2px] rounded-sm text-blue-400 border border-blue-500/30 leading-none translate-y-[1px]">
-                                              Default
-                                            </span>
-                                          )}
-                                        </div>
-                                        <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
+                                    <div className="z-10 flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                        {isDefault(dest.id) && (
+                                          <span className="text-[7px] font-black uppercase tracking-tighter px-1 py-[2px] rounded-sm text-blue-400 border border-blue-500/30 leading-none translate-y-[1px]">
+                                            Default
+                                          </span>
+                                        )}
                                       </div>
+                                      <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
                                     </div>
-                                  )}
+                                  </div>
                                 </div>
 
                                 {/* STATIC SECTION */}
