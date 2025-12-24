@@ -78,10 +78,10 @@ Click the circular arrow button in the header to trigger an immediate backup to 
 ### Key Components
 
 - **Session Sidecar (.jsync)**: A JSON-formatted metadata file stored in the session root. It tracks selected paths, backup destinations, and last sync timestamps, making settings portable across machines.
+- **Advanced Location Options**: A refined UI for managing backup destinations, featuring an elastic stretching transition, ability to set global defaults, and manual backup deletion.
 - **rclone Filtering**: Uses `--filter` rules (e.g., `+ /Capture/**`, `- /**`) to implement granular file selection based on the frontend tree view.
+- **Manual Backup Management**: Users can delete session-specific backups from individual destinations directly through the UI, with automatic state verification.
 - **Custom NSOpenPanel**: Direct macOS Cocoa bindings for native folder picker (eliminates sheet dimming effect).
-- **Singleton Dialog**: Uses a warm-up strategy and singleton pattern to ensure the file picker opens instantly without UI flashing.
-- **Dispatch Queue**: Main thread execution for modal dialogs.
 - **Auto-hide**: Focus-loss detection for menubar UX.
 - **Persistent State**: Tauri plugin-store for global settings (intervals, notifications).
 - **rclone Integration**: Bundled sidecar binary for efficient, parallel file transfers with accurate progress tracking.

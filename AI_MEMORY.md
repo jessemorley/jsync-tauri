@@ -35,17 +35,18 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 - Supports cancellation via an `AtomicBool` flag that kills the sidecar process.
 
 ## Recent Significant Changes (Dec 2025)
+- **Location Options Interface**: Replaced simple trash icon with a settings icon that expands into a 3-button options menu (Default, Remove, Delete).
+- **Advanced UI Transitions**: Implemented an elastic "stretching" transition for the location options menu that anchors from the left, along with static settings/return buttons for better focus.
+- **Manual Backup Deletion**: Added a "Delete" option to destinations that removes the session backup folder from that specific location and updates the UI state.
 - **Session Sidecar Implementation**: Moved `destinations` and `selectedPaths` from global storage to a portable `.jsync` sidecar file. Implemented Rust commands for robust loading/saving.
+- **Reliable Backup Tracking**: Fixed logic ensuring that the "Delete" button accurately enables/disables based on whether a backup exists at the destination, driven by verified persistent state.
 - **Improved Selection Logic**: Fixed hierarchical linkage in the Preferences tree (root toggles children). Ticking the last unselected child now correctly promotes the state to "All Selected" (root path).
-- **Empty Folder Preservation**: Added rclone flags to ensure empty source directories are created at the destination.
-- **Performance Optimization**: Implemented a singleton `NSOpenPanel` in `macos_dialog.rs`. The panel is "warmed up" (instantiated) at app launch on the main thread.
-- **Image Counting**: Updated `src-tauri/src/commands/session.rs` to recursively count images in the "Capture" folder.
-- **TypeScript Stability**: Resolved several type errors and removed unused states (`hasBackedUpOnce`, `lastSessionPath`) after the sidecar migration.
+- **TypeScript Stability**: Resolved several type errors and removed unused states (`hasBackedUpOnce`, `lastSessionPath`, `backedUpDestinations` - though the latter was restored for transient animations).
 
 ## Ongoing Work & Known Issues
 - **Cancel Button**: Needs verification for immediate responsiveness during high-IO transfers.
 - **Unticked Item Policy**: Determine if unticked items should be deleted from the destination on subsequent syncs.
-- **Manual Backup Management**: Add a way for users to delete backups directly from the UI.
+- **Tooltips**: Add informational tooltips for complex UI elements.
 
 ## Dev Commands
 - `npm run tauri dev`: Start development environment.
