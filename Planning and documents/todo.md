@@ -2,12 +2,17 @@
 
 ## Bugs
 - [ ] Cancel transfer button doesn't seem to tbe working
+- [x] "1 images" in subtitle (should image when 1)
+- [x] Location options (when no backup detected, delete backup should still say delete backup, but be greyed out (Currenly says "none"))
 
 ## UI
 - [ ] When no destination added: hover state should only be for plus button
+- [x] Add default location indicator
+- [ ] Polish delete backup interface
 
 ## Functionality
 
+- [ ] Add tooltips
 - [ ] Location options
     - Option to set/unset as default, which will show it as a backup location for all sessions
     - Option to remove location

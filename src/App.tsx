@@ -561,7 +561,7 @@ function App() {
                       {session && (
                         <div className="flex items-center gap-1.5 ml-1">
                           <Image size={10} className="flex-shrink-0" />
-                          <p className="text-[10px] font-bold tracking-wide uppercase">{session.image_count} Images</p>
+                          <p className="text-[10px] font-bold tracking-wide uppercase">{session.image_count} {session.image_count === 1 ? 'Image' : 'Images'}</p>
                         </div>
                       )}
                     </div>
@@ -685,7 +685,7 @@ function App() {
                                   >
                                     <Database size={10} />
                                     <span className="text-[9px] tracking-wide text-center">
-                                      {dest.has_existing_backup ? 'Delete Backup' : 'None'}
+                                      Delete Backup
                                     </span>
                                   </button>
 
@@ -722,9 +722,18 @@ function App() {
                                 </button>
 
                                 <div className="z-10 flex-1 min-w-0">
-                                  <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                    {isDefault(dest.id) && (
+                                      <span className="text-[7px] font-black uppercase tracking-tighter px-1 rounded-sm bg-blue-500/20 text-blue-400 border border-blue-500/30 leading-tight">
+                                        Default
+                                      </span>
+                                    )}
+                                  </div>
                                   <p className="text-[9.5px] font-mono truncate text-gray-500 mt-1">{dest.path}</p>
                                 </div>
+
+                                <div className="z-10 w-px self-stretch bg-white/10 -my-2.5" />
 
                                 <button
                                   onClick={(e) => {
@@ -732,7 +741,7 @@ function App() {
                                     setShowingOptionsFor(dest.id);
                                   }}
                                   disabled={backupState === 'running'}
-                                  className="z-10 p-1 transition-colors disabled:opacity-0 text-gray-600 hover:text-blue-400"
+                                  className="z-10 self-stretch flex items-center justify-center px-3.5 -mr-2.5 -ml-3 -my-2.5 transition-colors disabled:opacity-0 text-gray-600 hover:text-blue-400 hover:bg-white/5"
                                 >
                                   <Settings size={12} />
                                 </button>
