@@ -679,7 +679,7 @@ function App() {
                                       <button
                                         onClick={() => setConfirmDeleteBackupFor(dest.id)}
                                         disabled={!dest.has_existing_backup}
-                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all ${
                                           dest.has_existing_backup
                                             ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
                                             : 'text-gray-600 opacity-50 cursor-not-allowed'
