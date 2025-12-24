@@ -614,135 +614,131 @@ function App() {
                         const hasBackup = backedUpDestinations.has(dest.id) && dest.enabled;
                         const shouldPulse = backupState === 'success' && !isCollapsed && dest.enabled;
                         return (
-                          <div key={dest.id} className={`flex items-center gap-3 ${showingOptionsFor === dest.id ? '' : 'p-2.5'} rounded-xl border transition-all relative overflow-hidden h-[54px] ${
+                          <div key={dest.id} className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
                             !dest.enabled
                               ? 'bg-black/20 border-white/[0.08] opacity-50'
                               : hasBackup
                                 ? 'bg-blue-500/10 border-blue-500/20'
                                 : 'bg-white/5 border-white/10 shadow-sm'
                           } ${shouldPulse ? 'animate-completion-pulse' : ''}`}>
-                            {showingOptionsFor === dest.id ? (
-                              confirmDeleteBackupFor === dest.id ? (
-                                // CONFIRMATION UI (54px height maintained)
-                                <div className="flex flex-col gap-1.5 p-2.5 justify-center h-full w-full">
-                                  <p className="text-[9px] text-gray-300 font-bold text-center">
-                                    Delete backup at this location?
-                                  </p>
-                                  <div className="flex gap-1.5">
-                                    <button
-                                      onClick={() => handleConfirmDeleteBackup(dest)}
-                                      className="flex-1 py-1 rounded-lg border bg-red-600 border-red-500 text-white hover:bg-red-700 text-[9px] font-bold uppercase"
-                                    >
-                                      Confirm
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmDeleteBackupFor(null)}
-                                      className="flex-1 py-1 rounded-lg border bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 text-[9px] font-bold uppercase"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                // OPTIONS ROW - Vertical Dividers (icons + text)
-                                <div className="flex h-full w-full">
-                                  {/* Set/Unset Default */}
+                            {confirmDeleteBackupFor === dest.id ? (
+                              // CONFIRMATION UI (54px height maintained)
+                              <div className="flex flex-col gap-1.5 p-2.5 justify-center h-full w-full">
+                                <p className="text-[9px] text-gray-300 font-bold text-center">
+                                  Delete backup at this location?
+                                </p>
+                                <div className="flex gap-1.5">
                                   <button
-                                    onClick={() => toggleDefault(dest.id)}
-                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
-                                      isDefault(dest.id)
-                                        ? 'text-blue-400'
-                                        : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
-                                    }`}
+                                    onClick={() => handleConfirmDeleteBackup(dest)}
+                                    className="flex-1 py-1 rounded-lg border bg-red-600 border-red-500 text-white hover:bg-red-700 text-[9px] font-bold uppercase"
                                   >
-                                    <Check size={10} strokeWidth={3} />
-                                    <span className={`text-[9px] tracking-wide text-center ${isDefault(dest.id) ? 'font-bold' : ''}`}>
-                                      {isDefault(dest.id) ? 'Default' : 'Set Default'}
-                                    </span>
+                                    Confirm
                                   </button>
-
-                                  {/* Remove Location */}
                                   <button
-                                    onClick={() => {
-                                      removeDestination(dest.id);
-                                      setShowingOptionsFor(null);
-                                    }}
-                                    className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+                                    onClick={() => setConfirmDeleteBackupFor(null)}
+                                    className="flex-1 py-1 rounded-lg border bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 text-[9px] font-bold uppercase"
                                   >
-                                    <Trash2 size={10} />
-                                    <span className="text-[9px] tracking-wide text-center">Remove Location</span>
-                                  </button>
-
-                                  {/* Delete Backup */}
-                                  <button
-                                    onClick={() => setConfirmDeleteBackupFor(dest.id)}
-                                    disabled={!dest.has_existing_backup}
-                                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
-                                      dest.has_existing_backup
-                                        ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
-                                        : 'text-gray-600 opacity-50 cursor-not-allowed'
-                                    }`}
-                                  >
-                                    <Database size={10} />
-                                    <span className="text-[9px] tracking-wide text-center">
-                                      Delete Backup
-                                    </span>
-                                  </button>
-
-                                  {/* Return */}
-                                  <button
-                                    onClick={() => setShowingOptionsFor(null)}
-                                    className="flex items-center justify-center px-3.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all"
-                                  >
-                                    <CornerDownLeft size={12} />
+                                    Cancel
                                   </button>
                                 </div>
-                              )
+                              </div>
                             ) : (
-                              // NORMAL CARD CONTENT (existing implementation)
                               <>
-                                {isBackingUp && (
-                                  <div
-                                    className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
-                                      backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
-                                    }`}
-                                    style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
-                                  />
-                                )}
+                                <div className="flex-1 flex items-center h-full min-w-0">
+                                  {showingOptionsFor === dest.id ? (
+                                    // OPTIONS ROW - Vertical Dividers (icons + text)
+                                    <div className="flex h-full w-full">
+                                      {/* Set/Unset Default */}
+                                      <button
+                                        onClick={() => toggleDefault(dest.id)}
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
+                                          isDefault(dest.id)
+                                            ? 'text-blue-400'
+                                            : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
+                                        }`}
+                                      >
+                                        <Check size={10} strokeWidth={3} />
+                                        <span className={`text-[9px] tracking-wide text-center ${isDefault(dest.id) ? 'font-bold' : ''}`}>
+                                          {isDefault(dest.id) ? 'Default' : 'Set Default'}
+                                        </span>
+                                      </button>
 
-                                <button
-                                  onClick={() => toggleDestination(dest.id)}
-                                  disabled={backupState === 'running'}
-                                  className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
-                                    dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
-                                  } disabled:cursor-default`}
-                                >
-                                  {getDestinationIcon(dest.destination_type, dest.enabled)}
-                                </button>
+                                      {/* Remove Location */}
+                                      <button
+                                        onClick={() => {
+                                          removeDestination(dest.id);
+                                          setShowingOptionsFor(null);
+                                        }}
+                                        className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+                                      >
+                                        <Trash2 size={10} />
+                                        <span className="text-[9px] tracking-wide text-center">Remove Location</span>
+                                      </button>
 
-                                <div className="z-10 flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
-                                    {isDefault(dest.id) && (
-                                      <span className="text-[7px] font-black uppercase tracking-tighter px-1 py-[2px] rounded-sm text-blue-400 border border-blue-500/30 leading-none translate-y-[1px]">
-                                        Default
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
+                                      {/* Delete Backup */}
+                                      <button
+                                        onClick={() => setConfirmDeleteBackupFor(dest.id)}
+                                        disabled={!dest.has_existing_backup}
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
+                                          dest.has_existing_backup
+                                            ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                                            : 'text-gray-600 opacity-50 cursor-not-allowed'
+                                        }`}
+                                      >
+                                        <Database size={10} />
+                                        <span className="text-[9px] tracking-wide text-center">
+                                          Delete Backup
+                                        </span>
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    // NORMAL CARD CONTENT (existing implementation)
+                                    <div className="flex items-center gap-3 p-2.5 h-full w-full">
+                                      {isBackingUp && (
+                                        <div
+                                          className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
+                                            backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
+                                          }`}
+                                          style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
+                                        />
+                                      )}
+
+                                      <button
+                                        onClick={() => toggleDestination(dest.id)}
+                                        disabled={backupState === 'running'}
+                                        className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                          dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
+                                        } disabled:cursor-default`}
+                                      >
+                                        {getDestinationIcon(dest.destination_type, dest.enabled)}
+                                      </button>
+
+                                      <div className="z-10 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                          {isDefault(dest.id) && (
+                                            <span className="text-[7px] font-black uppercase tracking-tighter px-1 py-[2px] rounded-sm text-blue-400 border border-blue-500/30 leading-none translate-y-[1px]">
+                                              Default
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
-                                <div className="z-10 w-px self-stretch bg-white/10 -my-2.5" />
-
+                                {/* STATIC SECTION */}
+                                <div className="z-10 w-px self-stretch bg-white/10" />
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setShowingOptionsFor(dest.id);
+                                    setShowingOptionsFor(showingOptionsFor === dest.id ? null : dest.id);
                                   }}
                                   disabled={backupState === 'running'}
-                                  className="z-10 self-stretch flex items-center justify-center px-3.5 -mr-2.5 -ml-3 -my-2.5 transition-colors disabled:opacity-0 text-gray-600 hover:text-blue-400 hover:bg-white/5"
+                                  className="z-10 self-stretch flex items-center justify-center px-3.5 transition-colors disabled:opacity-0 text-gray-600 hover:text-blue-400 hover:bg-white/5"
                                 >
-                                  <Settings size={12} />
+                                  {showingOptionsFor === dest.id ? <CornerDownLeft size={12} /> : <Settings size={12} />}
                                 </button>
                               </>
                             )}
