@@ -645,57 +645,59 @@ function App() {
                             ) : (
                               <>
                                 <div className="flex-1 relative h-full min-w-0 overflow-hidden">
-                                  {/* OPTIONS ROW */}
-                                  <div className={`absolute inset-0 flex h-full w-full transition-all duration-300 ease-in-out ${
+                                  {/* OPTIONS ROW - Stretching from right */}
+                                  <div className={`absolute inset-y-0 right-0 flex h-full transition-all duration-300 ease-in-out overflow-hidden ${
                                     showingOptionsFor === dest.id 
-                                      ? 'translate-x-0 opacity-100' 
-                                      : '-translate-x-full opacity-0'
+                                      ? 'w-full opacity-100' 
+                                      : 'w-0 opacity-0'
                                   }`}>
-                                    {/* Set/Unset Default */}
-                                    <button
-                                      onClick={() => toggleDefault(dest.id)}
-                                      className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all ${
-                                        isDefault(dest.id)
-                                          ? 'text-blue-400'
-                                          : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
-                                      }`}
-                                    >
-                                      <Check size={10} strokeWidth={3} />
-                                      <span className={`text-[9px] tracking-wide text-center ${isDefault(dest.id) ? 'font-bold' : ''}`}>
-                                        {isDefault(dest.id) ? 'Default' : 'Set Default'}
-                                      </span>
-                                    </button>
+                                    <div className="flex h-full w-[calc(100%+1px)]"> {/* Prevent subpixel gaps during stretch */}
+                                      {/* Set/Unset Default */}
+                                      <button
+                                        onClick={() => toggleDefault(dest.id)}
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all min-w-0 ${
+                                          isDefault(dest.id)
+                                            ? 'text-blue-400'
+                                            : 'text-gray-400 hover:text-blue-400 hover:bg-white/5'
+                                        }`}
+                                      >
+                                        <Check size={10} strokeWidth={3} className="flex-shrink-0" />
+                                        <span className={`text-[9px] tracking-wide text-center truncate w-full ${isDefault(dest.id) ? 'font-bold' : ''}`}>
+                                          {isDefault(dest.id) ? 'Default' : 'Set Default'}
+                                        </span>
+                                      </button>
 
-                                    {/* Remove Location */}
-                                    <button
-                                      onClick={() => {
-                                        removeDestination(dest.id);
-                                        setShowingOptionsFor(null);
-                                      }}
-                                      className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
-                                    >
-                                      <Trash2 size={10} />
-                                      <span className="text-[9px] tracking-wide text-center">Remove Location</span>
-                                    </button>
+                                      {/* Remove Location */}
+                                      <button
+                                        onClick={() => {
+                                          removeDestination(dest.id);
+                                          setShowingOptionsFor(null);
+                                        }}
+                                        className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all min-w-0"
+                                      >
+                                        <Trash2 size={10} className="flex-shrink-0" />
+                                        <span className="text-[9px] tracking-wide text-center truncate w-full">Remove Location</span>
+                                      </button>
 
-                                    {/* Delete Backup */}
-                                    <button
-                                      onClick={() => setConfirmDeleteBackupFor(dest.id)}
-                                      disabled={!dest.has_existing_backup}
-                                      className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all ${
-                                        dest.has_existing_backup
-                                          ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
-                                          : 'text-gray-600 opacity-50 cursor-not-allowed'
-                                      }`}
-                                    >
-                                      <Database size={10} />
-                                      <span className="text-[9px] tracking-wide text-center">
-                                        Delete Backup
-                                      </span>
-                                    </button>
+                                      {/* Delete Backup */}
+                                      <button
+                                        onClick={() => setConfirmDeleteBackupFor(dest.id)}
+                                        disabled={!dest.has_existing_backup}
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all min-w-0 ${
+                                          dest.has_existing_backup
+                                            ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                                            : 'text-gray-600 opacity-50 cursor-not-allowed'
+                                        }`}
+                                      >
+                                        <Database size={10} className="flex-shrink-0" />
+                                        <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                          Delete Backup
+                                        </span>
+                                      </button>
+                                    </div>
                                   </div>
 
-                                  {/* NORMAL CARD CONTENT */}
+                                  {/* NORMAL CARD CONTENT - Sliding right */}
                                   <div className={`absolute inset-0 flex items-center gap-3 p-2.5 h-full w-full transition-all duration-300 ease-in-out ${
                                     showingOptionsFor === dest.id 
                                       ? 'translate-x-full opacity-0' 
