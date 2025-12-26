@@ -658,7 +658,9 @@ function App() {
                                       {/* Set/Unset Default */}
                                       <button
                                         onClick={() => toggleDefault(dest.id)}
-                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 transition-all min-w-0 hover:bg-blue-500/10 ${
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r transition-all min-w-0 hover:bg-blue-500/10 ${
+                                          hasBackup ? 'border-blue-500/20' : 'border-white/10'
+                                        } ${
                                           isDefault(dest.id)
                                             ? 'text-blue-400'
                                             : 'text-gray-400 hover:text-blue-400'
@@ -676,7 +678,9 @@ function App() {
                                           removeDestination(dest.id);
                                           setShowingOptionsFor(null);
                                         }}
-                                        className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r border-white/10 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all min-w-0"
+                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 border-r text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all min-w-0 ${
+                                          hasBackup ? 'border-blue-500/20' : 'border-white/10'
+                                        }`}
                                       >
                                         <X size={10} className="flex-shrink-0" />
                                         <span className="text-[9px] tracking-wide text-center truncate w-full">Remove</span>
@@ -740,7 +744,7 @@ function App() {
                                 </div>
 
                                 {/* STATIC SECTION */}
-                                <div className="z-10 w-px self-stretch bg-white/10" />
+                                <div className={`z-10 w-px self-stretch ${hasBackup ? 'bg-blue-500/20' : 'bg-white/10'}`} />
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

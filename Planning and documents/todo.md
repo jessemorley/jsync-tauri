@@ -6,22 +6,25 @@
 - [x] Location options (when no backup detected, delete backup should still say delete backup, but be greyed out (Currenly says "none"))
 
 ## UI
-- [ ] When no destination added: hover state should only be for plus button
 - [x] Add default location indicator
 - [ ] Polish delete backup interface
+- [ ] Vertical location separators to match blue outline colour when backup exists
+- [ ] Set as default icon state change?
+- Change Set as Default icon to Pin and when disabled, the 
 
 ## Functionality
 
 - [ ] Add tooltips
-- [ ] Location options
-    - Option to set/unset as default, which will show it as a backup location for all sessions
-    - Option to remove location
-    - Option to delete backup at this location
 
 - [ ] Determine behavior for unticked items on subsequent syncs (should they be removed from destination backups?)
 
 
 # Completed
+
+- [x] Location options
+    - Option to set/unset as default, which will show it as a backup location for all sessions
+    - Option to remove location
+    - Option to delete backup at this location
 
 - [x] Portable Session Settings (.jsync sidecar): Implemented session-specific storage for selections and destinations, including auto-verification of existing backups on session change.
 
