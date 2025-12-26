@@ -740,19 +740,16 @@ function App() {
                                     </button>
 
                                     <div className="z-10 flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
-                                        {isDefault(dest.id) && (
-                                          <span className="text-[7px] font-black uppercase tracking-tighter px-1 py-[2px] rounded-sm text-blue-400 border border-blue-500/30 leading-none translate-y-[1px]">
-                                            Default
-                                          </span>
-                                        )}
-                                      </div>
-                                                                            <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
+                                                                              <div className="flex items-center gap-2">
+                                                                                <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                                                                {isDefault(dest.id) && (
+                                                                                  <Pin size={10} strokeWidth={3} className="text-blue-400 flex-shrink-0" />
+                                                                                )}
+                                                                              </div>
+                                                                              <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
+                                                                            </div>
                                                                           </div>
-                                                                        </div>
-                                                                      </div>
-                                      
+                                                                        </div>                                      
                                                                       {/* STATIC SECTION */}
                                                                       <div className={`z-10 w-px self-stretch ${hasBackup ? 'bg-blue-500/20' : 'bg-white/10'}`} />
                                                                       <button
