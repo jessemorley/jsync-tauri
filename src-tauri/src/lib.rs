@@ -91,8 +91,13 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let quit_item = MenuItem::with_id(app, "quit", "Quit JSync", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&quit_item])?;
 
+    let tray_icon = tauri::image::Image::from_path(
+        app.path().resolve("icons/tray-iconTemplate.png", tauri::path::BaseDirectory::Resource)?
+    )?;
+
     let _tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(tray_icon)
+        .icon_as_template(true)
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| {
