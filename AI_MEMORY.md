@@ -37,6 +37,7 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 ## Recent Significant Changes (Dec 2025)
 - **Location Options Interface**: Replaced simple trash icon with a settings icon that expands into a 3-button options menu (Default, Remove, Delete).
 - **Advanced UI Transitions**: Implemented an elastic "stretching" transition for the location options menu that anchors from the left, along with static settings/return buttons for better focus.
+- **Menubar Icon Update**: Switched to a template-compatible PNG implementation of the `folder-sync` icon, ensuring native-like appearance across light and dark macOS themes.
 - **Manual Backup Deletion**: Added a "Delete" option to destinations that removes the session backup folder from that specific location and updates the UI state.
 - **Session Sidecar Implementation**: Moved `destinations` and `selectedPaths` from global storage to a portable `.jsync` sidecar file. Implemented Rust commands for robust loading/saving.
 - **Reliable Backup Tracking**: Fixed logic ensuring that the "Delete" button accurately enables/disables based on whether a backup exists at the destination, driven by verified persistent state.
