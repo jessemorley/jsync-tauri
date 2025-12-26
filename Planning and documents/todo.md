@@ -8,9 +8,9 @@
 ## UI
 - [x] Add default location indicator
 - [ ] Polish delete backup interface
-- [ ] Vertical location separators to match blue outline colour when backup exists
+
 - [ ] Set as default icon state change?
-- Change Set as Default icon to Pin and when disabled, the 
+- [x] Change Set as Default icon to Pin and when disabled, the pin-off icon. Animate this transition.
 
 ## Functionality
 
@@ -20,6 +20,7 @@
 
 
 # Completed
+- [x] Vertical location separators to match blue outline colour when backup exists
 
 - [x] Location options
     - Option to set/unset as default, which will show it as a backup location for all sessions
