@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { load, Store } from '@tauri-apps/plugin-store';
 import { isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
+import { check, Update } from '@tauri-apps/plugin-updater';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import type { Destination, SessionInfo, SessionItem, BackupProgress, BackupComplete, SessionConfig } from './types';
 
@@ -101,6 +102,11 @@ export async function sendBackupNotification(title: string, body: string): Promi
   } catch (error) {
     // Silent fail for notifications
   }
+}
+
+// Updater
+export async function checkForAppUpdates(): Promise<Update | null> {
+  return await check();
 }
 
 // Store

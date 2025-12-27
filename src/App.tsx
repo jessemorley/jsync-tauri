@@ -25,7 +25,8 @@ import {
   Image,
   CornerDownLeft,
   Pin,
-  PinOff
+  PinOff,
+  Loader2
 } from 'lucide-react';
 import './App.css';
 import type { Destination, SessionInfo, SessionItem, SessionConfig } from './lib/types';
@@ -47,6 +48,7 @@ import {
   sendBackupNotification,
   onRefreshSession,
   requestNotificationPermission,
+  checkForAppUpdates
 } from './lib/tauri';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -90,6 +92,10 @@ function App() {
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+
+  // Update State
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   // Options Menu State
   const [showingOptionsFor, setShowingOptionsFor] = useState<number | null>(null);
@@ -226,6 +232,49 @@ function App() {
       if (unlisten) unlisten();
     };
   }, [refreshSession]);
+
+  // Update check handler
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatus('Checking for update...');
+    try {
+      const update = await checkForAppUpdates();
+      if (update) {
+        const confirmed = await window.confirm(
+          `Update available: v${update.version}\n\nDo you want to download and install it now?`
+        );
+        if (confirmed) {
+          setUpdateStatus(`Downloading v${update.version}...`);
+          await update.downloadAndInstall((event) => {
+            switch (event.event) {
+              case 'Started':
+                setUpdateStatus('Download started...');
+                break;
+              case 'Progress':
+                setUpdateStatus(`Downloading... ${Math.round(event.data.chunkLength / 1024)}KB`);
+                break;
+              case 'Finished':
+                setUpdateStatus('Download finished. Installing...');
+                break;
+            }
+          });
+          // App should restart automatically, but just in case
+          setUpdateStatus('Update installed. Please restart.');
+        } else {
+          setUpdateStatus(null);
+        }
+      } else {
+        setUpdateStatus('Up to date');
+        setTimeout(() => setUpdateStatus(null), 3000);
+      }
+    } catch (error) {
+      console.error('Update check failed:', error);
+      setUpdateStatus('Check failed');
+      setTimeout(() => setUpdateStatus(null), 3000);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   // Inject completion animations CSS
   useEffect(() => {
@@ -961,9 +1010,21 @@ function App() {
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-white/5 bg-black/40 flex items-center justify-between z-20">
-          <div className="flex items-center gap-1.5 text-[10px] font-medium text-gray-500">
-            <Clock size={10} className="opacity-70" />
-            <span>{view === 'prefs' ? 'Auto-saved' : sessionInfo.lastSyncLabel}</span>
+          <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <Clock size={10} className="opacity-70" />
+              <span>{view === 'prefs' ? 'v0.1.4' : sessionInfo.lastSyncLabel}</span>
+            </div>
+            {view === 'prefs' && (
+              <button
+                onClick={handleCheckForUpdates}
+                disabled={isCheckingUpdate}
+                className="ml-1 px-2 py-0.5 rounded-md border border-white/10 text-[8px] font-bold uppercase tracking-wider hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isCheckingUpdate && <Loader2 size={10} className="animate-spin" />}
+                <span>{updateStatus || 'Check for update'}</span>
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <button
