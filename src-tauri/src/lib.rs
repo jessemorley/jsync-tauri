@@ -2,7 +2,7 @@ use log::info;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager, RunEvent,
+    Emitter, Manager,
 };
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_positioner::{Position, WindowExt};
@@ -56,11 +56,19 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Focused(is_focused) = event {
-                // Auto-hide when window loses focus
-                if !is_focused {
-                    let _ = window.hide();
+            match event {
+                tauri::WindowEvent::Focused(is_focused) => {
+                    // Auto-hide when window loses focus
+                    if !is_focused {
+                        let _ = window.hide();
+                    }
                 }
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    // Prevent closing, just hide
+                    let _ = window.hide();
+                    api.prevent_close();
+                }
+                _ => {}
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -79,12 +87,7 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, event| {
-            if let RunEvent::ExitRequested { api, .. } = event {
-                // Prevent exit when window closes - keep app running in tray
-                api.prevent_exit();
-            }
-        });
+        .run(|_app_handle, _event| {});
 }
 
 fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
