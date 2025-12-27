@@ -1,6 +1,6 @@
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use log::info;
 use tauri::AppHandle;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -44,8 +44,14 @@ pub fn parse_destination(path: String) -> Destination {
 }
 
 #[tauri::command]
-pub async fn delete_backup_folder(destination_path: String, session_name: String) -> Result<(), String> {
-    info!("Deleting backup folder for session '{}' at '{}'", session_name, destination_path);
+pub async fn delete_backup_folder(
+    destination_path: String,
+    session_name: String,
+) -> Result<(), String> {
+    info!(
+        "Deleting backup folder for session '{}' at '{}'",
+        session_name, destination_path
+    );
 
     let backup_path = Path::new(&destination_path).join(&session_name);
 
@@ -53,8 +59,7 @@ pub async fn delete_backup_folder(destination_path: String, session_name: String
         return Err(format!("Backup folder does not exist: {:?}", backup_path));
     }
 
-    std::fs::remove_dir_all(&backup_path)
-        .map_err(|e| format!("Failed to delete backup: {}", e))?;
+    std::fs::remove_dir_all(&backup_path).map_err(|e| format!("Failed to delete backup: {}", e))?;
 
     info!("Successfully deleted backup at {:?}", backup_path);
     Ok(())

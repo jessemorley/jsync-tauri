@@ -1,5 +1,5 @@
+use log::{error, info};
 use std::fs;
-use log::{info, error};
 
 #[tauri::command]
 pub fn check_full_disk_access() -> bool {
@@ -8,7 +8,10 @@ pub fn check_full_disk_access() -> bool {
     // Try to access a protected directory that requires Full Disk Access
     let test_paths = vec![
         "/Library/Application Support/com.apple.TCC".to_string(),
-        format!("{}/Library/Safari", std::env::var("HOME").unwrap_or_default()),
+        format!(
+            "{}/Library/Safari",
+            std::env::var("HOME").unwrap_or_default()
+        ),
     ];
 
     for path in test_paths {

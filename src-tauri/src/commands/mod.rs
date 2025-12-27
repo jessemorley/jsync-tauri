@@ -1,7 +1,7 @@
-pub mod session;
-pub mod destinations;
 pub mod backup;
+pub mod destinations;
 pub mod permissions;
+pub mod session;
 
 #[tauri::command]
 pub fn quit_app(app: tauri::AppHandle) {

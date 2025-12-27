@@ -1,8 +1,8 @@
+use log::{error, info};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use tauri::AppHandle;
 use tauri_plugin_shell::ShellExt;
-use log::{info, error};
-use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionInfo {
@@ -38,11 +38,17 @@ pub struct SessionConfig {
 }
 
 #[tauri::command]
-pub async fn load_session_config(session_path: String, session_name: String) -> Result<SessionConfig, String> {
+pub async fn load_session_config(
+    session_path: String,
+    session_name: String,
+) -> Result<SessionConfig, String> {
     let config_path = Path::new(&session_path).join(format!("{}.jsync", session_name));
-    
+
     if !config_path.exists() {
-        info!("No session config found at {:?}, returning default", config_path);
+        info!(
+            "No session config found at {:?}, returning default",
+            config_path
+        );
         return Ok(SessionConfig {
             version: 1,
             last_synced: None,
@@ -54,7 +60,7 @@ pub async fn load_session_config(session_path: String, session_name: String) -> 
     info!("Loading session config from {:?}", config_path);
     let content = std::fs::read_to_string(&config_path)
         .map_err(|e| format!("Failed to read session config: {}", e))?;
-    
+
     let mut config: SessionConfig = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse session config: {}", e))?;
 
@@ -68,16 +74,20 @@ pub async fn load_session_config(session_path: String, session_name: String) -> 
 }
 
 #[tauri::command]
-pub async fn save_session_config(session_path: String, session_name: String, config: SessionConfig) -> Result<(), String> {
+pub async fn save_session_config(
+    session_path: String,
+    session_name: String,
+    config: SessionConfig,
+) -> Result<(), String> {
     let config_path = Path::new(&session_path).join(format!("{}.jsync", session_name));
-    
+
     info!("Saving session config to {:?}", config_path);
     let content = serde_json::to_string_pretty(&config)
         .map_err(|e| format!("Failed to serialize session config: {}", e))?;
-    
+
     std::fs::write(&config_path, content)
         .map_err(|e| format!("Failed to write session config: {}", e))?;
-    
+
     Ok(())
 }
 
@@ -131,7 +141,7 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
             let err_msg = parts.get(1).unwrap_or(&"Unknown error");
             error!("Capture One AppleScript error: {}", err_msg);
             return Err(format!("Capture One error: {}", err_msg));
-        },
+        }
         _ => {}
     }
 
@@ -141,7 +151,7 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
 
     let raw_path = parts[0];
     let doc_name = parts[1];
-    
+
     // Clean up session name (remove common extensions)
     let session_name = doc_name
         .trim_end_matches(".cosessiondb")
@@ -154,13 +164,14 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
         raw_path.to_string()
     } else {
         // If it's a file (like a .cosessiondb), the session folder is its parent
-        path_obj.parent()
+        path_obj
+            .parent()
             .and_then(|p| p.to_str())
             .unwrap_or(raw_path)
             .to_string()
     };
 
-    // Heuristic: If the folder we found doesn't match the session name, 
+    // Heuristic: If the folder we found doesn't match the session name,
     // but there's a subfolder that DOES match the session name, use that.
     // This handles cases where the .cosessiondb is sitting next to the session folder
     // or when the user has a generic 'Capture One' parent folder.
@@ -172,7 +183,10 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
     if folder_name != session_name {
         let subfolder = std::path::Path::new(&session_folder).join(&session_name);
         if subfolder.is_dir() {
-            info!("Heuristic triggered: using subfolder matching session name: {:?}", subfolder);
+            info!(
+                "Heuristic triggered: using subfolder matching session name: {:?}",
+                subfolder
+            );
             if let Some(s) = subfolder.to_str() {
                 session_folder = s.to_string();
             }
@@ -203,8 +217,8 @@ pub async fn get_capture_one_session(app: AppHandle) -> Result<SessionInfo, Stri
 pub async fn get_session_contents(path: String) -> Result<Vec<SessionItem>, String> {
     info!("Getting session contents for path: {}", path);
 
-    let entries = std::fs::read_dir(&path)
-        .map_err(|e| format!("Failed to read directory: {}", e))?;
+    let entries =
+        std::fs::read_dir(&path).map_err(|e| format!("Failed to read directory: {}", e))?;
 
     let mut items = Vec::new();
     for entry in entries.flatten() {
@@ -223,7 +237,11 @@ pub async fn get_session_contents(path: String) -> Result<Vec<SessionItem>, Stri
             items.push(SessionItem {
                 id: format!("{}/{}", path, file_name),
                 label: file_name,
-                item_type: if is_dir { "folder".to_string() } else { "file".to_string() },
+                item_type: if is_dir {
+                    "folder".to_string()
+                } else {
+                    "file".to_string()
+                },
             });
         }
     }
@@ -242,7 +260,7 @@ async fn get_folder_size(path: &str) -> Result<String, String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     info!("du output: {}", stdout.trim());
-    
+
     // Output format: "123456\t/path/to/folder"
     let kb_str = stdout.split_whitespace().next().unwrap_or("0");
     let kb: f64 = kb_str.parse().unwrap_or(0.0);
@@ -264,16 +282,14 @@ async fn get_image_count(session_path: &str) -> u32 {
 
     // Common raw extensions + standard image formats
     let extensions = [
-        "cr3", "cr2", "nef", "arw", "raf", "dng", "iiq", "eip", 
-        "jpg", "jpeg", "tif", "tiff", "mos", "3fr", "ari", "sr2", "srf", "rw2"
+        "cr3", "cr2", "nef", "arw", "raf", "dng", "iiq", "eip", "jpg", "jpeg", "tif", "tiff",
+        "mos", "3fr", "ari", "sr2", "srf", "rw2",
     ];
 
     // Offload the recursive counting to a blocking thread to avoid blocking the async runtime
-    tokio::task::spawn_blocking(move || {
-        count_images_recursive(&capture_path, &extensions)
-    })
-    .await
-    .unwrap_or(0)
+    tokio::task::spawn_blocking(move || count_images_recursive(&capture_path, &extensions))
+        .await
+        .unwrap_or(0)
 }
 
 fn count_images_recursive(dir: &std::path::Path, extensions: &[&str]) -> u32 {
@@ -286,9 +302,9 @@ fn count_images_recursive(dir: &std::path::Path, extensions: &[&str]) -> u32 {
                 } else if file_type.is_file() {
                     let path = entry.path();
                     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                         if extensions.contains(&ext.to_lowercase().as_str()) {
-                             count += 1;
-                         }
+                        if extensions.contains(&ext.to_lowercase().as_str()) {
+                            count += 1;
+                        }
                     }
                 }
             }

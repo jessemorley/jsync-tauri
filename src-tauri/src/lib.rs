@@ -1,3 +1,4 @@
+use log::info;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -5,11 +6,10 @@ use tauri::{
 };
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_positioner::{Position, WindowExt};
-use log::info;
 
 mod commands;
-mod macos_window;
 mod macos_dialog;
+mod macos_window;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,7 +23,9 @@ pub fn run() {
             tauri_plugin_log::Builder::default()
                 .targets([
                     Target::new(TargetKind::Stdout),
-                    Target::new(TargetKind::LogDir { file_name: Some("jsync.log".into()) }),
+                    Target::new(TargetKind::LogDir {
+                        file_name: Some("jsync.log".into()),
+                    }),
                     Target::new(TargetKind::Webview),
                 ])
                 .build(),
@@ -37,7 +39,7 @@ pub fn run() {
                 use tauri::ActivationPolicy;
                 app.set_activation_policy(ActivationPolicy::Accessory);
                 info!("Set activation policy to Accessory (no dock icon)");
-                
+
                 // Pre-initialize dialog components to reduce wait time on first use
                 macos_dialog::warm_up();
             }
@@ -91,9 +93,10 @@ fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let quit_item = MenuItem::with_id(app, "quit", "Quit JSync", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&quit_item])?;
 
-    let tray_icon = tauri::image::Image::from_path(
-        app.path().resolve("icons/tray-iconTemplate.png", tauri::path::BaseDirectory::Resource)?
-    )?;
+    let tray_icon = tauri::image::Image::from_path(app.path().resolve(
+        "icons/tray-iconTemplate.png",
+        tauri::path::BaseDirectory::Resource,
+    )?)?;
 
     let _tray = TrayIconBuilder::new()
         .icon(tray_icon)

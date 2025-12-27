@@ -1,9 +1,9 @@
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
-use log::{info, error};
 
 static BACKUP_CANCELLED: AtomicBool = AtomicBool::new(false);
 
@@ -74,23 +74,35 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
     }
 
     for (index, dest) in enabled_destinations.iter().enumerate() {
-        info!("Processing destination {}/{} (ID: {})", index + 1, enabled_destinations.len(), dest.id);
-        
+        info!(
+            "Processing destination {}/{} (ID: {})",
+            index + 1,
+            enabled_destinations.len(),
+            dest.id
+        );
+
         if BACKUP_CANCELLED.load(Ordering::SeqCst) {
-            info!("Backup cancellation detected before destination {}", dest.id);
+            info!(
+                "Backup cancellation detected before destination {}",
+                dest.id
+            );
             return Err("Backup cancelled".to_string());
         }
 
         // Verify destination exists
         if !std::path::Path::new(&dest.path).exists() {
             error!("Destination not accessible: {}", dest.path);
-            app.emit("backup-error", BackupComplete {
-                destination_id: dest.id,
-                success: false,
-                files_copied: 0,
-                size_transferred: "0".to_string(),
-                error: Some(format!("Destination not accessible: {}", dest.path)),
-            }).ok();
+            app.emit(
+                "backup-error",
+                BackupComplete {
+                    destination_id: dest.id,
+                    success: false,
+                    files_copied: 0,
+                    size_transferred: "0".to_string(),
+                    error: Some(format!("Destination not accessible: {}", dest.path)),
+                },
+            )
+            .ok();
             continue;
         }
 
@@ -103,9 +115,9 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
         // Generate filters based on selected_paths
         let mut filters = Vec::new();
         let session_path_obj = std::path::Path::new(&request.session_path);
-        
+
         let mut sync_all = false;
-        
+
         // If selected_paths contains the session root, we sync everything (no filters needed)
         for path_str in &request.selected_paths {
             if path_str == &request.session_path {
@@ -113,7 +125,7 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
                 break;
             }
         }
-        
+
         if !sync_all && !request.selected_paths.is_empty() {
             for path_str in &request.selected_paths {
                 let p = std::path::Path::new(path_str);
@@ -127,24 +139,36 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
             }
             // If we added any specific includes, we must exclude everything else
             if !filters.is_empty() {
-                 filters.push("- /**".to_string());
+                filters.push("- /**".to_string());
             }
         }
 
-        if let Err(e) = run_rclone_backup(&app, &request.session_path, session_dest_str, dest.id, filters).await {
+        if let Err(e) = run_rclone_backup(
+            &app,
+            &request.session_path,
+            session_dest_str,
+            dest.id,
+            filters,
+        )
+        .await
+        {
             if e == "Backup cancelled" {
                 info!("Backup loop aborted due to cancellation");
                 return Err("Backup cancelled".to_string());
             }
 
             error!("Backup failed for {}: {}", dest.path, e);
-            app.emit("backup-error", BackupComplete {
-                destination_id: dest.id,
-                success: false,
-                files_copied: 0,
-                size_transferred: "0".to_string(),
-                error: Some(e),
-            }).ok();
+            app.emit(
+                "backup-error",
+                BackupComplete {
+                    destination_id: dest.id,
+                    success: false,
+                    files_copied: 0,
+                    size_transferred: "0".to_string(),
+                    error: Some(e),
+                },
+            )
+            .ok();
         }
     }
 
@@ -192,10 +216,13 @@ async fn run_rclone_backup(
     }
 
     // Ensure destination directory exists
-    std::fs::create_dir_all(dest_path).map_err(|e| format!("Failed to create destination: {}", e))?;
+    std::fs::create_dir_all(dest_path)
+        .map_err(|e| format!("Failed to create destination: {}", e))?;
 
     // Get rclone sidecar command
-    let rclone_cmd = app.path().resolve("rclone", tauri::path::BaseDirectory::Resource)
+    let rclone_cmd = app
+        .path()
+        .resolve("rclone", tauri::path::BaseDirectory::Resource)
         .map_err(|e| format!("Failed to resolve rclone path: {}", e))?;
 
     info!("Resolved rclone path: {:?}", rclone_cmd);
@@ -207,10 +234,14 @@ async fn run_rclone_backup(
         "--check-first".to_string(),
         "--use-json-log".to_string(),
         "--create-empty-src-dirs".to_string(),
-        "--stats".to_string(), "500ms".to_string(),
-        "--stats-log-level".to_string(), "NOTICE".to_string(),
-        "--transfers".to_string(), "4".to_string(),
-        "--checkers".to_string(), "8".to_string(),
+        "--stats".to_string(),
+        "500ms".to_string(),
+        "--stats-log-level".to_string(),
+        "NOTICE".to_string(),
+        "--transfers".to_string(),
+        "4".to_string(),
+        "--checkers".to_string(),
+        "8".to_string(),
     ];
 
     for filter in filters {
@@ -299,7 +330,10 @@ async fn run_rclone_backup(
         }
     }
 
-    let status = child.wait().await.map_err(|e| format!("rclone wait error: {}", e))?;
+    let status = child
+        .wait()
+        .await
+        .map_err(|e| format!("rclone wait error: {}", e))?;
     if !status.success() {
         return Err(format!("rclone failed with status: {}", status));
     }
@@ -307,13 +341,16 @@ async fn run_rclone_backup(
     info!("Backup completed successfully for destination {}", dest_id);
 
     // Emit completion event with final stats
-    let _ = app.emit("backup-complete", BackupComplete {
-        destination_id: dest_id,
-        success: true,
-        files_copied: total_files,
-        size_transferred: String::new(), // Will be shown in final progress update
-        error: None,
-    });
+    let _ = app.emit(
+        "backup-complete",
+        BackupComplete {
+            destination_id: dest_id,
+            success: true,
+            files_copied: total_files,
+            size_transferred: String::new(), // Will be shown in final progress update
+            error: None,
+        },
+    );
 
     Ok(())
 }

@@ -1,7 +1,7 @@
 #[cfg(target_os = "macos")]
 pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64) {
     use cocoa::base::id;
-    use objc::{msg_send, sel, sel_impl, class};
+    use objc::{class, msg_send, sel, sel_impl};
 
     unsafe {
         let ns_window = window.ns_window().unwrap() as id;
@@ -11,7 +11,7 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64) {
         let clear_color: id = msg_send![class!(NSColor), clearColor];
         let _: () = msg_send![ns_window, setBackgroundColor: clear_color];
         let _: () = msg_send![ns_window, setAlphaValue: 1.0];
-        
+
         // Disable native shadow and title bar related artifacts
         let _: () = msg_send![ns_window, setHasShadow: true];
         let _: () = msg_send![ns_window, invalidateShadow];

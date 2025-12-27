@@ -3,10 +3,10 @@ use log::info;
 #[cfg(target_os = "macos")]
 mod macos_impl {
     use super::*;
-    use cocoa::base::{id, nil, YES, NO};
+    use cocoa::base::{id, nil, NO, YES};
     use cocoa::foundation::NSString;
-    use objc::{class, msg_send, sel, sel_impl};
     use objc::runtime::Object;
+    use objc::{class, msg_send, sel, sel_impl};
     use std::sync::atomic::{AtomicPtr, Ordering};
 
     static PANEL_INSTANCE: AtomicPtr<Object> = AtomicPtr::new(std::ptr::null_mut());
@@ -19,7 +19,7 @@ mod macos_impl {
 
         // Create new instance
         let panel: id = msg_send![class!(NSOpenPanel), openPanel];
-        
+
         // Retain it so it persists globally (openPanel usually returns autoreleased)
         let _: () = msg_send![panel, retain];
 
@@ -43,10 +43,8 @@ mod macos_impl {
 
     pub fn warm_up() {
         info!("Warming up macOS dialog components");
-        dispatch::Queue::main().exec_async(move || {
-            unsafe {
-                let _ = get_shared_panel();
-            }
+        dispatch::Queue::main().exec_async(move || unsafe {
+            let _ = get_shared_panel();
         });
     }
 
@@ -66,7 +64,8 @@ mod macos_impl {
 
                 info!("Dialog response: {:?}", response);
 
-                let result = if response == 1 { // NSModalResponseOK = 1
+                let result = if response == 1 {
+                    // NSModalResponseOK = 1
                     let urls: id = msg_send![open_panel, URLs];
                     let count: usize = msg_send![urls, count];
 
