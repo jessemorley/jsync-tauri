@@ -75,6 +75,11 @@ jobs:
           releaseDraft: false
           prerelease: false
 
+      - name: List files (debug)
+        run: |
+          find src-tauri/target -name "*.tar.gz"
+          find src-tauri/target -name "*.sig"
+
       - name: Generate Updater JSON
         run: node scripts/generate-updater-json.mjs
 
