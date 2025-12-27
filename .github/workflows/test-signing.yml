@@ -1,0 +1,61 @@
+name: Test Signing Keys
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  test-signing:
+    name: Test Signing Configuration
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify signing key is set
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          echo "Checking if TAURI_SIGNING_PRIVATE_KEY is set..."
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "❌ TAURI_SIGNING_PRIVATE_KEY is NOT set!"
+            exit 1
+          fi
+          echo "✅ TAURI_SIGNING_PRIVATE_KEY is set"
+          echo "Key length: ${#TAURI_SIGNING_PRIVATE_KEY} characters"
+          echo "Key starts with: ${TAURI_SIGNING_PRIVATE_KEY:0:40}..."
+
+      - name: Test build with signing (quick)
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          echo "Testing Tauri build with signing..."
+          npm run tauri build -- --verbose 2>&1 | tee build-output.log || true
+
+          echo ""
+          echo "Checking for signature-related errors..."
+          if grep -i "failed to decode secret key" build-output.log; then
+            echo "❌ Key decoding failed!"
+            echo "This usually means:"
+            echo "  1. Wrong key format in GitHub Secrets"
+            echo "  2. Key has password but TAURI_SIGNING_PRIVATE_KEY_PASSWORD not set"
+            echo "  3. Extra whitespace or line breaks in the secret"
+            exit 1
+          fi
+
+          echo "✅ No key decoding errors found"
+
+      - name: Check for signature files
+        run: |
+          echo "Looking for .sig files..."
+          find src-tauri/target -name "*.sig" -ls || echo "No .sig files found yet (build may not have completed)"
