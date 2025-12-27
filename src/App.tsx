@@ -1013,7 +1013,7 @@ function App() {
           <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500">
             <div className="flex items-center gap-1.5">
               <Clock size={10} className="opacity-70" />
-              <span>{view === 'prefs' ? 'v0.1.4' : sessionInfo.lastSyncLabel}</span>
+              <span>{view === 'prefs' ? 'v0.1.5' : sessionInfo.lastSyncLabel}</span>
             </div>
             {view === 'prefs' && (
               <button

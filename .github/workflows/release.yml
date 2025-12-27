@@ -62,6 +62,7 @@ jobs:
         run: npm ci
 
       - name: Build and Release
+        id: tauri_build
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,3 +74,14 @@ jobs:
           releaseBody: 'See the changelog for details.'
           releaseDraft: false
           prerelease: false
+
+      - name: Generate Updater JSON
+        run: node scripts/generate-updater-json.mjs
+
+      - name: Upload Updater JSON
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
