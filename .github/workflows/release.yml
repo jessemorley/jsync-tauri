@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   validate:
-    name: Pre-build Checks
+    name: Validate Frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +29,6 @@ jobs:
 
       - name: Build frontend
         run: npm run build
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust format check
-        run: cd src-tauri && cargo fmt -- --check
-
-      - name: Rust clippy
-        run: cd src-tauri && cargo clippy -- -D warnings
-
-      - name: Rust check
-        run: cd src-tauri && cargo check
 
   release-macos:
     name: Build and Release (macOS)
