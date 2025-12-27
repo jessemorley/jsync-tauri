@@ -56,7 +56,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM0QzVBRjMyNzdDNzQ5MDAKUldRQVNjZDNNcS9GeEtxdUpIZXVPa1U3bmNaaDFDalNZaEttKzBHRmlOcTVWYmNseE12Qng4QmUK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ2ODVGMEY3NTc0Q0NGNkQKUldSdHoweFg5L0NGMXYvbkFtSGFLdDdmMTFrU3BpZEtNWFJoOVNPU1IzOS8zL09vcEVHeWFvZ3UK",
       "endpoints": [
         "https://github.com/jessemorley/jsync-tauri/releases/latest/download/latest.json"
       ]
