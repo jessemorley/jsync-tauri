@@ -36,6 +36,9 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_TERM_COLOR: always
 
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +59,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: src-tauri
           cache-on-failure: true
 
       - name: Install dependencies
