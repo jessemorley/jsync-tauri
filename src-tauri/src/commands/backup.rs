@@ -1,7 +1,7 @@
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
@@ -220,10 +220,13 @@ async fn run_rclone_backup(
         .map_err(|e| format!("Failed to create destination: {}", e))?;
 
     // Get rclone sidecar command
-    let rclone_cmd = app
-        .path()
-        .resolve("rclone", tauri::path::BaseDirectory::Resource)
-        .map_err(|e| format!("Failed to resolve rclone path: {}", e))?;
+    // In packaged apps (macOS), the externalBin is placed in the same directory as the executable (Contents/MacOS)
+    // In dev, it's also in the target/debug directory next to the executable
+    let rclone_cmd = std::env::current_exe()
+        .map_err(|e| format!("Failed to get current executable path: {}", e))?
+        .parent()
+        .ok_or("Failed to get parent directory of executable")?
+        .join("rclone");
 
     info!("Resolved rclone path: {:?}", rclone_cmd);
 
