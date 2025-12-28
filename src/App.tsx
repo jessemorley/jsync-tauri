@@ -1253,7 +1253,7 @@ function App() {
 
         {/* VIEW: PREFERENCES */}
         {view === "prefs" && (
-          <div className="overflow-y-auto p-5 space-y-5" style={{height: '550px', maxHeight: '550px', gridRow: '1 / 3'}}>
+          <div className="overflow-y-auto p-5 space-y-5" style={{minHeight: 0, gridRow: '1 / 3'}}>
             <div className="flex items-center justify-between">
               <h2 className="text-[13px] font-bold text-white flex items-center gap-2">
                 <Settings size={14} className="text-blue-400" />
