@@ -668,16 +668,17 @@ function App() {
                                                   const isBackingUp = (backupState === 'running' || backupState === 'success') && dest.enabled;
                                                   const hasBackup = dest.has_existing_backup && dest.enabled;
                                                   const shouldPulse = backupState === 'success' && !isCollapsed && backedUpDestinations.has(dest.id);
-                                                  return (                          <div key={dest.id} className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
-                            !dest.enabled
-                              ? 'bg-black/20 border-white/[0.08] opacity-50'
-                              : hasBackup
-                                ? 'bg-blue-500/10 border-blue-500/20'
-                                : 'bg-white/5 border-white/10 shadow-sm'
-                          } ${shouldPulse ? 'animate-completion-pulse' : ''}`}>
-                            {confirmDeleteBackupFor === dest.id ? (
-                              // CONFIRMATION UI (54px height maintained)
-                              <div className="flex flex-col gap-1.5 p-2.5 justify-center h-full w-full">
+                                                                            return (
+                                                                              <div key={dest.id} className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
+                                                                                !dest.enabled
+                                                                                  ? 'bg-black/20 border-white/[0.08] opacity-50'
+                                                                                  : hasBackup
+                                                                                    ? 'bg-blue-500/10 border-blue-500/20'
+                                                                                    : 'bg-white/5 border-white/10 shadow-sm'
+                                                                              } ${shouldPulse ? 'animate-completion-pulse' : ''}`}>
+                                                                                {confirmDeleteBackupFor === dest.id ? (
+                                                                                  // CONFIRMATION UI (54px height maintained)
+                                                                                  <div className="z-10 flex flex-col gap-1.5 p-2.5 justify-center h-full w-full">
                                 <p className="text-[9px] text-gray-300 font-bold text-center">
                                   Delete backup at this location?
                                 </p>
@@ -696,126 +697,116 @@ function App() {
                                   </button>
                                 </div>
                               </div>
-                            ) : (
-                              <>
-                                <div className="flex-1 relative h-full min-w-0 overflow-hidden">
-                                  {/* OPTIONS ROW - Stretching from right */}
-                                  <div className={`absolute inset-y-0 right-0 flex h-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] overflow-hidden ${
-                                    showingOptionsFor === dest.id 
-                                      ? 'w-full opacity-100' 
-                                      : 'w-0 opacity-0'
-                                  }`}>
-                                    <div className="flex h-full w-full">
-                                      {/* Set/Unset Default */}
-                                      <button
-                                        onClick={() => toggleDefault(dest.id)}
-                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all min-w-0 hover:bg-blue-500/10 ${
-                                          isDefault(dest.id)
-                                            ? 'text-blue-400'
-                                            : 'text-gray-400 hover:text-blue-400'
-                                        }`}
-                                      >
-                                        <span key={isDefault(dest.id) ? 'pinoff' : 'pin'} className="animate-in fade-in zoom-in duration-200">
-                                          {isDefault(dest.id) ? (
-                                            <PinOff size={10} strokeWidth={3} className="flex-shrink-0" />
-                                          ) : (
-                                            <Pin size={10} strokeWidth={3} className="flex-shrink-0" />
-                                          )}
-                                        </span>
-                                        <span className={`text-[9px] tracking-wide text-center truncate w-full ${isDefault(dest.id) ? 'font-bold' : ''}`}>
-                                          {isDefault(dest.id) ? 'Default' : 'Set Default'}
-                                        </span>
-                                      </button>
-
-                                      {/* Divider */}
-                                      <div className={`w-px self-stretch ${hasBackup ? 'bg-blue-500/20' : 'bg-white/10'}`} />
-
-                                      {/* Remove Location */}
-                                      <button
-                                        onClick={() => {
-                                          removeDestination(dest.id);
-                                          setShowingOptionsFor(null);
-                                        }}
-                                        className="flex-1 flex flex-col items-center justify-center gap-0.5 px-2 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 transition-all min-w-0"
-                                      >
-                                        <X size={10} className="flex-shrink-0" />
-                                        <span className="text-[9px] tracking-wide text-center truncate w-full">Remove</span>
-                                      </button>
-
-                                      {/* Divider */}
-                                      <div className={`w-px self-stretch ${hasBackup ? 'bg-blue-500/20' : 'bg-white/10'}`} />
-
-                                      {/* Delete Backup */}
-                                      <button
-                                        onClick={() => setConfirmDeleteBackupFor(dest.id)}
-                                        disabled={!dest.has_existing_backup}
-                                        className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 transition-all min-w-0 ${
-                                          dest.has_existing_backup
-                                            ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
-                                            : 'text-gray-600 opacity-50 cursor-not-allowed'
-                                        }`}
-                                      >
-                                        <Trash2 size={10} className="flex-shrink-0" />
-                                        <span className={`text-[9px] tracking-wide text-center truncate w-full`}>
-                                          Delete
-                                        </span>
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* NORMAL CARD CONTENT - Sliding left */}
-                                  <div className={`absolute inset-0 flex items-center gap-3 p-2.5 h-full w-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] ${
-                                    showingOptionsFor === dest.id 
-                                      ? '-translate-x-full opacity-0' 
-                                      : 'translate-x-0 opacity-100'
-                                  }`}>
-                                    {isBackingUp && (
-                                      <div
-                                        className={`absolute inset-y-0 left-0 bg-blue-600 transition-all duration-300 ease-out z-0 ${
-                                          backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
-                                        }`}
-                                        style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
-                                      />
-                                    )}
-
-                                    <button
-                                      onClick={() => toggleDestination(dest.id)}
-                                      disabled={backupState === 'running'}
-                                      className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
-                                        dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
-                                      } disabled:cursor-default`}
-                                    >
-                                      {getDestinationIcon(dest.destination_type, dest.enabled)}
-                                    </button>
-
-                                    <div className="z-10 flex-1 min-w-0">
-                                                                              <div className="flex items-center gap-2">
-                                                                                <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
-                                                                                {isDefault(dest.id) && (
-                                                                                  <Pin size={10} strokeWidth={3} className="text-blue-400 flex-shrink-0" />
-                                                                                )}
-                                                                              </div>
-                                                                              <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
-                                                                            </div>
-                                                                          </div>
-                                                                        </div>                                      
-                                                                      {/* STATIC SECTION */}
-                                                                      <div className={`z-10 w-px self-stretch ${hasBackup ? 'bg-blue-500/20' : 'bg-white/10'}`} />
-                                                                      <button
-                                                                        onClick={(e) => {
-                                                                          e.stopPropagation();
-                                                                          setShowingOptionsFor(showingOptionsFor === dest.id ? null : dest.id);
-                                                                        }}
-                                                                        disabled={backupState === 'running'}
-                                                                        className="z-10 self-stretch flex items-center justify-center px-3.5 transition-colors disabled:opacity-0 text-gray-600 hover:text-blue-400 hover:bg-white/5"
-                                                                      >
-                                                                        {showingOptionsFor === dest.id ? <CornerDownLeft size={12} /> : <Settings size={12} />}
-                                                                      </button>                              </>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
+                                                        ) : (
+                                                          <div className="flex-1 relative h-full min-w-0 overflow-hidden">
+                                                                                                                                                            {/* Settings Toggle - Sitting on top */}
+                                                                                                                                                            <button
+                                                                                                                                                              onClick={(e) => {
+                                                                                                                                                                e.stopPropagation();
+                                                                                                                                                                setShowingOptionsFor(showingOptionsFor === dest.id ? null : dest.id);
+                                                                                                                                                              }}
+                                                                                                                                                              disabled={backupState === 'running'}
+                                                                                                                                                              className="absolute right-0 top-0 bottom-0 z-30 px-4 text-gray-600 hover:text-blue-400 transition-all disabled:opacity-0 flex items-center justify-center"
+                                                                                                                                                            >
+                                                                                                                                                              {showingOptionsFor === dest.id ? <CornerDownLeft size={12} /> : <Settings size={12} />}
+                                                                                                                                                            </button>
+                                                                                                                            
+                                                                                                                                                            {/* OPTIONS ROW - Stretching from right */}
+                                                                                                                                                            <div className={`absolute inset-y-0 right-0 flex h-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] overflow-hidden ${
+                                                                                                                                                              showingOptionsFor === dest.id 
+                                                                                                                                                                ? 'w-full opacity-100' 
+                                                                                                                                                                : 'w-0 opacity-0'
+                                                                                                                                                            }`}>
+                                                                                                                                                              <div className="flex h-full w-full p-1.5 gap-1.5 pr-12">
+                                                                                                                                                                {/* Set/Unset Default */}
+                                                                                                                                                                <button
+                                                                                                                                                                  onClick={() => toggleDefault(dest.id)}
+                                                                                                                                                                  className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
+                                                                                                                                                                    isDefault(dest.id)
+                                                                                                                                                                      ? 'bg-blue-600/20 border-blue-500 text-blue-400'
+                                                                                                                                                                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400'
+                                                                                                                                                                  }`}
+                                                                                                                                                                >
+                                                                                                                                                                  <span key={isDefault(dest.id) ? 'pinoff' : 'pin'} className="animate-in fade-in zoom-in duration-200">
+                                                                                                                                                                    {isDefault(dest.id) ? (
+                                                                                                                                                                      <PinOff size={10} strokeWidth={3} className="flex-shrink-0" />
+                                                                                                                                                                    ) : (
+                                                                                                                                                                      <Pin size={10} strokeWidth={3} className="flex-shrink-0" />
+                                                                                                                                                                    )}
+                                                                                                                                                                  </span>
+                                                                                                                                                                  <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                                                                                                                                                    Default
+                                                                                                                                                                  </span>
+                                                                                                                                                                </button>
+                                                                                                                            
+                                                                                                                                                                {/* Remove Location */}
+                                                                                                                                                                <button
+                                                                                                                                                                  onClick={() => {
+                                                                                                                                                                    removeDestination(dest.id);
+                                                                                                                                                                    setShowingOptionsFor(null);
+                                                                                                                                                                  }}
+                                                                                                                                                                  className="flex-1 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
+                                                                                                                                                                >
+                                                                                                                                                                  <X size={10} className="flex-shrink-0" />
+                                                                                                                                                                  <span className="text-[9px] tracking-wide text-center truncate w-full">Remove</span>
+                                                                                                                                                                </button>
+                                                                                                                            
+                                                                                                                                                                {/* Delete Backup */}
+                                                                                                                                                                <button
+                                                                                                                                                                  onClick={() => setConfirmDeleteBackupFor(dest.id)}
+                                                                                                                                                                  disabled={!dest.has_existing_backup}
+                                                                                                                                                                  className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
+                                                                                                                                                                    dest.has_existing_backup
+                                                                                                                                                                      ? 'border-white/10 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30'
+                                                                                                                                                                      : 'border-white/10 bg-white/[0.02] text-gray-600 opacity-50 cursor-not-allowed'
+                                                                                                                                                                  }`}
+                                                                                                                                                                >
+                                                                                                                                                                  <Trash2 size={10} className="flex-shrink-0" />
+                                                                                                                                                                  <span className={`text-[9px] tracking-wide text-center truncate w-full`}>
+                                                                                                                                                                    Delete
+                                                                                                                                                                  </span>
+                                                                                                                                                                </button>
+                                                                                                                                                              </div>
+                                                                                                                                                            </div>
+                                                                                                                            
+                                                                                                                                                            {/* NORMAL CARD CONTENT - Sliding left */}
+                                                                                                                                                            <div className={`absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] ${
+                                                                                                                                                              showingOptionsFor === dest.id 
+                                                                                                                                                                ? '-translate-x-full opacity-0' 
+                                                                                                                                                                : 'translate-x-0 opacity-100'
+                                                                                                                                                            }`}>                                                              <button
+                                                                onClick={() => toggleDestination(dest.id)}
+                                                                disabled={backupState === 'running'}
+                                                                className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                                                  dest.enabled ? 'bg-white/5 border-white/10 hover:bg-black/10 shadow-sm' : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/5'
+                                                                } disabled:cursor-default`}
+                                                              >
+                                                                {getDestinationIcon(dest.destination_type, dest.enabled)}
+                                                              </button>
+                            
+                                                              <div className="z-10 flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                  <p className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? 'text-gray-200' : 'text-gray-500'}`}>{dest.label}</p>
+                                                                  {isDefault(dest.id) && (
+                                                                    <Pin size={10} strokeWidth={3} className="text-blue-400 flex-shrink-0" />
+                                                                  )}
+                                                                </div>
+                                                                <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">{dest.path}</p>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        )}                                                                                                                                        {isBackingUp && (
+                                                                                                                                          <div
+                                                                                                                                            className={`absolute inset-0 bg-blue-600 transition-all duration-300 ease-out z-20 pointer-events-none ${
+                                                                                                                                              backupState === 'success' ? 'animate-fill-fade opacity-40' : 'opacity-40'
+                                                                                                                                            }`}
+                                                                                                                                            style={{ width: backupState === 'success' ? '100%' : `${globalProgress}%` }}
+                                                                                                                                          />
+                                                                                                                                        )}
+                                                                                                                                      </div>
+                                                                                                                                    );
+                                                                                                                                  })
+                                                                                                                                ) : (
                       <button
                         onClick={addDefaultLocation}
                         className="group w-full flex items-center gap-3 p-2.5 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all h-[54px]"
