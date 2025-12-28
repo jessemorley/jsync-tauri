@@ -65,6 +65,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install DMG creation dependencies
+        run: |
+          # Ensure create-dmg is available
+          brew install create-dmg || true
+
       - name: Build and Release
         id: tauri_build
         uses: tauri-apps/tauri-action@v0.5
