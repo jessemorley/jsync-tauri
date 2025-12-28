@@ -34,6 +34,13 @@ jobs:
           echo "✅ TAURI_SIGNING_PRIVATE_KEY is set"
           echo "Key length: ${#TAURI_SIGNING_PRIVATE_KEY} characters"
           echo "Key starts with: ${TAURI_SIGNING_PRIVATE_KEY:0:40}..."
+          echo ""
+          echo "=== FULL KEY (with line breaks visible as [LF]) ==="
+          echo "$TAURI_SIGNING_PRIVATE_KEY" | sed 's/$/[LF]/'
+          echo "=== END OF KEY ==="
+          echo ""
+          echo "Using od to show all characters including newlines:"
+          echo "$TAURI_SIGNING_PRIVATE_KEY" | od -An -tx1 | head -10
 
       - name: Test key format and decoding
         env:
