@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip } from "./components/Tooltip";
+import { ScrollContainer } from "./components/ScrollContainer";
 import {
   Plus,
   Trash2,
@@ -95,6 +96,7 @@ function App() {
   const [isEditingCustom, setIsEditingCustom] = useState(false);
   const [customValue, setCustomValue] = useState("");
   const [isHoveringSync, setIsHoveringSync] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const customInputRef = useRef<HTMLInputElement>(null);
 
   // Session State
@@ -166,6 +168,13 @@ function App() {
   useEffect(() => {
     lastSyncedRef.current = lastSynced;
   }, [lastSynced]);
+
+  // Handle collapse animation
+  useEffect(() => {
+    setIsAnimating(true);
+    const timer = setTimeout(() => setIsAnimating(false), 200);
+    return () => clearTimeout(timer);
+  }, [isCollapsed]);
 
   // Load Session and its Config
   const loadSessionData = useCallback(async (newSession: SessionInfo) => {
@@ -809,14 +818,18 @@ function App() {
 
             {/* Collapsible Content */}
             <div
-              className="overflow-y-auto"
               style={{
                 height: isCollapsed ? '0px' : '460px',
                 maxHeight: '460px',
-                transition: 'height 300ms ease-out'
+                transition: 'height 200ms ease-out',
+                overflow: 'hidden'
               }}
             >
-              <div className="p-4 space-y-4">
+              <ScrollContainer
+                className="h-full"
+                defer={isCollapsed || isAnimating}
+              >
+                <div className="p-4 space-y-4">
                 {/* Locations Section */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
@@ -1247,13 +1260,17 @@ function App() {
                   </div>
                 </div>
               </div>
+              </ScrollContainer>
             </div>
           </>
         )}
 
         {/* VIEW: PREFERENCES */}
         {view === "prefs" && (
-          <div className="overflow-y-auto p-5 space-y-5" style={{minHeight: 0, gridRow: '1 / 3'}}>
+          <ScrollContainer
+            className="p-5 space-y-5"
+            style={{minHeight: 0, gridRow: '1 / 3'}}
+          >
             <div className="flex items-center justify-between">
               <h2 className="text-[13px] font-bold text-white flex items-center gap-2">
                 <Settings size={14} className="text-blue-400" />
@@ -1409,7 +1426,7 @@ function App() {
                 </div>
               </button>
             </div>
-          </div>
+          </ScrollContainer>
         )}
 
         {/* Footer */}

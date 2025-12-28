@@ -100,8 +100,16 @@ export function useTooltip(options: UseTooltipOptions = {}) {
       calculatePosition();
     };
 
+    const handleScroll = () => {
+      calculatePosition();
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    document.addEventListener('scroll', handleScroll, true);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('scroll', handleScroll, true);
+    };
   }, [isVisible, calculatePosition]);
 
   useEffect(() => {
