@@ -115,6 +115,9 @@ function App() {
   const [confirmDeleteBackupFor, setConfirmDeleteBackupFor] = useState<
     number | null
   >(null);
+  const [previousCardState, setPreviousCardState] = useState<{
+    [key: number]: "content" | "options" | "confirm";
+  }>({});
 
   // Persisted Global State
   const [scheduledBackup, setScheduledBackup] = usePersistedState(
@@ -214,6 +217,23 @@ function App() {
       customInputRef.current.focus();
     }
   }, [isEditingCustom]);
+
+  // Track previous card state for conditional animations
+  useEffect(() => {
+    destinations.forEach((dest) => {
+      const currentState: "content" | "options" | "confirm" =
+        confirmDeleteBackupFor === dest.id
+          ? "confirm"
+          : showingOptionsFor === dest.id
+            ? "options"
+            : "content";
+
+      setPreviousCardState((prev) => ({
+        ...prev,
+        [dest.id]: currentState,
+      }));
+    });
+  }, [showingOptionsFor, confirmDeleteBackupFor, destinations]);
 
   // Load session info
   const refreshSession = useCallback(() => {
@@ -847,7 +867,11 @@ function App() {
                                   confirmDeleteBackupFor !== dest.id && (
                                     <motion.div
                                       key="content"
-                                      initial={{ x: "-100%", opacity: 0 }}
+                                      initial={
+                                        previousCardState[dest.id] === "options"
+                                          ? { x: "-100%", opacity: 0 }
+                                          : { x: "-100%", opacity: 0 }
+                                      }
                                       animate={{ x: 0, opacity: 1 }}
                                       exit={{ x: "-100%", opacity: 0 }}
                                       transition={{
@@ -902,34 +926,24 @@ function App() {
                                   confirmDeleteBackupFor !== dest.id && (
                                     <motion.div
                                       key="options"
-                                      initial={{
-                                        x:
-                                          confirmDeleteBackupFor === null
-                                            ? "100%"
-                                            : 0,
-
-                                        opacity: 0,
-
-                                        scale:
-                                          confirmDeleteBackupFor === null
-                                            ? 1
-                                            : 0.95,
-                                      }}
+                                      initial={
+                                        previousCardState[dest.id] === "content"
+                                          ? { x: "100%", opacity: 0 }
+                                          : previousCardState[dest.id] ===
+                                              "confirm"
+                                            ? { x: 0, opacity: 0, scale: 0.95 }
+                                            : { x: "100%", opacity: 0 }
+                                      }
                                       animate={{ x: 0, opacity: 1, scale: 1 }}
-                                      exit={{
-                                        opacity: 0,
-
-                                        scale: 0.95,
-
-                                        x: 0,
-                                      }}
+                                      exit={
+                                        showingOptionsFor === dest.id
+                                          ? { x: 0, opacity: 0, scale: 0.95 }
+                                          : { x: "100%", opacity: 0 }
+                                      }
                                       transition={{
                                         type: "spring",
-
                                         stiffness: 700,
-
                                         damping: 40,
-
                                         mass: 1,
                                       }}
                                       className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
