@@ -1268,10 +1268,11 @@ function App() {
         {/* VIEW: PREFERENCES */}
         {view === "prefs" && (
           <ScrollContainer
-            className="p-5 space-y-5"
+            className="p-5"
             style={{minHeight: 0, gridRow: '1 / 3'}}
           >
-            <div className="flex items-center justify-between">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
               <h2 className="text-[13px] font-bold text-white flex items-center gap-2">
                 <Settings size={14} className="text-blue-400" />
                 Preferences
@@ -1425,6 +1426,7 @@ function App() {
                   />
                 </div>
               </button>
+            </div>
             </div>
           </ScrollContainer>
         )}
