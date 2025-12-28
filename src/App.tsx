@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tooltip } from "./components/Tooltip";
 import {
   Plus,
   Trash2,
@@ -714,16 +715,18 @@ function App() {
 
               <div className="p-4 px-5 flex items-center justify-between gap-3 z-10">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-1.5 -ml-1 rounded-lg transition-all flex-shrink-0 hover:bg-white/10 text-gray-400 active:bg-white/5"
-                  >
-                    {isCollapsed ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronUp size={16} />
-                    )}
-                  </button>
+                  <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'}>
+                    <button
+                      onClick={() => setIsCollapsed(!isCollapsed)}
+                      className="p-1.5 -ml-1 rounded-lg transition-all flex-shrink-0 hover:bg-white/10 text-gray-400 active:bg-white/5"
+                    >
+                      {isCollapsed ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronUp size={16} />
+                      )}
+                    </button>
+                  </Tooltip>
 
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -756,36 +759,44 @@ function App() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleStartBackup}
-                  onMouseEnter={() => setIsHoveringSync(true)}
-                  onMouseLeave={() => setIsHoveringSync(false)}
-                  disabled={enabledCount === 0}
-                  className={`flex-shrink-0 group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
-                    backupState === "running"
-                      ? isHoveringSync
-                        ? "bg-red-500/20 border border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                        : "bg-blue-500/20 border border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                      : backupState === "success"
-                        ? "bg-blue-600 border border-blue-400 text-white shadow-lg"
-                        : "bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 active:scale-95 active:bg-blue-500/30"
-                  } disabled:opacity-30 disabled:grayscale`}
+                <Tooltip
+                  content={() => {
+                    if (backupState === 'running') return 'Cancel backup';
+                    if (backupState === 'success') return 'Backup complete';
+                    return 'Start backup';
+                  }}
                 >
-                  {backupState === "running" ? (
-                    isHoveringSync ? (
-                      <X size={18} />
+                  <button
+                    onClick={handleStartBackup}
+                    onMouseEnter={() => setIsHoveringSync(true)}
+                    onMouseLeave={() => setIsHoveringSync(false)}
+                    disabled={enabledCount === 0}
+                    className={`flex-shrink-0 group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
+                      backupState === "running"
+                        ? isHoveringSync
+                          ? "bg-red-500/20 border border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                          : "bg-blue-500/20 border border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                        : backupState === "success"
+                          ? "bg-blue-600 border border-blue-400 text-white shadow-lg"
+                          : "bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 active:scale-95 active:bg-blue-500/30"
+                    } disabled:opacity-30 disabled:grayscale`}
+                  >
+                    {backupState === "running" ? (
+                      isHoveringSync ? (
+                        <X size={18} />
+                      ) : (
+                        <RefreshCw size={18} className="animate-spin" />
+                      )
+                    ) : backupState === "success" ? (
+                      <CheckCircle2 size={18} />
                     ) : (
-                      <RefreshCw size={18} className="animate-spin" />
-                    )
-                  ) : backupState === "success" ? (
-                    <CheckCircle2 size={18} />
-                  ) : (
-                    <RefreshCw
-                      size={18}
-                      className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
-                    />
-                  )}
-                </button>
+                      <RefreshCw
+                        size={18}
+                        className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
+                      />
+                    )}
+                  </button>
+                </Tooltip>
               </div>
               <div className="h-px w-full bg-white/5" />
             </div>
@@ -801,12 +812,14 @@ function App() {
                     <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 text-white">
                       Locations
                     </span>
-                    <button
-                      onClick={addDefaultLocation}
-                      className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
-                    >
-                      <Plus size={14} />
-                    </button>
+                    <Tooltip content="Add new backup location">
+                      <button
+                        onClick={addDefaultLocation}
+                        className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </Tooltip>
                   </div>
 
                   <div className="space-y-2">
@@ -837,29 +850,34 @@ function App() {
                           >
                             <div className="relative flex-1 h-full min-w-0 overflow-hidden">
                               {/* Settings Toggle - Sitting on top */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirmDeleteBackupFor === dest.id) {
-                                    setConfirmDeleteBackupFor(null);
-                                  } else {
-                                    setShowingOptionsFor(
-                                      showingOptionsFor === dest.id
-                                        ? null
-                                        : dest.id,
-                                    );
-                                  }
-                                }}
-                                disabled={backupState === "running"}
-                                className="absolute right-0 top-0 bottom-0 z-30 px-4 text-gray-600 hover:text-blue-400 transition-all disabled:opacity-0 flex items-center justify-center"
+                              <Tooltip
+                                content={showingOptionsFor === dest.id ? 'Hide options' : 'Show options'}
+                                disabled={backupState === 'running'}
                               >
-                                {showingOptionsFor === dest.id ||
-                                confirmDeleteBackupFor === dest.id ? (
-                                  <CornerDownLeft size={12} />
-                                ) : (
-                                  <Settings size={12} />
-                                )}
-                              </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirmDeleteBackupFor === dest.id) {
+                                      setConfirmDeleteBackupFor(null);
+                                    } else {
+                                      setShowingOptionsFor(
+                                        showingOptionsFor === dest.id
+                                          ? null
+                                          : dest.id,
+                                      );
+                                    }
+                                  }}
+                                  disabled={backupState === "running"}
+                                  className="absolute right-0 top-0 bottom-0 z-30 px-4 text-gray-600 hover:text-blue-400 transition-all disabled:opacity-0 flex items-center justify-center"
+                                >
+                                  {showingOptionsFor === dest.id ||
+                                  confirmDeleteBackupFor === dest.id ? (
+                                    <CornerDownLeft size={12} />
+                                  ) : (
+                                    <Settings size={12} />
+                                  )}
+                                </button>
+                              </Tooltip>
 
                               <AnimatePresence mode="popLayout" initial={false}>
                                 {/* NORMAL CARD CONTENT */}
@@ -948,78 +966,87 @@ function App() {
                                       }}
                                       className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
                                     >
-                                      <button
-                                        onClick={() => toggleDefault(dest.id)}
-                                        className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
-                                          isDefault(dest.id)
-                                            ? "bg-blue-600/20 border-blue-500 text-blue-400"
-                                            : "bg-white/5 border-white/10 text-gray-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400"
-                                        }`}
-                                      >
-                                        <span
-                                          key={
+                                      <Tooltip content={isDefault(dest.id) ? 'Remove default' : 'Mark as default'}>
+                                        <button
+                                          onClick={() => toggleDefault(dest.id)}
+                                          className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
                                             isDefault(dest.id)
-                                              ? "pinoff"
-                                              : "pin"
-                                          }
-                                          className="animate-in fade-in zoom-in duration-200"
+                                              ? "bg-blue-600/20 border-blue-500 text-blue-400"
+                                              : "bg-white/5 border-white/10 text-gray-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400"
+                                          }`}
                                         >
-                                          {isDefault(dest.id) ? (
-                                            <PinOff
-                                              size={10}
-                                              strokeWidth={3}
-                                              className="flex-shrink-0"
-                                            />
-                                          ) : (
-                                            <Pin
-                                              size={10}
-                                              strokeWidth={3}
-                                              className="flex-shrink-0"
-                                            />
-                                          )}
-                                        </span>
-                                        <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                          Default
-                                        </span>
-                                      </button>
+                                          <span
+                                            key={
+                                              isDefault(dest.id)
+                                                ? "pinoff"
+                                                : "pin"
+                                            }
+                                            className="animate-in fade-in zoom-in duration-200"
+                                          >
+                                            {isDefault(dest.id) ? (
+                                              <PinOff
+                                                size={10}
+                                                strokeWidth={3}
+                                                className="flex-shrink-0"
+                                              />
+                                            ) : (
+                                              <Pin
+                                                size={10}
+                                                strokeWidth={3}
+                                                className="flex-shrink-0"
+                                              />
+                                            )}
+                                          </span>
+                                          <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                            Default
+                                          </span>
+                                        </button>
+                                      </Tooltip>
 
-                                      <button
-                                        onClick={() => {
-                                          removeDestination(dest.id);
-                                          setShowingOptionsFor(null);
-                                        }}
-                                        className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
-                                      >
-                                        <Delete
-                                          size={10}
-                                          className="flex-shrink-0"
-                                        />
-                                        <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                          Remove
-                                        </span>
-                                      </button>
+                                      <Tooltip content="Remove location">
+                                        <button
+                                          onClick={() => {
+                                            removeDestination(dest.id);
+                                            setShowingOptionsFor(null);
+                                          }}
+                                          className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
+                                        >
+                                          <Delete
+                                            size={10}
+                                            className="flex-shrink-0"
+                                          />
+                                          <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                            Remove
+                                          </span>
+                                        </button>
+                                      </Tooltip>
 
-                                      <button
-                                        onClick={() =>
-                                          setConfirmDeleteBackupFor(dest.id)
-                                        }
+                                      <Tooltip
+                                        content="Delete backup data"
                                         disabled={!dest.has_existing_backup}
-                                        className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
-                                          dest.has_existing_backup
-                                            ? "border-white/10 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
-                                            : "border-white/10 bg-white/[0.02] text-gray-600 opacity-50 cursor-not-allowed"
-                                        }`}
                                       >
-                                        <Trash2
-                                          size={10}
-                                          className="flex-shrink-0"
-                                        />
-                                        <span
-                                          className={`text-[9px] tracking-wide text-center truncate w-full`}
+                                        <button
+                                          onClick={() =>
+                                            setConfirmDeleteBackupFor(dest.id)
+                                          }
+                                          disabled={!dest.has_existing_backup}
+                                          className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
+                                            dest.has_existing_backup
+                                              ? "border-white/10 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
+                                              : "border-white/10 bg-white/[0.02] text-gray-600 opacity-50 cursor-not-allowed"
+                                          }`}
                                         >
-                                          Delete
-                                        </span>
-                                      </button>
+                                          <Trash2
+                                            size={10}
+                                            className="flex-shrink-0"
+                                          />
+                                          <span
+                                            className={`text-[9px] tracking-wide text-center truncate w-full`}
+                                          >
+                                            Delete
+                                          </span>
+                                        </button>
+                                      </Tooltip>
                                     </motion.div>
                                   )}
 
