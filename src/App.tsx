@@ -1014,24 +1014,6 @@ function App() {
                                         </button>
                                       </Tooltip>
 
-                                      <Tooltip content="Remove location" disabled={!tooltipsEnabled}>
-                                        <button
-                                          onClick={() => {
-                                            removeDestination(dest.id);
-                                            setShowingOptionsFor(null);
-                                          }}
-                                          className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
-                                        >
-                                          <Delete
-                                            size={10}
-                                            className="flex-shrink-0"
-                                          />
-                                          <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                            Remove
-                                          </span>
-                                        </button>
-                                      </Tooltip>
-
                                       <Tooltip
                                         content="Delete backup data"
                                         disabled={!tooltipsEnabled || !dest.has_existing_backup}
@@ -1055,6 +1037,24 @@ function App() {
                                             className={`text-[9px] tracking-wide text-center truncate w-full`}
                                           >
                                             Delete
+                                          </span>
+                                        </button>
+                                      </Tooltip>
+
+                                      <Tooltip content="Remove location" disabled={!tooltipsEnabled}>
+                                        <button
+                                          onClick={() => {
+                                            removeDestination(dest.id);
+                                            setShowingOptionsFor(null);
+                                          }}
+                                          className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
+                                        >
+                                          <Delete
+                                            size={10}
+                                            className="flex-shrink-0"
+                                          />
+                                          <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                            Remove
                                           </span>
                                         </button>
                                       </Tooltip>
@@ -1085,6 +1085,17 @@ function App() {
                                     </div>
                                     <button
                                       onClick={() =>
+                                        setConfirmDeleteBackupFor(null)
+                                      }
+                                      className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 transition-all"
+                                    >
+                                      <X size={10} className="flex-shrink-0" />
+                                      <span className="text-[9px] tracking-wide">
+                                        Cancel
+                                      </span>
+                                    </button>
+                                    <button
+                                      onClick={() =>
                                         handleConfirmDeleteBackup(dest)
                                       }
                                       className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
@@ -1095,17 +1106,6 @@ function App() {
                                       />
                                       <span className="text-[9px] tracking-wide">
                                         Delete
-                                      </span>
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        setConfirmDeleteBackupFor(null)
-                                      }
-                                      className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 transition-all"
-                                    >
-                                      <X size={10} className="flex-shrink-0" />
-                                      <span className="text-[9px] tracking-wide">
-                                        Cancel
                                       </span>
                                     </button>
                                   </motion.div>
