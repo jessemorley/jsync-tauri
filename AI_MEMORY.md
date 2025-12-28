@@ -53,3 +53,5 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 - `npm run tauri dev`: Start development environment.
 - `npm run build`: Check types and build frontend.
 - `npm run tauri build`: Build the full application.
+
+
