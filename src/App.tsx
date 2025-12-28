@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Trash2,
@@ -814,7 +815,7 @@ function App() {
                                     : "bg-white/5 border-white/10 shadow-sm"
                             } ${shouldPulse ? "animate-completion-pulse" : ""}`}
                           >
-                            <div className="flex-1 relative h-full min-w-0 overflow-hidden">
+                            <div className="relative flex-1 h-full min-w-0 overflow-hidden">
                               {/* Settings Toggle - Sitting on top */}
                               <button
                                 onClick={(e) => {
@@ -839,170 +840,198 @@ function App() {
                                   <Settings size={12} />
                                 )}
                               </button>
-                              {/* OPTIONS ROW */}
-                              <div
-                                className={`absolute inset-y-0 right-0 w-full flex h-full transition-all duration-200 [transition-timing-function:cubic-bezier(0.2,1.1,0.3,1.1)] overflow-hidden ${
-                                  confirmDeleteBackupFor === dest.id
-                                    ? "opacity-0 scale-95 pointer-events-none translate-x-0"
-                                    : showingOptionsFor === dest.id
-                                      ? "opacity-100 scale-100 translate-x-0"
-                                      : "opacity-0 scale-95 translate-x-full pointer-events-none"
-                                }`}
-                              >
-                                <div className="flex h-full w-full p-1.5 gap-1.5 pr-12">
-                                  <button
-                                    onClick={() => toggleDefault(dest.id)}
-                                    className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
-                                      isDefault(dest.id)
-                                        ? "bg-blue-600/20 border-blue-500 text-blue-400"
-                                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400"
-                                    }`}
-                                  >
-                                    <span
-                                      key={
-                                        isDefault(dest.id) ? "pinoff" : "pin"
-                                      }
-                                      className="animate-in fade-in zoom-in duration-200"
-                                    >
-                                      {isDefault(dest.id) ? (
-                                        <PinOff
-                                          size={10}
-                                          strokeWidth={3}
-                                          className="flex-shrink-0"
-                                        />
-                                      ) : (
-                                        <Pin
-                                          size={10}
-                                          strokeWidth={3}
-                                          className="flex-shrink-0"
-                                        />
-                                      )}
-                                    </span>
-                                    <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                      Default
-                                    </span>
-                                  </button>
 
-                                  <button
-                                    onClick={() => {
-                                      removeDestination(dest.id);
-                                      setShowingOptionsFor(null);
-                                    }}
-                                    className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
-                                  >
-                                    <Delete size={10} className="flex-shrink-0" />
-                                    <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                      Remove
-                                    </span>
-                                  </button>
-
-                                  <button
-                                    onClick={() =>
-                                      setConfirmDeleteBackupFor(dest.id)
-                                    }
-                                    disabled={!dest.has_existing_backup}
-                                    className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
-                                      dest.has_existing_backup
-                                        ? "border-white/10 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
-                                        : "border-white/10 bg-white/[0.02] text-gray-600 opacity-50 cursor-not-allowed"
-                                    }`}
-                                  >
-                                    <Trash2
-                                      size={10}
-                                      className="flex-shrink-0"
-                                    />
-                                    <span
-                                      className={`text-[9px] tracking-wide text-center truncate w-full`}
+                              <AnimatePresence mode="popLayout" initial={false}>
+                                {/* NORMAL CARD CONTENT */}
+                                {showingOptionsFor !== dest.id &&
+                                  confirmDeleteBackupFor !== dest.id && (
+                                    <motion.div
+                                      key="content"
+                                      initial={{ x: 0, opacity: 1 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      exit={{ x: "-100%", opacity: 0 }}
+                                      transition={{
+                                        type: "spring",
+                                        stiffness: 300,
+                                        damping: 30,
+                                      }}
+                                      className="absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full"
                                     >
-                                      Delete
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>
-                              {/* CONFIRM DELETE ROW */}
-                              <div
-                                className={`absolute inset-y-0 right-0 w-full flex h-full transition-all duration-200 ease-out overflow-hidden ${
-                                  confirmDeleteBackupFor === dest.id
-                                    ? "opacity-100 scale-100"
-                                    : "opacity-0 scale-95 pointer-events-none"
-                                }`}
-                              >
-                                <div className="flex h-full w-full p-1.5 gap-1.5 pr-12">
-                                  <div className="flex-1 basis-0 flex flex-col items-center justify-center min-w-0 rounded-lg border border-transparent">
-                                    <span className="text-[9px] tracking-wide text-gray-400 leading-[1.1] text-center">
-                                      Delete
-                                      <br />
-                                      Backup?
-                                    </span>
-                                  </div>
-                                  <button
-                                    onClick={() =>
-                                      handleConfirmDeleteBackup(dest)
-                                    }
-                                    className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                                  >
-                                    <Trash2 size={10} className="flex-shrink-0" />
-                                    <span className="text-[9px] tracking-wide">
-                                      Delete
-                                    </span>
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setConfirmDeleteBackupFor(null)
-                                    }
-                                    className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 transition-all"
-                                  >
-                                    <X size={10} className="flex-shrink-0" />
-                                    <span className="text-[9px] tracking-wide">
-                                      Cancel
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>{" "}
-                              {/* NORMAL CARD CONTENT - Sliding left */}
-                              <div
-                                className={`absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full transition-all duration-200 [transition-timing-function:cubic-bezier(0.2,1.1,0.3,1.1)] ${
-                                  showingOptionsFor === dest.id ||
-                                  confirmDeleteBackupFor === dest.id
-                                    ? "-translate-x-full opacity-0"
-                                    : "translate-x-0 opacity-100"
-                                }`}
-                              >
-                                {" "}
-                                <button
-                                  onClick={() => toggleDestination(dest.id)}
-                                  disabled={backupState === "running"}
-                                  className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
-                                    dest.enabled
-                                      ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
-                                      : "bg-white/[0.02] border-white/[0.08] hover:bg-white/5"
-                                  } disabled:cursor-default`}
-                                >
-                                  {getDestinationIcon(
-                                    dest.destination_type,
-                                    dest.enabled,
+                                      <button
+                                        onClick={() =>
+                                          toggleDestination(dest.id)
+                                        }
+                                        disabled={backupState === "running"}
+                                        className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                          dest.enabled
+                                            ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
+                                            : "bg-white/[0.02] border-white/[0.08] hover:bg-white/5"
+                                        } disabled:cursor-default`}
+                                      >
+                                        {getDestinationIcon(
+                                          dest.destination_type,
+                                          dest.enabled,
+                                        )}
+                                      </button>
+                                      <div className="z-10 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <p
+                                            className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}
+                                          >
+                                            {dest.label}
+                                          </p>
+                                          {isDefault(dest.id) && (
+                                            <Pin
+                                              size={10}
+                                              strokeWidth={3}
+                                              className="text-blue-400 flex-shrink-0"
+                                            />
+                                          )}
+                                        </div>
+                                        <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">
+                                          {dest.path}
+                                        </p>
+                                      </div>
+                                    </motion.div>
                                   )}
-                                </button>
-                                <div className="z-10 flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p
-                                      className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}
+
+                                {/* OPTIONS ROW */}
+                                {showingOptionsFor === dest.id &&
+                                  confirmDeleteBackupFor !== dest.id && (
+                                    <motion.div
+                                      key="options"
+                                      initial={{ x: "100%", opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      exit={{ opacity: 0, scale: 0.95 }}
+                                      transition={{
+                                        type: "spring",
+                                        stiffness: 300,
+                                        damping: 30,
+                                      }}
+                                      className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
                                     >
-                                      {dest.label}
-                                    </p>
-                                    {isDefault(dest.id) && (
-                                      <Pin
+                                      <button
+                                        onClick={() => toggleDefault(dest.id)}
+                                        className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
+                                          isDefault(dest.id)
+                                            ? "bg-blue-600/20 border-blue-500 text-blue-400"
+                                            : "bg-white/5 border-white/10 text-gray-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400"
+                                        }`}
+                                      >
+                                        <span
+                                          key={
+                                            isDefault(dest.id) ? "pinoff" : "pin"
+                                          }
+                                          className="animate-in fade-in zoom-in duration-200"
+                                        >
+                                          {isDefault(dest.id) ? (
+                                            <PinOff
+                                              size={10}
+                                              strokeWidth={3}
+                                              className="flex-shrink-0"
+                                            />
+                                          ) : (
+                                            <Pin
+                                              size={10}
+                                              strokeWidth={3}
+                                              className="flex-shrink-0"
+                                            />
+                                          )}
+                                        </span>
+                                        <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                          Default
+                                        </span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          removeDestination(dest.id);
+                                          setShowingOptionsFor(null);
+                                        }}
+                                        className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
+                                      >
+                                        <Delete
+                                          size={10}
+                                          className="flex-shrink-0"
+                                        />
+                                        <span className="text-[9px] tracking-wide text-center truncate w-full">
+                                          Remove
+                                        </span>
+                                      </button>
+
+                                      <button
+                                        onClick={() =>
+                                          setConfirmDeleteBackupFor(dest.id)
+                                        }
+                                        disabled={!dest.has_existing_backup}
+                                        className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
+                                          dest.has_existing_backup
+                                            ? "border-white/10 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
+                                            : "border-white/10 bg-white/[0.02] text-gray-600 opacity-50 cursor-not-allowed"
+                                        }`}
+                                      >
+                                        <Trash2
+                                          size={10}
+                                          className="flex-shrink-0"
+                                        />
+                                        <span
+                                          className={`text-[9px] tracking-wide text-center truncate w-full`}
+                                        >
+                                          Delete
+                                        </span>
+                                      </button>
+                                    </motion.div>
+                                  )}
+
+                                {/* CONFIRM DELETE ROW */}
+                                {confirmDeleteBackupFor === dest.id && (
+                                  <motion.div
+                                    key="confirm"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{
+                                      type: "spring",
+                                      stiffness: 400,
+                                      damping: 30,
+                                    }}
+                                    className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
+                                  >
+                                    <div className="flex-1 basis-0 flex flex-col items-center justify-center min-w-0 rounded-lg border border-transparent">
+                                      <span className="text-[9px] tracking-wide text-gray-400 leading-[1.1] text-center">
+                                        Delete
+                                        <br />
+                                        Backup?
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        handleConfirmDeleteBackup(dest)
+                                      }
+                                      className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                                    >
+                                      <Trash2
                                         size={10}
-                                        strokeWidth={3}
-                                        className="text-blue-400 flex-shrink-0"
+                                        className="flex-shrink-0"
                                       />
-                                    )}
-                                  </div>
-                                  <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">
-                                    {dest.path}
-                                  </p>
-                                </div>
-                              </div>
+                                      <span className="text-[9px] tracking-wide">
+                                        Delete
+                                      </span>
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        setConfirmDeleteBackupFor(null)
+                                      }
+                                      className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 transition-all"
+                                    >
+                                      <X size={10} className="flex-shrink-0" />
+                                      <span className="text-[9px] tracking-wide">
+                                        Cancel
+                                      </span>
+                                    </button>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                             {isBackingUp && (
                               <div
