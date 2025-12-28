@@ -27,6 +27,7 @@ import {
   Pin,
   PinOff,
   Loader2,
+  Delete,
 } from "lucide-react";
 import "./App.css";
 import type {
@@ -888,7 +889,7 @@ function App() {
                                     }}
                                     className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
                                   >
-                                    <X size={10} className="flex-shrink-0" />
+                                    <Delete size={10} className="flex-shrink-0" />
                                     <span className="text-[9px] tracking-wide text-center truncate w-full">
                                       Remove
                                     </span>
