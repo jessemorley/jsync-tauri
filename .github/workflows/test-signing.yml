@@ -48,24 +48,26 @@ jobs:
         run: |
           echo "Testing if key can be decoded..."
 
-          # Save key to temp file
-          echo "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/test-key.key
+          # Save key to temp file WITHOUT echo adding newline
+          printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" > /tmp/test-key.key
 
           echo "Key file size: $(wc -c < /tmp/test-key.key) bytes"
           echo "Key starts with: $(head -c 50 /tmp/test-key.key)"
           echo ""
 
           # Try to decode the base64 to see if it's valid
-          if echo "$TAURI_SIGNING_PRIVATE_KEY" | base64 -d > /dev/null 2>&1; then
+          if printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" | base64 -d > /dev/null 2>&1; then
             echo "✅ Key is valid base64"
           else
             echo "❌ Key is NOT valid base64!"
             exit 1
           fi
 
-          # Check for common issues
-          if echo "$TAURI_SIGNING_PRIVATE_KEY" | grep -q $'\n'; then
+          # Check for common issues - check the variable itself, not echo output
+          if [[ "$TAURI_SIGNING_PRIVATE_KEY" == *$'\n'* ]]; then
             echo "❌ Key contains line breaks!"
+            echo "Showing where newlines are:"
+            printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" | od -An -tx1c | head -20
             exit 1
           fi
 
