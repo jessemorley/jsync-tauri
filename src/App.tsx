@@ -803,7 +803,7 @@ function App() {
 
             {/* Collapsible Content */}
             <div
-              className={`overflow-hidden transition-all duration-500 ease-in-out ${isCollapsed ? "max-h-0" : "max-h-[600px]"}`}
+              className={`overflow-hidden transition-all ease-out ${isCollapsed ? "max-h-0 duration-300" : "max-h-[600px] duration-500"}`}
             >
               <div className="p-4 space-y-4">
                 {/* Locations Section */}
