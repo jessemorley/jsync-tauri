@@ -924,22 +924,27 @@ function App() {
                                       }}
                                       className="absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full"
                                     >
-                                      <button
-                                        onClick={() =>
-                                          toggleDestination(dest.id)
-                                        }
-                                        disabled={backupState === "running"}
-                                        className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
-                                          dest.enabled
-                                            ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
-                                            : "bg-white/[0.02] border-white/[0.08] hover:bg-white/5"
-                                        } disabled:cursor-default`}
+                                      <Tooltip
+                                        content={dest.enabled ? 'Disable location' : 'Enable location'}
+                                        disabled={!tooltipsEnabled || backupState === 'running'}
                                       >
-                                        {getDestinationIcon(
-                                          dest.destination_type,
-                                          dest.enabled,
-                                        )}
-                                      </button>
+                                        <button
+                                          onClick={() =>
+                                            toggleDestination(dest.id)
+                                          }
+                                          disabled={backupState === "running"}
+                                          className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                            dest.enabled
+                                              ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
+                                              : "bg-white/[0.02] border-white/[0.08] hover:bg-white/5"
+                                          } disabled:cursor-default`}
+                                        >
+                                          {getDestinationIcon(
+                                            dest.destination_type,
+                                            dest.enabled,
+                                          )}
+                                        </button>
+                                      </Tooltip>
                                       <div className="z-10 flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                           <p
