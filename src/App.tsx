@@ -847,13 +847,14 @@ function App() {
                                   confirmDeleteBackupFor !== dest.id && (
                                     <motion.div
                                       key="content"
-                                      initial={{ x: 0, opacity: 1 }}
+                                      initial={{ x: "-100%", opacity: 0 }}
                                       animate={{ x: 0, opacity: 1 }}
                                       exit={{ x: "-100%", opacity: 0 }}
                                       transition={{
                                         type: "spring",
-                                        stiffness: 300,
-                                        damping: 30,
+                                        stiffness: 700,
+                                        damping: 40,
+                                        mass: 1,
                                       }}
                                       className="absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full"
                                     >
@@ -896,17 +897,40 @@ function App() {
                                   )}
 
                                 {/* OPTIONS ROW */}
+
                                 {showingOptionsFor === dest.id &&
                                   confirmDeleteBackupFor !== dest.id && (
                                     <motion.div
                                       key="options"
-                                      initial={{ x: "100%", opacity: 0 }}
-                                      animate={{ x: 0, opacity: 1 }}
-                                      exit={{ opacity: 0, scale: 0.95 }}
+                                      initial={{
+                                        x:
+                                          confirmDeleteBackupFor === null
+                                            ? "100%"
+                                            : 0,
+
+                                        opacity: 0,
+
+                                        scale:
+                                          confirmDeleteBackupFor === null
+                                            ? 1
+                                            : 0.95,
+                                      }}
+                                      animate={{ x: 0, opacity: 1, scale: 1 }}
+                                      exit={{
+                                        opacity: 0,
+
+                                        scale: 0.95,
+
+                                        x: 0,
+                                      }}
                                       transition={{
                                         type: "spring",
-                                        stiffness: 300,
-                                        damping: 30,
+
+                                        stiffness: 700,
+
+                                        damping: 40,
+
+                                        mass: 1,
                                       }}
                                       className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
                                     >
@@ -920,7 +944,9 @@ function App() {
                                       >
                                         <span
                                           key={
-                                            isDefault(dest.id) ? "pinoff" : "pin"
+                                            isDefault(dest.id)
+                                              ? "pinoff"
+                                              : "pin"
                                           }
                                           className="animate-in fade-in zoom-in duration-200"
                                         >
@@ -992,8 +1018,9 @@ function App() {
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{
                                       type: "spring",
-                                      stiffness: 400,
-                                      damping: 30,
+                                      stiffness: 700,
+                                      damping: 40,
+                                      mass: 1,
                                     }}
                                     className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
                                   >
