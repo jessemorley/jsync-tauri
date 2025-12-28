@@ -699,8 +699,8 @@ function App() {
                             ) : (
                               <>
                                 <div className="flex-1 relative h-full min-w-0 overflow-hidden">
-                                  {/* OPTIONS ROW - Stretching from left */}
-                                  <div className={`absolute inset-y-0 left-0 flex h-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] overflow-hidden ${
+                                  {/* OPTIONS ROW - Stretching from right */}
+                                  <div className={`absolute inset-y-0 right-0 flex h-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] overflow-hidden ${
                                     showingOptionsFor === dest.id 
                                       ? 'w-full opacity-100' 
                                       : 'w-0 opacity-0'
@@ -763,10 +763,10 @@ function App() {
                                     </div>
                                   </div>
 
-                                  {/* NORMAL CARD CONTENT - Sliding right */}
+                                  {/* NORMAL CARD CONTENT - Sliding left */}
                                   <div className={`absolute inset-0 flex items-center gap-3 p-2.5 h-full w-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] ${
                                     showingOptionsFor === dest.id 
-                                      ? 'translate-x-full opacity-0' 
+                                      ? '-translate-x-full opacity-0' 
                                       : 'translate-x-0 opacity-100'
                                   }`}>
                                     {isBackingUp && (
@@ -1013,7 +1013,7 @@ function App() {
           <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500">
             <div className="flex items-center gap-1.5">
               <Clock size={10} className="opacity-70" />
-              <span>{view === 'prefs' ? 'v0.1.6' : sessionInfo.lastSyncLabel}</span>
+              <span>{view === 'prefs' ? 'v0.2.0' : sessionInfo.lastSyncLabel}</span>
             </div>
             {view === 'prefs' && (
               <button

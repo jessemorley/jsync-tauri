@@ -70,27 +70,9 @@ jobs:
         uses: tauri-apps/tauri-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'JSync ${{ github.ref_name }}'
           releaseBody: 'See the changelog for details.'
           releaseDraft: false
           prerelease: false
-
-      - name: List files (debug)
-        run: |
-          find src-tauri/target -name "*.tar.gz"
-          find src-tauri/target -name "*.sig"
-
-      - name: Generate Updater JSON
-        run: node scripts/generate-updater-json.mjs
-
-      - name: Upload Updater JSON
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: latest.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
