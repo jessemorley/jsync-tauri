@@ -5,7 +5,7 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 ## Project Overview
 **JSync** is a lightweight macOS menubar application designed to automate backups for Capture One sessions.
 
-- **Frontend**: React 19, TypeScript, Tailwind CSS 4.
+- **Frontend**: React 19, TypeScript, Tailwind CSS 4, Framer Motion.
 - **Backend**: Rust, Tauri v2.
 - **Backup Engine**: `rclone` (bundled as a sidecar binary).
 - **Session Detection**: AppleScript integration with Capture One.
@@ -18,6 +18,7 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
     - `src-tauri/src/macos_window.rs`: Sets window corner radius.
     - `src-tauri/src/macos_dialog.rs`: Implements a custom `NSOpenPanel` via `objc2` to avoid the "dimming sheet" effect common in menubar apps.
 - **Styling**: Tailwind CSS with a dark, modern aesthetic (monospaced fonts for paths, high-contrast status colors).
+- **Animations**: Framer Motion for high-fidelity spring physics. Uses `AnimatePresence` for mounting/unmounting state-aware rows (Options, Confirmation).
 
 ### State Management & Persistence
 - **Global Store**: Uses `tauri-plugin-store` for app-wide settings (notifications, schedule intervals).
@@ -35,12 +36,16 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 - Supports cancellation via an `AtomicBool` flag that kills the sidecar process.
 
 ## Recent Significant Changes (Dec 2025)
-- **Location Options Interface**: Replaced simple trash icon with a settings icon that expands into a 3-button options menu (Default, Remove, Delete).
-- **Advanced UI Transitions**: Implemented an elastic "stretching" transition for the location options menu that anchors from the left, along with static settings/return buttons for better focus.
+- **Refactored Location Options UI**: Replaced CSS-based stretching with Framer Motion spring animations (`stiffness: 700`, `damping: 40`). Transitions now slide in from the right.
+- **Integrated Deletion Confirmation**: Unified the "Delete" workflow into the sliding menu system. Confirmation row uses a scale/fade transition to/from the options row while maintaining perfect element alignment (`flex-1 basis-0`).
 - **Menubar Icon Update**: Switched to a template-compatible PNG implementation of the `folder-sync` icon, ensuring native-like appearance across light and dark macOS themes.
 - **Manual Backup Deletion**: Added a "Delete" option to destinations that removes the session backup folder from that specific location and updates the UI state.
 - **Session Sidecar Implementation**: Moved `destinations` and `selectedPaths` from global storage to a portable `.jsync` sidecar file. Implemented Rust commands for robust loading/saving.
-- **Reliable Backup Tracking**: Fixed logic ensuring that the "Delete" button accurately enables/disables based on whether a backup exists at the destination, driven by verified persistent state.
+- **UI Refinements**:
+    - Synchronized button sizes across all menus for seamless transitions.
+    - Updated icons: Header image icon to `FileImage`, Remove icon to `Delete`.
+    - Improved backup completion flash to cover the entire location card including settings toggle.
+- **Standardized Formatting**: Applied Prettier across the codebase to ensure consistent indentation and style.
 - **Improved Selection Logic**: Fixed hierarchical linkage in the Preferences tree (root toggles children). Ticking the last unselected child now correctly promotes the state to "All Selected" (root path).
 - **TypeScript Stability**: Resolved several type errors and removed unused states (`hasBackedUpOnce`, `lastSessionPath`, `backedUpDestinations` - though the latter was restored for transient animations).
 
