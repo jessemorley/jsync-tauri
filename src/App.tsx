@@ -136,6 +136,10 @@ function App() {
     "notificationsEnabled",
     true,
   );
+  const [tooltipsEnabled, setTooltipsEnabled] = usePersistedState(
+    "tooltipsEnabled",
+    true,
+  );
 
   const notificationsEnabledRef = useRef(notificationsEnabled);
   const sessionRef = useRef(session);
@@ -715,7 +719,7 @@ function App() {
 
               <div className="p-4 px-5 flex items-center justify-between gap-3 z-10">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'}>
+                  <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
                     <button
                       onClick={() => setIsCollapsed(!isCollapsed)}
                       className="p-1.5 -ml-1 rounded-lg transition-all flex-shrink-0 hover:bg-white/10 text-gray-400 active:bg-white/5"
@@ -765,6 +769,7 @@ function App() {
                     if (backupState === 'success') return 'Backup complete';
                     return 'Start backup';
                   }}
+                  disabled={!tooltipsEnabled}
                 >
                   <button
                     onClick={handleStartBackup}
@@ -812,7 +817,7 @@ function App() {
                     <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 text-white">
                       Locations
                     </span>
-                    <Tooltip content="Add new backup location">
+                    <Tooltip content="Add new backup location" disabled={!tooltipsEnabled}>
                       <button
                         onClick={addDefaultLocation}
                         className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
@@ -852,7 +857,7 @@ function App() {
                               {/* Settings Toggle - Sitting on top */}
                               <Tooltip
                                 content={showingOptionsFor === dest.id ? 'Hide options' : 'Show options'}
-                                disabled={backupState === 'running'}
+                                disabled={!tooltipsEnabled || backupState === 'running'}
                               >
                                 <button
                                   onClick={(e) => {
@@ -966,7 +971,7 @@ function App() {
                                       }}
                                       className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
                                     >
-                                      <Tooltip content={isDefault(dest.id) ? 'Remove default' : 'Mark as default'}>
+                                      <Tooltip content={isDefault(dest.id) ? 'Remove default' : 'Mark as default'} disabled={!tooltipsEnabled}>
                                         <button
                                           onClick={() => toggleDefault(dest.id)}
                                           className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
@@ -1003,7 +1008,7 @@ function App() {
                                         </button>
                                       </Tooltip>
 
-                                      <Tooltip content="Remove location">
+                                      <Tooltip content="Remove location" disabled={!tooltipsEnabled}>
                                         <button
                                           onClick={() => {
                                             removeDestination(dest.id);
@@ -1023,7 +1028,7 @@ function App() {
 
                                       <Tooltip
                                         content="Delete backup data"
-                                        disabled={!dest.has_existing_backup}
+                                        disabled={!tooltipsEnabled || !dest.has_existing_backup}
                                       >
                                         <button
                                           onClick={() =>
@@ -1366,6 +1371,34 @@ function App() {
                 >
                   <div
                     className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${notificationsEnabled ? "left-[15px]" : "left-0.5"}`}
+                  />
+                </div>
+              </button>
+
+              <button
+                onClick={() => setTooltipsEnabled(!tooltipsEnabled)}
+                className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`transition-colors duration-200 ${tooltipsEnabled ? "text-blue-400" : "text-gray-400"}`}
+                  >
+                    <Settings size={14} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[11px] font-bold text-white">
+                      Tooltips
+                    </p>
+                    <p className="text-[9px] text-gray-500">
+                      Show helpful hints on hover
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className={`w-7 h-4 rounded-full relative transition-colors ${tooltipsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${tooltipsEnabled ? "left-[15px]" : "left-0.5"}`}
                   />
                 </div>
               </button>
