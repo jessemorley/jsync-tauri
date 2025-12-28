@@ -689,11 +689,12 @@ function App() {
       `}</style>
 
       <div
-        className={`w-full h-full rounded-2xl border overflow-hidden relative bg-[#1c1c1e] transition-all duration-300 ${
+        className={`w-full h-full rounded-2xl border bg-[#1c1c1e] transition-all duration-300 ${
           backupState === "success" && isCollapsed
             ? "animate-completion-pulse"
             : "border-white/10"
         }`}
+        style={{display: 'grid', gridTemplateRows: 'auto 1fr auto'}}
       >
         {/* VIEW: MAIN APP */}
         {view === "main" && (
@@ -808,7 +809,12 @@ function App() {
 
             {/* Collapsible Content */}
             <div
-              className={`overflow-hidden transition-all ease-out ${isCollapsed ? "max-h-0 duration-300" : "max-h-[600px] duration-500"}`}
+              className="overflow-y-auto"
+              style={{
+                height: isCollapsed ? '0px' : '460px',
+                maxHeight: '460px',
+                transition: 'height 300ms ease-out'
+              }}
             >
               <div className="p-4 space-y-4">
                 {/* Locations Section */}
@@ -1247,7 +1253,7 @@ function App() {
 
         {/* VIEW: PREFERENCES */}
         {view === "prefs" && (
-          <div className="p-5 space-y-5">
+          <div className="overflow-y-auto p-5 space-y-5" style={{height: '550px', maxHeight: '550px', gridRow: '1 / 3'}}>
             <div className="flex items-center justify-between">
               <h2 className="text-[13px] font-bold text-white flex items-center gap-2">
                 <Settings size={14} className="text-blue-400" />
