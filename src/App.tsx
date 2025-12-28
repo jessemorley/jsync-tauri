@@ -22,7 +22,7 @@ import {
   Minus,
   Folder,
   FileCode,
-  Image,
+  FileImage,
   CornerDownLeft,
   Pin,
   PinOff,
@@ -724,7 +724,7 @@ function App() {
                       </p>
                       {session && (
                         <div className="flex items-center gap-1.5 ml-1">
-                          <Image size={10} className="flex-shrink-0" />
+                          <FileImage size={10} className="flex-shrink-0" />
                           <p className="text-[10px] font-bold tracking-wide uppercase">
                             {session.image_count}{" "}
                             {session.image_count === 1 ? "Image" : "Images"}
@@ -841,11 +841,12 @@ function App() {
                               </button>
                               {/* OPTIONS ROW */}
                               <div
-                                className={`absolute inset-y-0 right-0 w-full flex h-full transition-all duration-200 ease-out overflow-hidden ${
-                                  showingOptionsFor === dest.id &&
-                                  confirmDeleteBackupFor !== dest.id
-                                    ? "opacity-100 scale-100"
-                                    : "opacity-0 scale-95 pointer-events-none"
+                                className={`absolute inset-y-0 right-0 w-full flex h-full transition-all duration-200 [transition-timing-function:cubic-bezier(0.2,1.1,0.3,1.1)] overflow-hidden ${
+                                  confirmDeleteBackupFor === dest.id
+                                    ? "opacity-0 scale-95 pointer-events-none translate-x-0"
+                                    : showingOptionsFor === dest.id
+                                      ? "opacity-100 scale-100 translate-x-0"
+                                      : "opacity-0 scale-95 translate-x-full pointer-events-none"
                                 }`}
                               >
                                 <div className="flex h-full w-full p-1.5 gap-1.5 pr-12">
@@ -960,7 +961,7 @@ function App() {
                               </div>{" "}
                               {/* NORMAL CARD CONTENT - Sliding left */}
                               <div
-                                className={`absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full transition-all duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.1)] ${
+                                className={`absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full transition-all duration-200 [transition-timing-function:cubic-bezier(0.2,1.1,0.3,1.1)] ${
                                   showingOptionsFor === dest.id ||
                                   confirmDeleteBackupFor === dest.id
                                     ? "-translate-x-full opacity-0"
