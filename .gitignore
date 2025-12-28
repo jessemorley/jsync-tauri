@@ -51,3 +51,6 @@ Planning and documents/
 private-key.txt
 private-key-no-newline.txt
 public-key.txt
+
+# Claude
+.claude/
