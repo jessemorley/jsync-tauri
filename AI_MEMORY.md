@@ -19,6 +19,7 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
     - `src-tauri/src/macos_dialog.rs`: Implements a custom `NSOpenPanel` via `objc2` to avoid the "dimming sheet" effect common in menubar apps.
 - **Styling**: Tailwind CSS with a dark, modern aesthetic (monospaced fonts for paths, high-contrast status colors).
 - **Animations**: Framer Motion for high-fidelity spring physics. Uses `AnimatePresence` for mounting/unmounting state-aware rows (Options, Confirmation).
+- **Tooltips**: Custom system using Framer Motion with smart viewport-aware positioning, portal rendering, 500ms delay, and state-aware messaging. Provides contextual help on 7 key buttons with full keyboard accessibility.
 
 ### State Management & Persistence
 - **Global Store**: Uses `tauri-plugin-store` for app-wide settings (notifications, schedule intervals).
@@ -36,6 +37,17 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 - Supports cancellation via an `AtomicBool` flag that kills the sidecar process.
 
 ## Recent Significant Changes (Dec 2025)
+- **Custom Tooltip System**: Implemented a lightweight tooltip system using existing Framer Motion:
+    - **Components**: `src/components/Tooltip.tsx` (reusable component) and `src/hooks/useTooltip.ts` (positioning hook).
+    - **Smart Positioning**: Auto-detects viewport boundaries and positions above/below with 8px padding.
+    - **State-Aware Messaging**: Sync button shows "Start backup" / "Cancel backup" / "Backup complete" based on `backupState`.
+    - **7 Tooltips Added**: Chevron (expand/collapse), sync button, add location, location options, pin toggle, remove, and delete backup buttons.
+    - **Accessibility**: Full ARIA support, keyboard focus handling, portal rendering for proper z-index management.
+    - **Performance**: 500ms show delay, immediate hide, requestAnimationFrame for smooth positioning, no new dependencies.
+- **Refactored Location Transitions**: Implemented conditional entry logic based on previous state:
+    - Card → Options: slides in from right (`x: "100%"`)
+    - Options ↔ Confirmation: pure fade and scale (`opacity: 0, scale: 0.95`) with no sliding
+    - Options → Card: slides out to right while card slides in from left
 - **Refactored Location Options UI**: Replaced CSS-based stretching with Framer Motion spring animations (`stiffness: 700`, `damping: 40`). Transitions now slide in from the right.
 - **Integrated Deletion Confirmation**: Unified the "Delete" workflow into the sliding menu system. Confirmation row uses a scale/fade transition to/from the options row while maintaining perfect element alignment (`flex-1 basis-0`).
 - **Menubar Icon Update**: Switched to a template-compatible PNG implementation of the `folder-sync` icon, ensuring native-like appearance across light and dark macOS themes.
@@ -52,7 +64,6 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 ## Ongoing Work & Known Issues
 - **Cancel Button**: Needs verification for immediate responsiveness during high-IO transfers.
 - **Unticked Item Policy**: Determine if unticked items should be deleted from the destination on subsequent syncs.
-- **Tooltips**: Add informational tooltips for complex UI elements.
 
 ## Dev Commands
 - `npm run tauri dev`: Start development environment.
