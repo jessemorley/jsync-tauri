@@ -44,4 +44,10 @@ Thumbs.db
 
 # Project Specific
 # Documents
+
 Planning and documents/
+
+# Signing keys
+private-key.txt
+private-key-no-newline.txt
+public-key.txt
