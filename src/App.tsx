@@ -698,7 +698,7 @@ function App() {
       `}</style>
 
       <div
-        className={`w-full h-full rounded-2xl border bg-[#1c1c1e] transition-all duration-300 ${
+        className={`w-full h-full rounded-2xl border overflow-hidden bg-[#1c1c1e] transition-all duration-300 ${
           backupState === "success" && isCollapsed
             ? "animate-completion-pulse"
             : "border-white/10"
