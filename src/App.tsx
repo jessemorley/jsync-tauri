@@ -68,6 +68,12 @@ const completionAnimations = `
     100% { border-color: rgba(255, 255, 255, 0.1); }
   }
 
+  @keyframes duplicate-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
   @keyframes fill-fade-out {
     0%, 20% { opacity: 0.4; width: 100%; }
     100% { opacity: 0; width: 100%; }
@@ -75,6 +81,11 @@ const completionAnimations = `
 
   .animate-completion-pulse {
     animation: completion-pulse 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  .animate-duplicate-shake {
+    animation: duplicate-shake 0.4s ease-in-out;
+    border-color: rgba(249, 115, 22, 0.5) !important;
   }
 
   .animate-fill-fade {
@@ -124,6 +135,9 @@ function App() {
   const [previousCardState, setPreviousCardState] = useState<{
     [key: number]: "content" | "options" | "confirm";
   }>({});
+  const [pulsingLocationId, setPulsingLocationId] = useState<number | null>(
+    null,
+  );
 
   // Persisted Global State
   const [scheduledBackup, setScheduledBackup] = usePersistedState(
@@ -282,6 +296,16 @@ function App() {
       }));
     });
   }, [showingOptionsFor, confirmDeleteBackupFor, destinations]);
+
+  // Auto-clear pulsing location highlight
+  useEffect(() => {
+    if (pulsingLocationId) {
+      const timer = setTimeout(() => {
+        setPulsingLocationId(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [pulsingLocationId]);
 
   // Load session info
   const refreshSession = useCallback(() => {
@@ -640,7 +664,21 @@ function App() {
 
   const addDefaultLocation = async () => {
     const path = await openFolderPicker();
+
+    // Bring window back to focus after folder picker
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    const mainWindow = getCurrentWindow();
+    await mainWindow.show();
+    await mainWindow.setFocus();
+
     if (path) {
+      // Check if this path already exists
+      const existingDestination = destinations.find((d) => d.path === path);
+      if (existingDestination) {
+        setPulsingLocationId(existingDestination.id);
+        return;
+      }
+
       const destination = await parseDestination(path);
       // Backend parse_destination doesn't know about our sidecar extension yet
       const newDest: Destination = {
@@ -893,6 +931,7 @@ function App() {
                           backupState === "success" &&
                           !isCollapsed &&
                           backedUpDestinations.has(dest.id);
+                        const isDuplicate = pulsingLocationId === dest.id;
                         return (
                           <div
                             key={dest.id}
@@ -904,7 +943,7 @@ function App() {
                                   : hasBackup
                                     ? "bg-blue-500/10 border-blue-500/20"
                                     : "bg-white/5 border-white/10 shadow-sm"
-                            } ${shouldPulse ? "animate-completion-pulse" : ""}`}
+                            } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""}`}
                           >
                             <div className="relative flex-1 h-full min-w-0 overflow-hidden">
                               {/* Settings Toggle - Sitting on top */}
