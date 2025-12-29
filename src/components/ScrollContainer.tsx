@@ -8,13 +8,15 @@ interface ScrollContainerProps {
   className?: string;
   style?: React.CSSProperties;
   defer?: boolean; // For handling animation states
+  enableScroll?: boolean; // Explicitly control scrollbar visibility
 }
 
 export function ScrollContainer({
   children,
   className,
   style,
-  defer = false
+  defer = false,
+  enableScroll = true
 }: ScrollContainerProps) {
   const osRef = useRef<OverlayScrollbarsComponentRef>(null);
 
@@ -40,7 +42,7 @@ export function ScrollContainer({
         },
         overflow: {
           x: 'hidden',
-          y: defer ? 'hidden' : 'scroll'
+          y: defer ? 'hidden' : (enableScroll ? 'scroll' : 'hidden')
         },
         paddingAbsolute: true,
       }}

@@ -97,8 +97,8 @@ function App() {
   const [customValue, setCustomValue] = useState("");
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [measuredContentHeight, setMeasuredContentHeight] = useState(460); // Default to current fixed height
-  const [dynamicHeight, setDynamicHeight] = useState(460);
+  const [measuredContentHeight, setMeasuredContentHeight] = useState(480); // Initialize to max cap to prevent overflow on first expand
+  const [dynamicHeight, setDynamicHeight] = useState(480);
   const customInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -192,14 +192,13 @@ function App() {
       }
     };
 
-    // Measure after brief delay to ensure content is rendered
-    const measureTimer = setTimeout(measureContent, 50);
+    // Measure immediately first (synchronous)
+    measureContent();
 
     const resizeObserver = new ResizeObserver(measureContent);
     resizeObserver.observe(contentRef.current);
 
     return () => {
-      clearTimeout(measureTimer);
       resizeObserver.disconnect();
     };
   }, [isCollapsed, destinations, measuredContentHeight]);
@@ -348,7 +347,7 @@ function App() {
     try {
       const update = await checkForAppUpdates();
       if (update) {
-        const confirmed = await window.confirm(
+        const confirmed = window.confirm(
           `Update available: v${update.version}\n\nDo you want to download and install it now?`,
         );
         if (confirmed) {
@@ -862,6 +861,7 @@ function App() {
               <ScrollContainer
                 className="h-full"
                 defer={isCollapsed || isAnimating}
+                enableScroll={measuredContentHeight > 480}
               >
                 <div className="p-4 space-y-4" ref={contentRef}>
                 {/* Locations Section */}
