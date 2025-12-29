@@ -97,7 +97,10 @@ function App() {
   const [customValue, setCustomValue] = useState("");
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [measuredContentHeight, setMeasuredContentHeight] = useState(460); // Default to current fixed height
+  const [dynamicHeight, setDynamicHeight] = useState(460);
   const customInputRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Session State
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -175,6 +178,38 @@ function App() {
     const timer = setTimeout(() => setIsAnimating(false), 200);
     return () => clearTimeout(timer);
   }, [isCollapsed]);
+
+  // Measure content height dynamically
+  useEffect(() => {
+    if (!contentRef.current || isCollapsed) return;
+
+    const measureContent = () => {
+      if (contentRef.current) {
+        const height = contentRef.current.scrollHeight;
+        if (Math.abs(height - measuredContentHeight) > 1) {
+          setMeasuredContentHeight(height);
+        }
+      }
+    };
+
+    // Measure after brief delay to ensure content is rendered
+    const measureTimer = setTimeout(measureContent, 50);
+
+    const resizeObserver = new ResizeObserver(measureContent);
+    resizeObserver.observe(contentRef.current);
+
+    return () => {
+      clearTimeout(measureTimer);
+      resizeObserver.disconnect();
+    };
+  }, [isCollapsed, destinations, measuredContentHeight]);
+
+  // Calculate dynamic height with max cap (fit within 600px window)
+  useEffect(() => {
+    const MAX_CONTENT_HEIGHT = 480; // Cap at 480px (leaves room for header/footer in 600px window)
+    const cappedHeight = Math.min(measuredContentHeight, MAX_CONTENT_HEIGHT);
+    setDynamicHeight(isCollapsed ? 0 : cappedHeight);
+  }, [isCollapsed, measuredContentHeight]);
 
   // Load Session and its Config
   const loadSessionData = useCallback(async (newSession: SessionInfo) => {
@@ -819,8 +854,7 @@ function App() {
             {/* Collapsible Content */}
             <div
               style={{
-                height: isCollapsed ? '0px' : '460px',
-                maxHeight: '460px',
+                height: `${dynamicHeight}px`,
                 transition: 'height 200ms ease-out',
                 overflow: 'hidden'
               }}
@@ -829,7 +863,7 @@ function App() {
                 className="h-full"
                 defer={isCollapsed || isAnimating}
               >
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-4" ref={contentRef}>
                 {/* Locations Section */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
