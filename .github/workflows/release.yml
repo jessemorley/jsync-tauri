@@ -94,3 +94,4 @@ jobs:
           releaseDraft: false
           prerelease: false
           updaterJsonPreferNsis: true
+          args: --target aarch64-apple-darwin
