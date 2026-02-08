@@ -37,6 +37,20 @@ This file serves as a shared context for AI assistants (Gemini, Claude, etc.) wo
 - Supports cancellation via an `AtomicBool` flag that kills the sidecar process.
 
 ## Recent Significant Changes (Dec 2025)
+
+### Version 0.2.3
+- **Custom JSync Logo**: Replaced generic folder-sync icon with custom branded logo in template-compatible format.
+- **Duplicate Location Prevention**: Added validation to prevent adding the same backup location multiple times:
+    - Shows subtle horizontal shake animation on the existing location card instead of blocking alert dialog.
+    - Restores window focus after folder picker closes for better UX continuity.
+- **Dynamic Content Area**: Implemented flexible content sizing with smooth scrolling:
+    - Content area expands/contracts based on actual content instead of fixed 460px height.
+    - Maximum height capped at 480px (fits within 600px window).
+    - Uses ResizeObserver for dynamic measurement without window resizing.
+    - Scrollbar only appears when content exceeds max height (prevents flash on first schedule toggle).
+- **UI Polish**: Fixed transparent square edges visible under rounded window corners.
+
+### Earlier December Changes
 - **Custom Tooltip System**: Implemented a lightweight tooltip system using existing Framer Motion:
     - **Components**: `src/components/Tooltip.tsx` (reusable component) and `src/hooks/useTooltip.ts` (positioning hook).
     - **Smart Positioning**: Auto-detects viewport boundaries and positions above/below with 8px padding.

@@ -79,6 +79,8 @@ pub fn run() {
             commands::destinations::open_folder_picker,
             commands::destinations::parse_destination,
             commands::destinations::delete_backup_folder,
+            commands::destinations::check_path_exists,
+            commands::destinations::create_directory,
             commands::backup::start_backup,
             commands::backup::cancel_backup,
             commands::permissions::check_full_disk_access,

@@ -4,8 +4,9 @@ A lightweight macOS menubar application for automatically backing up Capture One
 
 ## Features
 
-- **Menubar Interface** - Compact, always-accessible menubar app with no dock icon
+- **Menubar Interface** - Compact, always-accessible menubar app with custom JSync logo and no dock icon
 - **Smart Destination Detection** - Automatically identifies drive types (external, cloud, network, local)
+- **Duplicate Prevention** - Prevents adding the same location twice with a subtle shake animation
 - **Portable Session Settings** - Stores preferences, selections, and destination history in a `.jsync` sidecar file within the session folder.
 - **Granular Sync** - Choose which session folders (Capture, Selects, Output, etc.) to include in backups using absolute path selection.
 - **Scheduled Backups** - Configure automatic backups at custom intervals (5m, 15m, 30m, or custom)
@@ -14,6 +15,7 @@ A lightweight macOS menubar application for automatically backing up Capture One
 - **Parallel Transfers** - Multi-threaded backups using rclone (4 concurrent file transfers)
 - **System Notifications** - Optional alerts when backups complete
 - **Auto-hide** - Window automatically hides when clicking away
+- **Dynamic Layout** - Content area adapts to actual content size with smooth scrolling
 - **Contextual Tooltips** - Smart tooltips with state-aware messaging for enhanced usability
 
 ## Installation
@@ -81,7 +83,9 @@ Click the circular arrow button in the header to trigger an immediate backup to 
 - **Session Sidecar (.jsync)**: A JSON-formatted metadata file stored in the session root. It tracks selected paths, backup destinations, and last sync timestamps, making settings portable across machines.
 - **Advanced Location Options**: A refined UI for managing backup destinations, featuring fluid Framer Motion spring transitions, animated "Default" actions with pinning logic, and integrated backup deletion.
 - **Smart Tooltip System**: Custom implementation using Framer Motion with viewport-aware positioning, 500ms delay, state-aware messaging, and full keyboard accessibility. Tooltips auto-position above/below based on available space and update dynamically based on application state.
-- **Menubar Icon**: Uses a template-compatible `folder-sync` icon that automatically adapts to light and dark macOS themes.
+- **Menubar Icon**: Uses a custom JSync logo in template-compatible format that automatically adapts to light and dark macOS themes.
+- **Dynamic Content Sizing**: Content area expands/contracts based on actual content (capped at 480px) with smooth overlay scrollbars that only appear when needed.
+- **Duplicate Location Prevention**: Shake animation provides gentle visual feedback when attempting to add an already-existing location, avoiding disruptive alert dialogs.
 - **rclone Filtering**: Uses `--filter` rules (e.g., `+ /Capture/**`, `- /**`) to implement granular file selection based on the frontend tree view.
 - **Manual Backup Management**: Users can delete session-specific backups from individual destinations directly through the UI, with automatic state verification.
 - **Custom NSOpenPanel**: Direct macOS Cocoa bindings for native folder picker (eliminates sheet dimming effect).

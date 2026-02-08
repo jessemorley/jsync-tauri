@@ -35,6 +35,14 @@ export async function deleteBackupFolder(destinationPath: string, sessionName: s
   return invoke('delete_backup_folder', { destinationPath, sessionName });
 }
 
+export async function checkPathExists(path: string): Promise<boolean> {
+  return invoke('check_path_exists', { path });
+}
+
+export async function createDirectory(path: string): Promise<void> {
+  return invoke('create_directory', { path });
+}
+
 // Backup commands
 export async function startBackup(
   sessionPath: string,

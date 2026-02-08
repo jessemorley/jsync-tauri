@@ -215,9 +215,12 @@ async fn run_rclone_backup(
         info!("Applying filters: {:?}", filters);
     }
 
-    // Ensure destination directory exists
-    std::fs::create_dir_all(dest_path)
-        .map_err(|e| format!("Failed to create destination: {}", e))?;
+    // Create the session subfolder (parent destination was already verified by the caller)
+    let dest = std::path::Path::new(dest_path);
+    if !dest.exists() {
+        std::fs::create_dir(dest_path)
+            .map_err(|e| format!("Failed to create session folder: {}", e))?;
+    }
 
     // Get rclone sidecar command
     // In packaged apps (macOS), the externalBin is placed in the same directory as the executable (Contents/MacOS)

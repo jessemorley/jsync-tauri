@@ -65,6 +65,17 @@ pub async fn delete_backup_folder(
     Ok(())
 }
 
+#[tauri::command]
+pub fn check_path_exists(path: String) -> bool {
+    Path::new(&path).exists()
+}
+
+#[tauri::command]
+pub fn create_directory(path: String) -> Result<(), String> {
+    info!("Creating directory: {}", path);
+    std::fs::create_dir_all(&path).map_err(|e| format!("Failed to create directory: {}", e))
+}
+
 fn detect_destination_type(path: &str) -> (String, String) {
     let path_lower = path.to_lowercase();
 
