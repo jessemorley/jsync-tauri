@@ -31,6 +31,7 @@ import {
   PinOff,
   Loader2,
   Delete,
+  Unplug,
 } from "lucide-react";
 import "./App.css";
 import type {
@@ -49,6 +50,8 @@ import {
   openFolderPicker,
   parseDestination,
   deleteBackupFolder,
+  checkPathExists,
+  createDirectory,
   startBackup,
   cancelBackup,
   onBackupProgress,
@@ -138,6 +141,7 @@ function App() {
   const [pulsingLocationId, setPulsingLocationId] = useState<number | null>(
     null,
   );
+  const [inaccessibleDests, setInaccessibleDests] = useState<Set<number>>(new Set());
 
   // Persisted Global State
   const [scheduledBackup, setScheduledBackup] = usePersistedState(
@@ -165,6 +169,13 @@ function App() {
   const destinationsRef = useRef(destinations);
   const selectedPathsRef = useRef(selectedPaths);
   const lastSyncedRef = useRef(lastSynced);
+
+  // Multi-destination completion tracking
+  const expectedDestCountRef = useRef(0);
+  const completedDestCountRef = useRef(0);
+  const failedDestCountRef = useRef(0);
+  const failedErrorsRef = useRef<string[]>([]);
+  const resetTimeoutRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     notificationsEnabledRef.current = notificationsEnabled;
@@ -264,7 +275,26 @@ function App() {
   // Reset backup status when session changes
   useEffect(() => {
     setBackedUpDestinations(new Set());
+    setInaccessibleDests(new Set());
   }, [session?.path]);
+
+  // Poll destination accessibility every 10 seconds
+  useEffect(() => {
+    if (destinations.length === 0) return;
+
+    const checkAccessibility = async () => {
+      const inaccessible = new Set<number>();
+      for (const dest of destinations) {
+        const exists = await checkPathExists(dest.path);
+        if (!exists) inaccessible.add(dest.id);
+      }
+      setInaccessibleDests(inaccessible);
+    };
+
+    checkAccessibility();
+    const interval = setInterval(checkAccessibility, 10000);
+    return () => clearInterval(interval);
+  }, [destinations]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -425,6 +455,43 @@ function App() {
     let unlistenComplete: (() => void) | undefined;
     let unlistenError: (() => void) | undefined;
 
+    const checkAllDestinationsComplete = () => {
+      if (completedDestCountRef.current < expectedDestCountRef.current) return;
+
+      const failed = failedDestCountRef.current;
+      const total = expectedDestCountRef.current;
+      const succeeded = total - failed;
+
+      setBackupState(failed > 0 ? "error" : "success");
+      setGlobalProgress(100);
+      setLastSynced(new Date().toISOString());
+
+      if (notificationsEnabledRef.current) {
+        const size = sessionRef.current?.size || "Unknown size";
+        if (failed === 0) {
+          sendBackupNotification(
+            "Backup Complete",
+            `Session successfully backed up to ${total} ${total === 1 ? "location" : "locations"}. Total session size: ${size}`,
+          );
+        } else if (succeeded > 0) {
+          sendBackupNotification(
+            "Backup Partially Complete",
+            `Backed up to ${succeeded} of ${total} locations. Session size: ${size}`,
+          );
+        } else {
+          const detail = failedErrorsRef.current.length > 0
+            ? failedErrorsRef.current.join(", ")
+            : "All destinations failed";
+          sendBackupNotification("Backup Failed", detail);
+        }
+      }
+
+      resetTimeoutRef.current = window.setTimeout(() => {
+        setBackupState("idle");
+        setGlobalProgress(0);
+      }, 3000);
+    };
+
     const setupListeners = async () => {
       unlistenProgress = await onBackupProgress((progress) => {
         setGlobalProgress(progress.percent);
@@ -432,7 +499,7 @@ function App() {
 
       unlistenComplete = await onBackupComplete((result) => {
         if (result.success) {
-          // Add destination to backed-up set for pulse animation
+          // Per-destination: pulse animation
           setBackedUpDestinations(
             (prev) => new Set([...prev, result.destination_id]),
           );
@@ -445,38 +512,19 @@ function App() {
                 : d,
             ),
           );
-
-          setBackupState("success");
-          setGlobalProgress(100); // Ensure 100% before animations start
-          setLastSynced(new Date().toISOString());
-
-          if (notificationsEnabledRef.current) {
-            const enabledCount = destinationsRef.current.filter(
-              (d) => d.enabled,
-            ).length;
-            const size = sessionRef.current?.size || "Unknown size";
-            sendBackupNotification(
-              "Backup Complete",
-              `Session successfully backed up to ${enabledCount} ${enabledCount === 1 ? "location" : "locations"}. Total session size: ${size}`,
-            );
-          }
-
-          setTimeout(() => {
-            setBackupState("idle");
-            setGlobalProgress(0);
-          }, 3000);
         }
+
+        completedDestCountRef.current += 1;
+        checkAllDestinationsComplete();
       });
 
       unlistenError = await onBackupError((error) => {
-        setBackupState("error");
-        if (notificationsEnabledRef.current && error.error) {
-          sendBackupNotification("Backup Failed", error.error);
+        completedDestCountRef.current += 1;
+        failedDestCountRef.current += 1;
+        if (error.error) {
+          failedErrorsRef.current.push(error.error);
         }
-        setTimeout(() => {
-          setBackupState("idle");
-          setGlobalProgress(0);
-        }, 3000);
+        checkAllDestinationsComplete();
       });
     };
 
@@ -509,9 +557,36 @@ function App() {
       return;
     }
 
+    // Pre-flight: auto-create local destinations that don't exist
+    const enabledDests = destinations.filter(d => d.enabled);
+    for (const dest of enabledDests) {
+      if (dest.destination_type === "local") {
+        const exists = await checkPathExists(dest.path);
+        if (!exists) {
+          try {
+            await createDirectory(dest.path);
+          } catch (error) {
+            console.error("Failed to create local directory:", error);
+          }
+        }
+      }
+    }
+
     setBackupState("running");
     setGlobalProgress(0);
     setBackedUpDestinations(new Set());
+
+    // Clear stale timeouts from previous backup
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = undefined;
+    }
+
+    // Track multi-destination completion
+    expectedDestCountRef.current = destinations.filter(d => d.enabled).length;
+    completedDestCountRef.current = 0;
+    failedDestCountRef.current = 0;
+    failedErrorsRef.current = [];
 
     try {
       await startBackup(
@@ -526,14 +601,15 @@ function App() {
       if (error === "Backup cancelled") {
         console.log("Setting state to idle due to cancellation");
         setBackupState("idle");
+        setGlobalProgress(0);
       } else {
         console.error("Backup failed:", error);
         setBackupState("error");
+        resetTimeoutRef.current = window.setTimeout(() => {
+          setBackupState("idle");
+          setGlobalProgress(0);
+        }, 3000);
       }
-      setTimeout(() => {
-        setBackupState("idle");
-        setGlobalProgress(0);
-      }, 3000);
     }
   }, [session, destinations, selectedPaths, backupState]);
 
@@ -828,14 +904,14 @@ function App() {
                         <Database size={10} className="flex-shrink-0" />
                       )}
                       <p
-                        className={`text-[10px] ${session ? "font-bold tracking-wide uppercase" : "font-medium"}`}
+                        className={`text-[10px] ${session ? "font-bold tracking-wide" : "font-medium"}`}
                       >
                         {sessionInfo.size}
                       </p>
                       {session && (
                         <div className="flex items-center gap-1.5 ml-1">
                           <FileImage size={10} className="flex-shrink-0" />
-                          <p className="text-[10px] font-bold tracking-wide uppercase">
+                          <p className="text-[10px] font-bold tracking-wide">
                             {session.image_count}{" "}
                             {session.image_count === 1 ? "Image" : "Images"}
                           </p>
@@ -921,6 +997,7 @@ function App() {
                   <div className="space-y-2">
                     {destinations.length > 0 ? (
                       destinations.map((dest) => {
+                        const isInaccessible = inaccessibleDests.has(dest.id);
                         const isBackingUp =
                           (backupState === "running" ||
                             backupState === "success") &&
@@ -936,24 +1013,27 @@ function App() {
                           <div
                             key={dest.id}
                             className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
-                              confirmDeleteBackupFor === dest.id
-                                ? "bg-black/40 border-white/10"
-                                : !dest.enabled
-                                  ? "bg-black/20 border-white/[0.08] opacity-50"
-                                  : hasBackup
-                                    ? "bg-blue-500/10 border-blue-500/20"
-                                    : "bg-white/5 border-white/10 shadow-sm"
+                              isInaccessible
+                                ? "bg-black/20 border-white/[0.06] opacity-40"
+                                : confirmDeleteBackupFor === dest.id
+                                  ? "bg-black/40 border-white/10"
+                                  : !dest.enabled
+                                    ? "bg-black/20 border-white/[0.08] opacity-50"
+                                    : hasBackup
+                                      ? "bg-blue-500/10 border-blue-500/20"
+                                      : "bg-white/5 border-white/10 shadow-sm"
                             } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""}`}
                           >
                             <div className="relative flex-1 h-full min-w-0 overflow-hidden">
                               {/* Settings Toggle - Sitting on top */}
                               <Tooltip
-                                content={showingOptionsFor === dest.id ? 'Hide options' : 'Show options'}
-                                disabled={!tooltipsEnabled || backupState === 'running'}
+                                content={isInaccessible ? 'Location not accessible' : showingOptionsFor === dest.id ? 'Hide options' : 'Show options'}
+                                disabled={!tooltipsEnabled || (!isInaccessible && backupState === 'running')}
                               >
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    if (isInaccessible) return;
                                     if (confirmDeleteBackupFor === dest.id) {
                                       setConfirmDeleteBackupFor(null);
                                     } else {
@@ -964,10 +1044,16 @@ function App() {
                                       );
                                     }
                                   }}
-                                  disabled={backupState === "running"}
-                                  className="absolute right-0 top-0 bottom-0 z-30 px-4 text-gray-600 hover:text-blue-400 transition-all disabled:opacity-0 flex items-center justify-center"
+                                  disabled={isInaccessible || backupState === "running"}
+                                  className={`absolute right-0 top-0 bottom-0 z-30 px-4 transition-all flex items-center justify-center ${
+                                    isInaccessible
+                                      ? "text-orange-400/70 cursor-default opacity-100"
+                                      : "text-gray-600 hover:text-blue-400 disabled:opacity-0"
+                                  }`}
                                 >
-                                  {showingOptionsFor === dest.id ||
+                                  {isInaccessible ? (
+                                    <Unplug size={12} />
+                                  ) : showingOptionsFor === dest.id ||
                                   confirmDeleteBackupFor === dest.id ? (
                                     <CornerDownLeft size={12} />
                                   ) : (
@@ -1005,7 +1091,7 @@ function App() {
                                           onClick={() =>
                                             toggleDestination(dest.id)
                                           }
-                                          disabled={backupState === "running"}
+                                          disabled={isInaccessible || backupState === "running"}
                                           className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
                                             dest.enabled
                                               ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
