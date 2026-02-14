@@ -5,7 +5,6 @@ import { ScrollContainer } from "./components/ScrollContainer";
 import {
   Plus,
   Trash2,
-  Timer,
   RefreshCw,
   HardDrive,
   Cloud,
@@ -13,7 +12,6 @@ import {
   Monitor,
   CheckCircle2,
   Clock,
-  Database,
   ChevronDown,
   ChevronUp,
   Settings,
@@ -25,7 +23,6 @@ import {
   Minus,
   Folder,
   FileCode,
-  FileImage,
   CornerDownLeft,
   Pin,
   PinOff,
@@ -876,7 +873,7 @@ function App() {
         {view === "main" && (
           <>
             {/* Header */}
-            <div className="relative flex flex-col bg-white/5">
+            <div className="relative flex flex-col">
               {(backupState === "running" || backupState === "success") &&
                 isCollapsed && (
                   <div
@@ -894,93 +891,87 @@ function App() {
                   />
                 )}
 
-              <div className="p-4 px-5 flex items-center justify-between gap-3 z-10">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="px-3 pt-6 pb-4 z-10 space-y-3">
+                <div className="flex items-center gap-3">
                   <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
                     <button
                       onClick={() => setIsCollapsed(!isCollapsed)}
-                      className="p-1.5 -ml-1 rounded-lg transition-all flex-shrink-0 hover:bg-white/10 text-gray-400 active:bg-white/5"
+                      className="bg-white/10 p-2 rounded-xl transition-all flex-shrink-0 hover:bg-white/15 text-white/70 active:bg-white/5"
                     >
                       {isCollapsed ? (
-                        <ChevronDown size={16} />
+                        <ChevronDown size={18} />
                       ) : (
-                        <ChevronUp size={16} />
+                        <ChevronUp size={18} />
                       )}
                     </button>
                   </Tooltip>
 
-                  <div className="flex-1 min-w-0 py-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className={`font-bold text-[13px] tracking-tight leading-none truncate ${!session ? "text-gray-500" : "text-white"}`}
-                        title={sessionInfo.name}
-                      >
-                        {truncateMiddle(sessionInfo.name)}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-gray-400 opacity-80">
-                      {session && (
-                        <Database size={10} className="flex-shrink-0" />
-                      )}
-                      <p
-                        className={`text-[10px] ${session ? "font-bold tracking-wide" : "font-medium"}`}
-                      >
-                        {sessionInfo.size}
-                      </p>
-                      {session && (
-                        <div className="flex items-center gap-1.5 ml-1">
-                          <FileImage size={10} className="flex-shrink-0" />
-                          <p className="text-[10px] font-bold tracking-wide">
-                            {session.image_count}{" "}
-                            {session.image_count === 1 ? "Image" : "Images"}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <h3
+                    className={`text-[15px] font-bold tracking-tight leading-none truncate ${!session ? "text-gray-500" : "text-white"}`}
+                    title={sessionInfo.name}
+                  >
+                    {truncateMiddle(sessionInfo.name)}
+                  </h3>
                 </div>
 
-                <Tooltip
-                  content={() => {
-                    if (backupState === 'running') return 'Cancel backup';
-                    if (backupState === 'success') return 'Backup complete';
-                    return 'Start backup';
-                  }}
-                  disabled={!tooltipsEnabled}
-                >
-                  <button
-                    onClick={handleStartBackup}
-                    onMouseEnter={() => setIsHoveringSync(true)}
-                    onMouseLeave={() => setIsHoveringSync(false)}
-                    disabled={enabledCount === 0}
-                    className={`flex-shrink-0 group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
-                      backupState === "running"
-                        ? isHoveringSync
-                          ? "bg-red-500/20 border border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                          : "bg-blue-500/20 border border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                        : backupState === "success"
-                          ? "bg-blue-600 border border-blue-400 text-white shadow-lg"
-                          : "bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 active:scale-95 active:bg-blue-500/30"
-                    } disabled:opacity-30 disabled:grayscale`}
+                {/* Action Bar */}
+                <div className="flex items-center justify-between bg-white/[0.03] rounded-2xl p-4 border border-white/[0.02]">
+                  <div className="flex items-center gap-3 text-[11px] text-white/50 font-medium px-1">
+                    <div className="flex flex-col">
+                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
+                      <span className="text-white/80">{session ? sessionInfo.size : "—"}</span>
+                    </div>
+                    <div className="w-[1px] h-4 bg-white/10" />
+                    <div className="flex flex-col">
+                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Files</span>
+                      <span className="text-white/80">{session ? `${session.image_count} ${session.image_count === 1 ? "Image" : "Images"}` : "—"}</span>
+                    </div>
+                  </div>
+
+                  <Tooltip
+                    content={() => {
+                      if (backupState === 'running') return 'Cancel backup';
+                      if (backupState === 'success') return 'Backup complete';
+                      return 'Start backup';
+                    }}
+                    disabled={!tooltipsEnabled}
                   >
-                    {backupState === "running" ? (
-                      isHoveringSync ? (
-                        <X size={18} />
+                    <button
+                      onClick={handleStartBackup}
+                      onMouseEnter={() => setIsHoveringSync(true)}
+                      onMouseLeave={() => setIsHoveringSync(false)}
+                      disabled={enabledCount === 0}
+                      className={`relative group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                        backupState === "running"
+                          ? isHoveringSync
+                            ? "bg-red-500/20 text-red-500"
+                            : "bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                          : backupState === "success"
+                            ? "bg-blue-600 text-white shadow-lg"
+                            : "bg-white/10 hover:bg-white/20 text-white active:scale-95"
+                      } disabled:opacity-30 disabled:grayscale`}
+                    >
+                      {backupState === "running" ? (
+                        isHoveringSync ? (
+                          <X size={14} />
+                        ) : (
+                          <RefreshCw size={14} className="animate-spin" />
+                        )
+                      ) : backupState === "success" ? (
+                        <CheckCircle2 size={14} />
                       ) : (
-                        <RefreshCw size={18} className="animate-spin" />
-                      )
-                    ) : backupState === "success" ? (
-                      <CheckCircle2 size={18} />
-                    ) : (
-                      <RefreshCw
-                        size={18}
-                        className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
-                      />
-                    )}
-                  </button>
-                </Tooltip>
+                        <RefreshCw
+                          size={14}
+                          className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
+                        />
+                      )}
+                      <span className="text-[11px] font-bold tracking-wide uppercase">
+                        {backupState === "running" ? (isHoveringSync ? "Cancel" : "Syncing") : backupState === "success" ? "Done" : "Sync"}
+                      </span>
+                    </button>
+                  </Tooltip>
+                </div>
               </div>
-              <div className="h-px w-full bg-white/5" />
             </div>
 
             {/* Collapsible Content */}
@@ -996,11 +987,11 @@ function App() {
                 defer={isCollapsed || isAnimating}
                 enableScroll={measuredContentHeight > 480}
               >
-                <div className="p-4 space-y-4" ref={contentRef}>
+                <div className="px-3 space-y-5 pb-4 pt-3" ref={contentRef}>
                 {/* Locations Section */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 text-white">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
                       Locations
                     </span>
                     <Tooltip content="Add new backup location" disabled={!tooltipsEnabled}>
@@ -1031,7 +1022,7 @@ function App() {
                         return (
                           <div
                             key={dest.id}
-                            className={`flex items-center rounded-xl border transition-all relative overflow-hidden h-[54px] ${
+                            className={`flex items-center rounded-2xl border transition-all relative overflow-hidden h-16 ${
                               isInaccessible
                                 ? "bg-black/20 border-white/[0.06] opacity-40"
                                 : confirmDeleteBackupFor === dest.id
@@ -1039,8 +1030,8 @@ function App() {
                                   : !dest.enabled
                                     ? "bg-black/20 border-white/[0.08] opacity-50"
                                     : hasBackup
-                                      ? "bg-blue-500/10 border-blue-500/20"
-                                      : "bg-white/5 border-white/10 shadow-sm"
+                                      ? "bg-blue-500/10 border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
+                                      : "bg-white/[0.03] border-white/[0.02] hover:bg-white/[0.05]"
                             } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""}`}
                           >
                             <div className="relative flex-1 h-full min-w-0 overflow-hidden">
@@ -1100,7 +1091,7 @@ function App() {
                                         damping: 40,
                                         mass: 1,
                                       }}
-                                      className="absolute inset-0 flex items-center gap-3 p-2.5 pr-12 h-full w-full"
+                                      className="absolute inset-0 flex items-center gap-3 p-4 pr-12 h-full w-full"
                                     >
                                       <Tooltip
                                         content={dest.enabled ? 'Disable location' : 'Enable location'}
@@ -1111,7 +1102,7 @@ function App() {
                                             toggleDestination(dest.id)
                                           }
                                           disabled={isInaccessible || backupState === "running"}
-                                          className={`group/icon z-10 relative flex items-center justify-center w-8 h-8 rounded-lg border transition-all overflow-hidden flex-shrink-0 ${
+                                          className={`group/icon z-10 relative flex items-center justify-center w-9 h-9 rounded-xl border transition-all overflow-hidden flex-shrink-0 ${
                                             dest.enabled
                                               ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
                                               : "bg-white/[0.02] border-white/[0.08] hover:bg-white/5"
@@ -1126,7 +1117,7 @@ function App() {
                                       <div className="z-10 flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                           <p
-                                            className={`text-[11px] font-bold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}
+                                            className={`text-[13px] font-semibold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}
                                           >
                                             {dest.label}
                                           </p>
@@ -1138,7 +1129,7 @@ function App() {
                                             />
                                           )}
                                         </div>
-                                        <p className="text-[9.5px] font-mono truncate text-gray-500 mt-[3px]">
+                                        <p className="text-[11px] font-mono truncate text-gray-500 mt-[3px]">
                                           {dest.path}
                                         </p>
                                       </div>
@@ -1329,7 +1320,7 @@ function App() {
                     ) : (
                       <button
                         onClick={addDefaultLocation}
-                        className="group w-full flex items-center gap-3 p-2.5 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all h-[54px]"
+                        className="group w-full flex items-center gap-3 p-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all h-16"
                       >
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 text-gray-500 group-hover:text-blue-400 transition-all flex-shrink-0">
                           <Plus size={16} />
@@ -1347,99 +1338,33 @@ function App() {
                   </div>
                 </div>
 
-                <div className="h-px -mx-4 bg-white/5" />
+                <div className="h-px -mx-3 bg-white/5" />
 
                 {/* Schedule Section */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 text-white">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
                       Schedule
                     </span>
                   </div>
 
-                  <div className="p-2.5 border border-white/10 rounded-xl space-y-3 shadow-sm bg-white/5">
-                    <div className="flex items-center justify-between px-1">
-                      <div className="flex items-center gap-2">
-                        <Timer
-                          size={13}
-                          className={
-                            scheduledBackup ? "text-blue-400" : "text-gray-500"
-                          }
-                        />
-                        <span className="text-[10px] font-bold uppercase text-gray-500">
-                          {scheduledBackup ? "Sync Every" : "Paused"}
-                        </span>
+                  <div className="bg-white/[0.03] rounded-2xl p-4 flex items-center justify-between group hover:bg-white/[0.05] transition-colors border border-white/[0.02]">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${scheduledBackup ? 'bg-green-500/10 text-green-400' : 'bg-orange-500/10 text-orange-400'}`}>
+                        <Clock size={16} />
                       </div>
-                      <button
-                        onClick={() => setScheduledBackup(!scheduledBackup)}
-                        className={`w-7 h-4 rounded-full relative transition-colors ${scheduledBackup ? "bg-blue-500" : "bg-gray-400"}`}
-                      >
-                        <div
-                          className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${scheduledBackup ? "left-[15px]" : "left-0.5"}`}
-                        />
-                      </button>
+                      <span className="text-[13px] font-medium text-white/90">
+                        {scheduledBackup ? "Auto-Sync" : "Paused"}
+                      </span>
                     </div>
-
-                    {scheduledBackup && (
-                      <div className="flex gap-1.5 p-0.5">
-                        {[5, 15, 30].map((min) => (
-                          <button
-                            key={min}
-                            onClick={() => {
-                              setIntervalMinutes(min);
-                              setIsEditingCustom(false);
-                            }}
-                            className={`flex-1 py-1.5 text-[9px] rounded-lg border transition-all ${
-                              intervalMinutes === min && !isEditingCustom
-                                ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
-                                : "bg-white/5 border-white/5 text-gray-500 hover:bg-white/10"
-                            }`}
-                          >
-                            {min}m
-                          </button>
-                        ))}
-                        <div className="flex-1 relative">
-                          {isEditingCustom ? (
-                            <input
-                              ref={customInputRef}
-                              type="number"
-                              min="1"
-                              value={customValue}
-                              onChange={(e) => setCustomValue(e.target.value)}
-                              onBlur={() => {
-                                const val = parseInt(customValue);
-                                if (!isNaN(val) && val > 0) {
-                                  setIntervalMinutes(val);
-                                }
-                                setIsEditingCustom(false);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  customInputRef.current?.blur();
-                                }
-                              }}
-                              className="w-full py-1.5 text-[9px] text-center rounded-lg border bg-blue-600/20 border-blue-500 text-blue-400 font-bold focus:outline-none"
-                            />
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setCustomValue("");
-                                setIsEditingCustom(true);
-                              }}
-                              className={`w-full py-1.5 text-[9px] rounded-lg border transition-all ${
-                                ![5, 15, 30].includes(intervalMinutes)
-                                  ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
-                                  : "bg-white/5 border-white/5 text-gray-500 hover:bg-white/10"
-                              }`}
-                            >
-                              {![5, 15, 30].includes(intervalMinutes)
-                                ? `${intervalMinutes}m`
-                                : "Custom"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => setScheduledBackup(!scheduledBackup)}
+                      className={`w-9 h-5 rounded-full relative transition-colors ${scheduledBackup ? "bg-blue-500" : "bg-gray-600"}`}
+                    >
+                      <div
+                        className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${scheduledBackup ? "left-[18px]" : "left-[2px]"}`}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1451,33 +1376,33 @@ function App() {
         {/* VIEW: PREFERENCES */}
         {view === "prefs" && (
           <ScrollContainer
-            className="p-5"
+            className=""
             style={{minHeight: 0, gridRow: '1 / 3'}}
           >
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
-              <h2 className="text-[13px] font-bold text-white flex items-center gap-2">
-                <Settings size={14} className="text-blue-400" />
-                Preferences
-              </h2>
+            <div className="p-5 flex items-center justify-between border-b border-white/[0.05]">
+              <div className="flex items-center gap-2 text-blue-400">
+                <Settings size={18} />
+                <h1 className="text-[15px] font-semibold text-white">Preferences</h1>
+              </div>
               <button
                 onClick={() => setView("main")}
-                className="p-1 rounded-lg hover:bg-white/10 text-gray-400 transition-colors"
+                className="p-1 rounded-lg hover:bg-white/10 text-white/40 transition-colors"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
+            <div className="p-4 space-y-5">
 
             {/* Session File Tree Selection */}
             <div className="space-y-3 select-none">
               <div className="flex items-center gap-2 px-1">
                 <FolderTree size={12} className="text-gray-500" />
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
                   Session Contents
                 </span>
               </div>
 
-              <div className="border border-white/10 rounded-xl overflow-hidden shadow-sm bg-white/5">
+              <div className="border border-white/[0.02] rounded-2xl overflow-hidden bg-white/[0.03]">
                 {/* Root Level */}
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer"
@@ -1548,11 +1473,81 @@ function App() {
 
             <div className="h-px bg-white/5" />
 
+            {/* Backup Interval */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <Clock size={12} className="text-gray-500" />
+                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
+                  Backup Interval
+                </span>
+              </div>
+              <div className="flex gap-1.5">
+                {[5, 15, 30].map((min) => (
+                  <button
+                    key={min}
+                    onClick={() => {
+                      setIntervalMinutes(min);
+                      setIsEditingCustom(false);
+                    }}
+                    className={`flex-1 py-2 text-[11px] rounded-xl border transition-all ${
+                      intervalMinutes === min && !isEditingCustom
+                        ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
+                        : "bg-white/[0.03] border-white/[0.02] text-gray-500 hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    {min}m
+                  </button>
+                ))}
+                <div className="flex-1 relative">
+                  {isEditingCustom ? (
+                    <input
+                      ref={customInputRef}
+                      type="number"
+                      min="1"
+                      value={customValue}
+                      onChange={(e) => setCustomValue(e.target.value)}
+                      onBlur={() => {
+                        const val = parseInt(customValue);
+                        if (!isNaN(val) && val > 0) {
+                          setIntervalMinutes(val);
+                        }
+                        setIsEditingCustom(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          customInputRef.current?.blur();
+                        }
+                      }}
+                      className="w-full py-2 text-[11px] text-center rounded-xl border bg-blue-600/20 border-blue-500 text-blue-400 font-bold focus:outline-none"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setCustomValue("");
+                        setIsEditingCustom(true);
+                      }}
+                      className={`w-full py-2 text-[11px] rounded-xl border transition-all ${
+                        ![5, 15, 30].includes(intervalMinutes)
+                          ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
+                          : "bg-white/[0.03] border-white/[0.02] text-gray-500 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      {![5, 15, 30].includes(intervalMinutes)
+                        ? `${intervalMinutes}m`
+                        : "Custom"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-white/5" />
+
             {/* Notifications Toggle */}
             <div className="space-y-3">
               <button
                 onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 shadow-sm"
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -1574,17 +1569,17 @@ function App() {
                   </div>
                 </div>
                 <div
-                  className={`w-7 h-4 rounded-full relative transition-colors ${notificationsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
+                  className={`w-9 h-5 rounded-full relative transition-colors ${notificationsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
                 >
                   <div
-                    className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${notificationsEnabled ? "left-[15px]" : "left-0.5"}`}
+                    className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${notificationsEnabled ? "left-[18px]" : "left-[2px]"}`}
                   />
                 </div>
               </button>
 
               <button
                 onClick={() => setTooltipsEnabled(!tooltipsEnabled)}
-                className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 shadow-sm"
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -1602,10 +1597,10 @@ function App() {
                   </div>
                 </div>
                 <div
-                  className={`w-7 h-4 rounded-full relative transition-colors ${tooltipsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
+                  className={`w-9 h-5 rounded-full relative transition-colors ${tooltipsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
                 >
                   <div
-                    className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${tooltipsEnabled ? "left-[15px]" : "left-0.5"}`}
+                    className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${tooltipsEnabled ? "left-[18px]" : "left-[2px]"}`}
                   />
                 </div>
               </button>
@@ -1615,12 +1610,16 @@ function App() {
         )}
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-white/5 bg-black/40 flex items-center justify-between z-20">
-          <div className="flex items-center gap-2 text-[10px] font-medium text-gray-500">
+        <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between z-20">
+          <div className="flex items-center gap-2 text-[11px] font-medium text-white/40">
             <div className="flex items-center gap-1.5">
-              <Clock size={10} className="opacity-70" />
+              {view === "prefs" ? (
+                <Clock size={12} className="opacity-70" />
+              ) : (
+                <CheckCircle2 size={12} className="text-green-500/70" />
+              )}
               <span>
-                {view === "prefs" ? `v${appVersion}` : sessionInfo.lastSyncLabel}
+                {view === "prefs" ? `v${appVersion}` : (lastSynced ? "Synced" : sessionInfo.lastSyncLabel)}
               </span>
             </div>
             {view === "prefs" && (
@@ -1646,24 +1645,29 @@ function App() {
             )}
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setView(view === "main" ? "prefs" : "main")}
-              className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                view === "prefs"
-                  ? "text-blue-400"
-                  : "text-gray-500 hover:text-blue-400"
-              }`}
-            >
-              {view === "main" && <Settings size={12} />}
-              <span>{view === "prefs" ? "Done" : "Settings"}</span>
-            </button>
-            {view === "main" && (
+            {view === "prefs" ? (
               <button
-                onClick={() => invoke("quit_app")}
-                className="text-[10px] uppercase font-bold tracking-[0.1em] text-gray-500 hover:text-red-500 transition-colors"
+                onClick={() => setView("main")}
+                className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-[11px] font-bold text-white transition-colors"
               >
-                Quit
+                DONE
               </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setView("prefs")}
+                  className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-white/60 hover:text-white transition-colors"
+                >
+                  <Settings size={14} />
+                  SETTINGS
+                </button>
+                <button
+                  onClick={() => invoke("quit_app")}
+                  className="text-[11px] uppercase font-bold text-red-400/80 hover:text-red-400 transition-colors"
+                >
+                  Quit
+                </button>
+              </>
             )}
           </div>
         </div>
