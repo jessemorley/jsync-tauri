@@ -9,6 +9,11 @@ pub fn quit_app(app: tauri::AppHandle) {
 }
 
 #[tauri::command]
+pub fn relaunch_app(app: tauri::AppHandle) {
+    app.restart();
+}
+
+#[tauri::command]
 pub fn send_notification(_app: tauri::AppHandle, title: String, body: String) {
     // Direct AppleScript call as a definitive fallback for macOS dev environments
     let script = format!(

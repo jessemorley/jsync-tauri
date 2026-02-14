@@ -128,6 +128,7 @@ function App() {
   // Update State
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [updateReady, setUpdateReady] = useState(false);
   const [appVersion, setAppVersion] = useState("");
 
   // Options Menu State
@@ -403,6 +404,7 @@ function App() {
   // Update check handler
   const handleCheckForUpdates = async () => {
     setIsCheckingUpdate(true);
+    setUpdateReady(false);
     setUpdateStatus("Checking for update...");
     try {
       const update = await checkForAppUpdates();
@@ -411,24 +413,35 @@ function App() {
           `Update available: v${update.version}\n\nDo you want to download and install it now?`,
         );
         if (confirmed) {
+          let totalBytes = 0;
+          let downloadedBytes = 0;
           setUpdateStatus(`Downloading v${update.version}...`);
           await update.downloadAndInstall((event) => {
             switch (event.event) {
               case "Started":
-                setUpdateStatus("Download started...");
+                totalBytes = event.data.contentLength ?? 0;
+                downloadedBytes = 0;
+                setUpdateStatus("Downloading...");
                 break;
               case "Progress":
-                setUpdateStatus(
-                  `Downloading... ${Math.round(event.data.chunkLength / 1024)}KB`,
-                );
+                downloadedBytes += event.data.chunkLength;
+                if (totalBytes > 0) {
+                  const pct = Math.round((downloadedBytes / totalBytes) * 100);
+                  setUpdateStatus(`Downloading... ${pct}%`);
+                } else {
+                  setUpdateStatus(
+                    `Downloading... ${(downloadedBytes / 1024 / 1024).toFixed(1)}MB`,
+                  );
+                }
                 break;
               case "Finished":
-                setUpdateStatus("Download finished. Installing...");
+                setUpdateStatus("Installing...");
                 break;
             }
           });
-          // App should restart automatically, but just in case
-          setUpdateStatus("Update installed. Please restart.");
+          setUpdateStatus("Update complete!");
+          setUpdateReady(true);
+          setIsCheckingUpdate(false);
         } else {
           setUpdateStatus(null);
         }
@@ -1611,16 +1624,25 @@ function App() {
               </span>
             </div>
             {view === "prefs" && (
-              <button
-                onClick={handleCheckForUpdates}
-                disabled={isCheckingUpdate}
-                className="ml-1 px-2 py-0.5 rounded-md border border-white/10 text-[8px] font-bold uppercase tracking-wider hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {isCheckingUpdate && (
-                  <Loader2 size={10} className="animate-spin" />
-                )}
-                <span>{updateStatus || "Check for update"}</span>
-              </button>
+              updateReady ? (
+                <button
+                  onClick={() => invoke("relaunch_app")}
+                  className="ml-1 px-2 py-0.5 rounded-md border border-green-500/30 bg-green-500/10 text-green-400 text-[8px] font-bold uppercase tracking-wider hover:bg-green-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <span>Restart to update</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleCheckForUpdates}
+                  disabled={isCheckingUpdate}
+                  className="ml-1 px-2 py-0.5 rounded-md border border-white/10 text-[8px] font-bold uppercase tracking-wider hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isCheckingUpdate && (
+                    <Loader2 size={10} className="animate-spin" />
+                  )}
+                  <span>{updateStatus || "Check for update"}</span>
+                </button>
+              )
             )}
           </div>
           <div className="flex items-center gap-4">
