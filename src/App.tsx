@@ -63,6 +63,7 @@ import {
   checkForAppUpdates,
 } from "./lib/tauri";
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
 
 const completionAnimations = `
   @keyframes completion-pulse {
@@ -127,6 +128,7 @@ function App() {
   // Update State
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState("");
 
   // Options Menu State
   const [showingOptionsFor, setShowingOptionsFor] = useState<number | null>(
@@ -176,6 +178,10 @@ function App() {
   const failedDestCountRef = useRef(0);
   const failedErrorsRef = useRef<string[]>([]);
   const resetTimeoutRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    getVersion().then(setAppVersion);
+  }, []);
 
   useEffect(() => {
     notificationsEnabledRef.current = notificationsEnabled;
@@ -1601,7 +1607,7 @@ function App() {
             <div className="flex items-center gap-1.5">
               <Clock size={10} className="opacity-70" />
               <span>
-                {view === "prefs" ? "v0.2.6" : sessionInfo.lastSyncLabel}
+                {view === "prefs" ? `v${appVersion}` : sessionInfo.lastSyncLabel}
               </span>
             </div>
             {view === "prefs" && (
