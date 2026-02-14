@@ -1,6 +1,6 @@
 [package]
 name = "jsync"
-version = "0.2.8"
+version = "0.2.9"
 description = "JSync - Capture One Backup Tool"
 authors = ["Jesse Morley"]
 edition = "2021"
