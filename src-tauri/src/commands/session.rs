@@ -42,7 +42,7 @@ pub async fn load_session_config(
     session_path: String,
     session_name: String,
 ) -> Result<SessionConfig, String> {
-    let config_path = Path::new(&session_path).join(format!("{}.jsync", session_name));
+    let config_path = Path::new(&session_path).join(format!(".{}.jsync", session_name));
 
     if !config_path.exists() {
         info!(
@@ -79,7 +79,7 @@ pub async fn save_session_config(
     session_name: String,
     config: SessionConfig,
 ) -> Result<(), String> {
-    let config_path = Path::new(&session_path).join(format!("{}.jsync", session_name));
+    let config_path = Path::new(&session_path).join(format!(".{}.jsync", session_name));
 
     info!("Saving session config to {:?}", config_path);
     let content = serde_json::to_string_pretty(&config)
