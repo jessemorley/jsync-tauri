@@ -112,6 +112,12 @@ export async function sendBackupNotification(title: string, body: string): Promi
   }
 }
 
+// Open path in system file manager
+export async function openInFinder(path: string): Promise<void> {
+  const { openPath } = await import('@tauri-apps/plugin-opener');
+  await openPath(path);
+}
+
 // Updater
 export async function checkForAppUpdates(): Promise<Update | null> {
   return await check();

@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip } from "./components/Tooltip";
 import { ScrollContainer } from "./components/ScrollContainer";
+import { LocationDetail } from "./components/LocationDetail";
 import {
   Plus,
-  Trash2,
   RefreshCw,
   HardDrive,
   Cloud,
@@ -23,11 +23,8 @@ import {
   Minus,
   Folder,
   FileCode,
-  CornerDownLeft,
   Pin,
-  PinOff,
   Loader2,
-  Delete,
   Unplug,
 } from "lucide-react";
 import "./App.css";
@@ -58,6 +55,7 @@ import {
   onRefreshSession,
   requestNotificationPermission,
   checkForAppUpdates,
+  openInFinder,
 } from "./lib/tauri";
 import { invoke } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
@@ -96,7 +94,8 @@ const completionAnimations = `
 
 function App() {
   // Application State
-  const [view, setView] = useState<"main" | "prefs">("main");
+  const [view, setView] = useState<"main" | "prefs" | "location-detail">("main");
+  const [selectedDestId, setSelectedDestId] = useState<number | null>(null);
   const [backupState, setBackupState] = useState<
     "idle" | "running" | "success" | "error"
   >("idle");
@@ -129,15 +128,6 @@ function App() {
   const [appVersion, setAppVersion] = useState("");
 
   // Options Menu State
-  const [showingOptionsFor, setShowingOptionsFor] = useState<number | null>(
-    null,
-  );
-  const [confirmDeleteBackupFor, setConfirmDeleteBackupFor] = useState<
-    number | null
-  >(null);
-  const [previousCardState, setPreviousCardState] = useState<{
-    [key: number]: "content" | "options" | "confirm";
-  }>({});
   const [pulsingLocationId, setPulsingLocationId] = useState<number | null>(
     null,
   );
@@ -241,10 +231,6 @@ function App() {
 
   // Load Session and its Config
   const loadSessionData = useCallback(async (newSession: SessionInfo) => {
-    // Reset options menu when session changes
-    setShowingOptionsFor(null);
-    setConfirmDeleteBackupFor(null);
-
     setIsLoadingConfig(true);
     try {
       const items = await getSessionContents(newSession.path);
@@ -313,23 +299,6 @@ function App() {
       customInputRef.current.focus();
     }
   }, [isEditingCustom]);
-
-  // Track previous card state for conditional animations
-  useEffect(() => {
-    destinations.forEach((dest) => {
-      const currentState: "content" | "options" | "confirm" =
-        confirmDeleteBackupFor === dest.id
-          ? "confirm"
-          : showingOptionsFor === dest.id
-            ? "options"
-            : "content";
-
-      setPreviousCardState((prev) => ({
-        ...prev,
-        [dest.id]: currentState,
-      }));
-    });
-  }, [showingOptionsFor, confirmDeleteBackupFor, destinations]);
 
   // Auto-clear pulsing location highlight
   useEffect(() => {
@@ -556,10 +525,6 @@ function App() {
   const handleStartBackup = useCallback(async () => {
     if (enabledCount === 0 || !session) return;
 
-    // Close any open options menus
-    setShowingOptionsFor(null);
-    setConfirmDeleteBackupFor(null);
-
     if (backupState === "running") {
       console.log("User requested backup cancellation");
       try {
@@ -747,8 +712,6 @@ function App() {
         ),
       );
 
-      setConfirmDeleteBackupFor(null);
-      setShowingOptionsFor(null);
     } catch (error) {
       console.error("Failed to delete backup:", error);
     }
@@ -862,7 +825,7 @@ function App() {
       `}</style>
 
       <div
-        className={`w-full h-full rounded-2xl border overflow-hidden bg-[#1c1c1e] transition-all duration-300 ${
+        className={`w-full h-full rounded-[26px] border overflow-hidden bg-[#1c1c1e] transition-all duration-300 ${
           backupState === "success" && isCollapsed
             ? "animate-completion-pulse"
             : "border-white/10"
@@ -1020,285 +983,56 @@ function App() {
                           backedUpDestinations.has(dest.id);
                         const isDuplicate = pulsingLocationId === dest.id;
                         return (
-                          <div
+                          <button
                             key={dest.id}
-                            className={`flex items-center rounded-2xl border transition-all relative overflow-hidden h-16 ${
+                            onClick={() => {
+                              if (backupState === "running") return;
+                              setSelectedDestId(dest.id);
+                              setView("location-detail");
+                            }}
+                            disabled={backupState === "running"}
+                            className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all relative overflow-hidden h-16 text-left ${
                               isInaccessible
-                                ? "bg-black/20 border-white/[0.06] opacity-40"
-                                : confirmDeleteBackupFor === dest.id
-                                  ? "bg-black/40 border-white/10"
-                                  : !dest.enabled
-                                    ? "bg-black/20 border-white/[0.08] opacity-50"
-                                    : hasBackup
-                                      ? "bg-blue-500/10 border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
-                                      : "bg-white/[0.03] border-white/[0.02] hover:bg-white/[0.05]"
-                            } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""}`}
+                                ? "bg-black/20 border-white/[0.06] opacity-40 cursor-default"
+                                : !dest.enabled
+                                  ? "bg-black/20 border-white/[0.08] opacity-50 hover:opacity-70"
+                                  : hasBackup
+                                    ? "bg-blue-500/10 border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:bg-blue-500/15"
+                                    : "bg-white/[0.03] border-white/[0.02] hover:bg-white/[0.05]"
+                            } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""} disabled:cursor-default`}
                           >
-                            <div className="relative flex-1 h-full min-w-0 overflow-hidden">
-                              {/* Settings Toggle - Sitting on top */}
-                              <Tooltip
-                                content={isInaccessible ? 'Location not accessible' : showingOptionsFor === dest.id ? 'Hide options' : 'Show options'}
-                                disabled={!tooltipsEnabled || (!isInaccessible && backupState === 'running')}
-                              >
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isInaccessible) return;
-                                    if (confirmDeleteBackupFor === dest.id) {
-                                      setConfirmDeleteBackupFor(null);
-                                    } else {
-                                      setShowingOptionsFor(
-                                        showingOptionsFor === dest.id
-                                          ? null
-                                          : dest.id,
-                                      );
-                                    }
-                                  }}
-                                  disabled={isInaccessible || backupState === "running"}
-                                  className={`absolute right-0 top-0 bottom-0 z-30 px-4 transition-all flex items-center justify-center ${
-                                    isInaccessible
-                                      ? "text-orange-400/70 cursor-default opacity-100"
-                                      : "text-gray-600 hover:text-blue-400 disabled:opacity-0"
-                                  }`}
-                                >
-                                  {isInaccessible ? (
-                                    <Unplug size={12} />
-                                  ) : showingOptionsFor === dest.id ||
-                                  confirmDeleteBackupFor === dest.id ? (
-                                    <CornerDownLeft size={12} />
-                                  ) : (
-                                    <Settings size={12} />
-                                  )}
-                                </button>
-                              </Tooltip>
-
-                              <AnimatePresence mode="popLayout" initial={false}>
-                                {/* NORMAL CARD CONTENT */}
-                                {showingOptionsFor !== dest.id &&
-                                  confirmDeleteBackupFor !== dest.id && (
-                                    <motion.div
-                                      key="content"
-                                      initial={
-                                        previousCardState[dest.id] === "options"
-                                          ? { x: "-100%", opacity: 0 }
-                                          : { x: "-100%", opacity: 0 }
-                                      }
-                                      animate={{ x: 0, opacity: 1 }}
-                                      exit={{ x: "-100%", opacity: 0 }}
-                                      transition={{
-                                        type: "spring",
-                                        stiffness: 700,
-                                        damping: 40,
-                                        mass: 1,
-                                      }}
-                                      className="absolute inset-0 flex items-center gap-3 p-4 pr-12 h-full w-full"
-                                    >
-                                      <Tooltip
-                                        content={dest.enabled ? 'Disable location' : 'Enable location'}
-                                        disabled={!tooltipsEnabled || backupState === 'running'}
-                                      >
-                                        <button
-                                          onClick={() =>
-                                            toggleDestination(dest.id)
-                                          }
-                                          disabled={isInaccessible || backupState === "running"}
-                                          className={`group/icon z-10 relative flex items-center justify-center w-9 h-9 rounded-xl border transition-all overflow-hidden flex-shrink-0 ${
-                                            dest.enabled
-                                              ? "bg-white/5 border-white/10 hover:bg-black/10 shadow-sm"
-                                              : "bg-white/[0.02] border-white/[0.08] hover:bg-white/5"
-                                          } disabled:cursor-default`}
-                                        >
-                                          {getDestinationIcon(
-                                            dest.destination_type,
-                                            dest.enabled,
-                                          )}
-                                        </button>
-                                      </Tooltip>
-                                      <div className="z-10 flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <p
-                                            className={`text-[13px] font-semibold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}
-                                          >
-                                            {dest.label}
-                                          </p>
-                                          {isDefault(dest.id) && (
-                                            <Pin
-                                              size={10}
-                                              strokeWidth={3}
-                                              className="text-blue-400 flex-shrink-0"
-                                            />
-                                          )}
-                                        </div>
-                                        <p className="text-[11px] font-mono truncate text-gray-500 mt-[3px]">
-                                          {dest.path}
-                                        </p>
-                                      </div>
-                                    </motion.div>
-                                  )}
-
-                                {/* OPTIONS ROW */}
-
-                                {showingOptionsFor === dest.id &&
-                                  confirmDeleteBackupFor !== dest.id && (
-                                    <motion.div
-                                      key="options"
-                                      initial={
-                                        previousCardState[dest.id] === "content"
-                                          ? { x: "100%", opacity: 0 }
-                                          : previousCardState[dest.id] ===
-                                              "confirm"
-                                            ? { x: 0, opacity: 0, scale: 0.95 }
-                                            : { x: "100%", opacity: 0 }
-                                      }
-                                      animate={{ x: 0, opacity: 1, scale: 1 }}
-                                      exit={
-                                        showingOptionsFor === dest.id
-                                          ? { x: 0, opacity: 0, scale: 0.95 }
-                                          : { x: "100%", opacity: 0 }
-                                      }
-                                      transition={{
-                                        type: "spring",
-                                        stiffness: 700,
-                                        damping: 40,
-                                        mass: 1,
-                                      }}
-                                      className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
-                                    >
-                                      <Tooltip content={isDefault(dest.id) ? 'Remove default' : 'Mark as default'} disabled={!tooltipsEnabled}>
-                                        <button
-                                          onClick={() => toggleDefault(dest.id)}
-                                          className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
-                                            isDefault(dest.id)
-                                              ? "bg-blue-600/20 border-blue-500 text-blue-400"
-                                              : "bg-white/5 border-white/10 text-gray-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400"
-                                          }`}
-                                        >
-                                          <span
-                                            key={
-                                              isDefault(dest.id)
-                                                ? "pinoff"
-                                                : "pin"
-                                            }
-                                            className="animate-in fade-in zoom-in duration-200"
-                                          >
-                                            {isDefault(dest.id) ? (
-                                              <PinOff
-                                                size={10}
-                                                strokeWidth={3}
-                                                className="flex-shrink-0"
-                                              />
-                                            ) : (
-                                              <Pin
-                                                size={10}
-                                                strokeWidth={3}
-                                                className="flex-shrink-0"
-                                              />
-                                            )}
-                                          </span>
-                                          <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                            Default
-                                          </span>
-                                        </button>
-                                      </Tooltip>
-
-                                      <Tooltip
-                                        content="Delete backup data"
-                                        disabled={!tooltipsEnabled || !dest.has_existing_backup}
-                                      >
-                                        <button
-                                          onClick={() =>
-                                            setConfirmDeleteBackupFor(dest.id)
-                                          }
-                                          disabled={!dest.has_existing_backup}
-                                          className={`flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-all min-w-0 ${
-                                            dest.has_existing_backup
-                                              ? "border-white/10 bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
-                                              : "border-white/10 bg-white/[0.02] text-gray-600 opacity-50 cursor-not-allowed"
-                                          }`}
-                                        >
-                                          <Trash2
-                                            size={10}
-                                            className="flex-shrink-0"
-                                          />
-                                          <span
-                                            className={`text-[9px] tracking-wide text-center truncate w-full`}
-                                          >
-                                            Delete
-                                          </span>
-                                        </button>
-                                      </Tooltip>
-
-                                      <Tooltip content="Remove location" disabled={!tooltipsEnabled}>
-                                        <button
-                                          onClick={() => {
-                                            removeDestination(dest.id);
-                                            setShowingOptionsFor(null);
-                                          }}
-                                          className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/30 transition-all min-w-0"
-                                        >
-                                          <Delete
-                                            size={10}
-                                            className="flex-shrink-0"
-                                          />
-                                          <span className="text-[9px] tracking-wide text-center truncate w-full">
-                                            Remove
-                                          </span>
-                                        </button>
-                                      </Tooltip>
-                                    </motion.div>
-                                  )}
-
-                                {/* CONFIRM DELETE ROW */}
-                                {confirmDeleteBackupFor === dest.id && (
-                                  <motion.div
-                                    key="confirm"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{
-                                      type: "spring",
-                                      stiffness: 700,
-                                      damping: 40,
-                                      mass: 1,
-                                    }}
-                                    className="absolute inset-0 w-full flex h-full p-1.5 gap-1.5 pr-12"
-                                  >
-                                    <div className="flex-1 basis-0 flex flex-col items-center justify-center min-w-0 rounded-lg border border-transparent">
-                                      <span className="text-[9px] tracking-wide text-gray-400 leading-[1.1] text-center">
-                                        Delete
-                                        <br />
-                                        Backup?
-                                      </span>
-                                    </div>
-                                    <button
-                                      onClick={() =>
-                                        setConfirmDeleteBackupFor(null)
-                                      }
-                                      className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 transition-all"
-                                    >
-                                      <X size={10} className="flex-shrink-0" />
-                                      <span className="text-[9px] tracking-wide">
-                                        Cancel
-                                      </span>
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleConfirmDeleteBackup(dest)
-                                      }
-                                      className="flex-1 basis-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                                    >
-                                      <Trash2
-                                        size={10}
-                                        className="flex-shrink-0"
-                                      />
-                                      <span className="text-[9px] tracking-wide">
-                                        Delete
-                                      </span>
-                                    </button>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
+                            {/* Icon */}
+                            <div
+                              className={`flex items-center justify-center w-9 h-9 rounded-xl border flex-shrink-0 ${
+                                dest.enabled
+                                  ? "bg-white/5 border-white/10"
+                                  : "bg-white/[0.02] border-white/[0.08]"
+                              }`}
+                            >
+                              {getDestinationIcon(dest.destination_type, dest.enabled)}
                             </div>
+
+                            {/* Label + path */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className={`text-[13px] font-semibold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}>
+                                  {dest.label}
+                                </p>
+                                {isDefault(dest.id) && (
+                                  <Pin size={10} strokeWidth={3} className="text-blue-400 flex-shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-[11px] font-mono truncate text-gray-500 mt-[3px]">
+                                {dest.path}
+                              </p>
+                            </div>
+
+                            {/* Inaccessible indicator */}
+                            {isInaccessible && (
+                              <Unplug size={12} className="text-orange-400/70 flex-shrink-0" />
+                            )}
+
+                            {/* Backup progress overlay */}
                             {isBackingUp && (
                               <div
                                 className={`absolute inset-0 bg-blue-600 transition-all duration-300 ease-out z-20 pointer-events-none ${
@@ -1307,14 +1041,11 @@ function App() {
                                     : "opacity-40"
                                 }`}
                                 style={{
-                                  width:
-                                    backupState === "success"
-                                      ? "100%"
-                                      : `${globalProgress}%`,
+                                  width: backupState === "success" ? "100%" : `${globalProgress}%`,
                                 }}
                               />
                             )}
-                          </div>
+                          </button>
                         );
                       })
                     ) : (
@@ -1372,6 +1103,39 @@ function App() {
             </div>
           </>
         )}
+
+        {/* VIEW: LOCATION DETAIL */}
+        {view === "location-detail" && (() => {
+          const selectedDest = destinations.find(d => d.id === selectedDestId);
+          if (!selectedDest) return null;
+          return (
+            <motion.div
+              key="location-detail"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 700, damping: 40, mass: 1 }}
+              className="flex flex-col overflow-hidden min-h-0"
+              style={{ gridRow: '1 / 3' }}
+            >
+              <LocationDetail
+                dest={selectedDest}
+                lastSynced={lastSynced}
+                isDefault={isDefault(selectedDest.id)}
+                onBack={() => setView("main")}
+                onToggleEnabled={() => toggleDestination(selectedDest.id)}
+                onToggleDefault={() => toggleDefault(selectedDest.id)}
+                onDeleteBackup={() => handleConfirmDeleteBackup(selectedDest)}
+                onRemove={() => {
+                  removeDestination(selectedDest.id);
+                  setView("main");
+                }}
+                onOpenInFinder={() => openInFinder(selectedDest.path).catch(console.error)}
+                formatLastSync={formatLastSync}
+              />
+            </motion.div>
+          );
+        })()}
 
         {/* VIEW: PREFERENCES */}
         {view === "prefs" && (
