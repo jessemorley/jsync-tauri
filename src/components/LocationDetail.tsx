@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  ArrowLeft,
+  MapPin,
   HardDrive,
   Cloud,
   Network,
@@ -80,23 +80,24 @@ export function LocationDetail({
   };
 
   return (
-    <div className="flex flex-col h-full animate-in slide-in-from-right duration-200">
+    <div className="flex flex-col h-full">
 
       {/* Nav header */}
-      <div className="shrink-0 px-4 py-3 bg-black/40 border-b border-white/[0.06] flex items-center gap-3">
+      <div className="shrink-0 p-5 flex items-center justify-between border-b border-white/[0.05]">
+        <div className="flex items-center gap-2 text-blue-400">
+          <MapPin size={18} />
+          <h1 className="text-[15px] font-semibold text-white">Location Details</h1>
+        </div>
         <button
           onClick={onBack}
-          className="p-1.5 rounded-xl bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10 transition-colors"
+          className="p-1 rounded-lg hover:bg-white/10 text-white/40 transition-colors"
         >
-          <ArrowLeft size={15} />
+          <X size={18} />
         </button>
-        <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40">
-          Location Details
-        </span>
       </div>
 
       {/* Location info */}
-      <div className="shrink-0 px-5 pt-5 pb-4 border-b border-white/[0.05]">
+      <div className="shrink-0 px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={onToggleEnabled}

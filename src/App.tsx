@@ -1008,15 +1008,16 @@ function App() {
                             } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""} disabled:cursor-default`}
                           >
                             {/* Icon */}
-                            <div
-                              className={`flex items-center justify-center w-9 h-9 rounded-xl border flex-shrink-0 ${
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleDestination(dest.id); }}
+                              className={`flex items-center justify-center w-9 h-9 rounded-xl border flex-shrink-0 transition-all hover:scale-105 active:scale-95 ${
                                 dest.enabled
                                   ? "bg-white/5 border-white/10"
                                   : "bg-white/[0.02] border-white/[0.08]"
                               }`}
                             >
                               {getDestinationIcon(dest.destination_type, dest.enabled)}
-                            </div>
+                            </button>
 
                             {/* Label + path */}
                             <div className="flex-1 min-w-0">
@@ -1115,12 +1116,8 @@ function App() {
           const selectedDest = destinations.find(d => d.id === selectedDestId);
           if (!selectedDest) return null;
           return (
-            <motion.div
+            <div
               key="location-detail"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 700, damping: 40, mass: 1 }}
               className="flex flex-col overflow-hidden min-h-0"
               style={{ gridRow: '1 / 3' }}
             >
@@ -1139,7 +1136,7 @@ function App() {
                 onOpenInFinder={() => openInFinder(selectedDest.path).catch(console.error)}
                 formatLastSync={formatLastSync}
               />
-            </motion.div>
+            </div>
           );
         })()}
 
