@@ -843,15 +843,17 @@ function App() {
         {view === "main" && (
           <>
             <div
-              className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-500"
+              className="absolute top-0 left-0 right-0 pointer-events-none z-0 transition-opacity duration-500"
               style={{
+                height: '300px',
                 backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(34,197,94,0.04) 0%, transparent 100%)',
                 opacity: backupState === "running" ? 0 : 1,
               }}
             />
             <div
-              className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-500"
+              className="absolute top-0 left-0 right-0 pointer-events-none z-0 transition-opacity duration-500"
               style={{
+                height: '300px',
                 backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(59,130,246,0.05) 0%, transparent 100%)',
                 opacity: backupState === "running" ? 1 : 0,
               }}
@@ -1004,7 +1006,7 @@ function App() {
                     </Tooltip>
                   </div>
 
-                  <div className="rounded-[24px] bg-black/40 shadow-[inset_0_4px_8px_rgba(0,0,0,0.4)] border border-neutral-900 overflow-hidden">
+                  <div className="rounded-[24px] bg-[oklab(0_0_0/0.4)] shadow-[inset_0_4px_8px_rgba(0,0,0,0.4)] border border-neutral-900 overflow-hidden">
                   <div>
                     {destinations.length > 0 ? (
                       destinations.map((dest, index) => {
