@@ -26,6 +26,8 @@ import {
   Pin,
   Loader2,
   Unplug,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import "./App.css";
 import type {
@@ -860,32 +862,43 @@ function App() {
                   />
                 )}
 
-              <div className="px-3 pt-6 pb-4 z-10 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
-                    <button
-                      onClick={() => setIsCollapsed(!isCollapsed)}
-                      className="bg-white/10 p-2 rounded-xl transition-all flex-shrink-0 hover:bg-white/15 text-white/70 active:bg-white/5"
-                    >
-                      {isCollapsed ? (
-                        <ChevronDown size={18} />
-                      ) : (
-                        <ChevronUp size={18} />
-                      )}
-                    </button>
-                  </Tooltip>
-
-                  <h3
-                    className={`text-[15px] font-bold tracking-tight leading-none truncate ${!session ? "text-gray-500" : "text-white"}`}
-                    title={sessionInfo.name}
-                  >
-                    {truncateMiddle(sessionInfo.name)}
-                  </h3>
+              <div className="px-3 pt-4 pb-4 z-10 space-y-4">
+                <div
+                  className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase cursor-pointer px-1 ${
+                    backupState === "running"
+                      ? "text-blue-400/75 drop-shadow-[0_0_3px_rgba(59,130,246,0.12)]"
+                      : session
+                        ? "text-green-400/75 drop-shadow-[0_0_3px_rgba(34,197,94,0.12)]"
+                        : "text-white/20"
+                  }`}
+                  title={session?.path}
+                  onClick={() => session && openInFinder(session.path)}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    backupState === "running"
+                      ? "bg-blue-500 shadow-[0_0_3px_rgba(59,130,246,0.12)] animate-pulse"
+                      : "bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.12)]"
+                  }`} />
+                  <span className="truncate">{truncateMiddle(sessionInfo.name)}</span>
+                  <ExternalLink size={10} className="opacity-0 group-hover/session:opacity-60 transition-opacity shrink-0" />
                 </div>
 
                 {/* Action Bar */}
                 <div className="flex items-center justify-between bg-white/[0.03] rounded-2xl p-4 border border-white/[0.02]">
                   <div className="flex items-center gap-3 text-[11px] text-white/50 font-medium px-1">
+                    <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
+                      <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="transition-all flex-shrink-0 text-white/40 hover:text-white/70 active:text-white/20 -ml-1"
+                      >
+                        {isCollapsed ? (
+                          <ChevronDown size={16} />
+                        ) : (
+                          <ChevronUp size={16} />
+                        )}
+                      </button>
+                    </Tooltip>
+                    <div className="w-[1px] h-4 bg-white/10" />
                     <div className="flex flex-col">
                       <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
                       <span className="text-white/80">{session ? sessionInfo.size : "—"}</span>
@@ -958,107 +971,101 @@ function App() {
               >
                 <div className="px-3 space-y-5 pb-4 pt-3" ref={contentRef}>
                 {/* Locations Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-2">
-                    <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
-                      Locations
-                    </span>
-                    <Tooltip content="Add new backup location" disabled={!tooltipsEnabled}>
-                      <button
-                        onClick={addDefaultLocation}
-                        className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </Tooltip>
+                <div className="rounded-[24px] bg-neutral-950 shadow-[inset_0_4px_12px_rgba(0,0,0,1)] border border-neutral-900 overflow-hidden">
+                  <div className="relative z-10 bg-neutral-950">
+                    <div className="flex items-center justify-between px-4 pt-3.5 pb-3.5">
+                      <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
+                        Locations
+                      </span>
+                      <Tooltip content="Add new backup location" disabled={!tooltipsEnabled}>
+                        <button
+                          onClick={addDefaultLocation}
+                          className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </Tooltip>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="pb-2">
                     {destinations.length > 0 ? (
-                      destinations.map((dest) => {
+                      destinations.map((dest, index) => {
                         const isInaccessible = inaccessibleDests.has(dest.id);
                         const isBackingUp =
                           (backupState === "running" ||
                             backupState === "success") &&
                           dest.enabled;
-                        const hasBackup =
-                          dest.has_existing_backup && dest.enabled;
                         const shouldPulse =
                           backupState === "success" &&
                           !isCollapsed &&
                           backedUpDestinations.has(dest.id);
                         const isDuplicate = pulsingLocationId === dest.id;
                         return (
-                          <button
-                            key={dest.id}
-                            onClick={() => {
-                              if (backupState === "running") return;
-                              setSelectedDestId(dest.id);
-                              setView("location-detail");
-                            }}
-                            disabled={backupState === "running"}
-                            className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all relative overflow-hidden h-16 text-left ${
-                              isInaccessible
-                                ? "bg-black/20 border-white/[0.06] opacity-40 cursor-default"
-                                : !dest.enabled
-                                  ? "bg-black/20 border-white/[0.08] opacity-50 hover:opacity-70"
-                                  : hasBackup
-                                    ? "bg-blue-500/10 border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] hover:bg-blue-500/15"
-                                    : "bg-white/[0.03] border-white/[0.02] hover:bg-white/[0.05]"
-                            } ${shouldPulse && !isDuplicate ? "animate-completion-pulse" : ""} ${isDuplicate ? "animate-duplicate-shake" : ""} disabled:cursor-default`}
-                          >
-                            {/* Icon */}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleDestination(dest.id); }}
-                              className={`flex items-center justify-center w-9 h-9 rounded-xl border flex-shrink-0 transition-all hover:scale-105 active:scale-95 ${
-                                dest.enabled
-                                  ? "bg-white/5 border-white/10"
-                                  : "bg-white/[0.02] border-white/[0.08]"
+                          <div key={dest.id}>
+                            {index > 0 && (
+                              <div className="mx-4 h-px bg-white/[0.04]" />
+                            )}
+                            <div
+                              onClick={() => {
+                                if (backupState === "running") return;
+                                setSelectedDestId(dest.id);
+                                setView("location-detail");
+                              }}
+                              className={`group relative overflow-hidden flex items-center justify-between px-3.5 py-2.5 transition-all cursor-pointer ${
+                                isInaccessible
+                                  ? "opacity-40 cursor-default"
+                                  : shouldPulse && !isDuplicate
+                                    ? "animate-completion-pulse"
+                                    : isDuplicate
+                                      ? "animate-duplicate-shake"
+                                      : "hover:bg-white/[0.03]"
                               }`}
                             >
-                              {getDestinationIcon(dest.destination_type, dest.enabled)}
-                            </button>
+                              {/* Backup progress overlay */}
+                              {isBackingUp && (
+                                <div
+                                  className={`absolute inset-0 bg-blue-500/5 pointer-events-none ${
+                                    backupState === "success" ? "animate-fill-fade" : "transition-all duration-300 ease-out"
+                                  }`}
+                                  style={{ width: backupState === "success" ? "100%" : `${globalProgress}%` }}
+                                />
+                              )}
 
-                            {/* Label + path */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className={`text-[13px] font-semibold leading-none truncate ${dest.enabled ? "text-gray-200" : "text-gray-500"}`}>
+                              <div className="flex items-center gap-3 relative z-10">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); toggleDestination(dest.id); }}
+                                  className={`p-1.5 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
+                                    dest.enabled ? "bg-blue-500/10 text-blue-400" : "bg-white/5 text-white/20"
+                                  }`}
+                                >
+                                  {getDestinationIcon(dest.destination_type, dest.enabled)}
+                                </button>
+                                <span className={`text-[12px] font-bold truncate ${dest.enabled ? "text-white/80" : "text-white/30"}`}>
                                   {dest.label}
-                                </p>
+                                </span>
                                 {isDefault(dest.id) && (
                                   <Pin size={10} strokeWidth={3} className="text-blue-400 flex-shrink-0" />
                                 )}
                               </div>
-                              <p className="text-[11px] font-mono truncate text-gray-500 mt-[3px]">
-                                {dest.path}
-                              </p>
+
+                              <div className="flex items-center gap-2 relative z-10">
+                                {isInaccessible ? (
+                                  <Unplug size={12} className="text-orange-400/70" />
+                                ) : isBackingUp ? (
+                                  <span className="text-[10px] font-mono font-bold text-blue-400">{Math.round(globalProgress)}%</span>
+                                ) : (
+                                  <ChevronRight size={14} className="text-white/20 group-hover:text-white/50 transition-colors" />
+                                )}
+                              </div>
                             </div>
-
-                            {/* Inaccessible indicator */}
-                            {isInaccessible && (
-                              <Unplug size={12} className="text-orange-400/70 flex-shrink-0" />
-                            )}
-
-                            {/* Backup progress overlay */}
-                            {isBackingUp && (
-                              <div
-                                className={`absolute inset-0 bg-blue-600 transition-all duration-300 ease-out z-20 pointer-events-none ${
-                                  backupState === "success"
-                                    ? "animate-fill-fade opacity-40"
-                                    : "opacity-40"
-                                }`}
-                                style={{
-                                  width: backupState === "success" ? "100%" : `${globalProgress}%`,
-                                }}
-                              />
-                            )}
-                          </button>
+                          </div>
                         );
                       })
                     ) : (
                       <button
                         onClick={addDefaultLocation}
-                        className="group w-full flex items-center gap-3 p-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all h-16"
+                        className="group w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-all"
                       >
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 text-gray-500 group-hover:text-blue-400 transition-all flex-shrink-0">
                           <Plus size={16} />
