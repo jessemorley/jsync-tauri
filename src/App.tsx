@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Tooltip } from "./components/Tooltip";
 import { ScrollContainer } from "./components/ScrollContainer";
 import { LocationDetail } from "./components/LocationDetail";

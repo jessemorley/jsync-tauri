@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   HardDrive,
@@ -14,6 +14,13 @@ import {
   Check,
 } from "lucide-react";
 import type { Destination } from "../lib/types";
+import { getDiskInfo, type DiskInfo } from "../lib/tauri";
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1e12) return `${(bytes / 1e12).toFixed(1)}TB`;
+  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)}GB`;
+  return `${(bytes / 1e6).toFixed(0)}MB`;
+}
 
 interface LocationDetailProps {
   dest: Destination;
@@ -56,6 +63,11 @@ export function LocationDetail({
 }: LocationDetailProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [diskInfo, setDiskInfo] = useState<DiskInfo | null>(null);
+
+  useEffect(() => {
+    getDiskInfo(dest.path).then(setDiskInfo).catch(() => setDiskInfo(null));
+  }, [dest.path]);
 
   const handleDeleteBackup = async () => {
     setIsDeleting(true);
@@ -120,6 +132,26 @@ export function LocationDetail({
             {formatLastSync(lastSynced)}
           </span>
         </div>
+
+        {/* Capacity Card */}
+        {diskInfo && (() => {
+          const usedBytes = diskInfo.total_bytes - diskInfo.available_bytes;
+          const percent = diskInfo.total_bytes > 0 ? (usedBytes / diskInfo.total_bytes) * 100 : 0;
+          return (
+            <div className="bg-transparent border border-white/[0.08] px-3.5 py-3 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider">
+                <span className="text-white/20">Destination Capacity</span>
+                <span className="text-white/40">{formatBytes(usedBytes)} / {formatBytes(diskInfo.total_bytes)}</span>
+              </div>
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${dest.enabled ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.4)]' : 'bg-white/20'}`}
+                  style={{ width: `${Math.min(percent, 100)}%` }}
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Action buttons */}
         <div className="bg-transparent border border-white/[0.08] rounded-2xl overflow-hidden">

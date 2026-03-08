@@ -112,6 +112,16 @@ export async function sendBackupNotification(title: string, body: string): Promi
   }
 }
 
+// Disk info
+export interface DiskInfo {
+  total_bytes: number;
+  available_bytes: number;
+}
+
+export async function getDiskInfo(path: string): Promise<DiskInfo> {
+  return invoke('get_disk_info', { path });
+}
+
 // Open path in system file manager
 export async function openInFinder(path: string): Promise<void> {
   const { openPath } = await import('@tauri-apps/plugin-opener');

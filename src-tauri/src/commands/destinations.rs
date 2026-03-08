@@ -3,6 +3,36 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::AppHandle;
 
+#[derive(Debug, Serialize)]
+pub struct DiskInfo {
+    pub total_bytes: u64,
+    pub available_bytes: u64,
+}
+
+#[tauri::command]
+pub fn get_disk_info(path: String) -> Result<DiskInfo, String> {
+    let output = std::process::Command::new("df")
+        .args(["-k", &path])
+        .output()
+        .map_err(|e| format!("Failed to run df: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let line = stdout.lines().nth(1).ok_or("No df output")?;
+    let parts: Vec<&str> = line.split_whitespace().collect();
+
+    if parts.len() < 4 {
+        return Err("Unexpected df output format".to_string());
+    }
+
+    let total_1k: u64 = parts[1].parse().map_err(|_| "Failed to parse total".to_string())?;
+    let available_1k: u64 = parts[3].parse().map_err(|_| "Failed to parse available".to_string())?;
+
+    Ok(DiskInfo {
+        total_bytes: total_1k * 1024,
+        available_bytes: available_1k * 1024,
+    })
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Destination {
     pub id: u64,
