@@ -166,6 +166,7 @@ function App() {
   const failedDestCountRef = useRef(0);
   const failedErrorsRef = useRef<string[]>([]);
   const resetTimeoutRef = useRef<number | undefined>(undefined);
+  const suppressFocusRefreshRef = useRef(false);
 
   useEffect(() => {
     getVersion().then(setAppVersion);
@@ -352,7 +353,10 @@ function App() {
     const interval = setInterval(refreshSession, 30000);
 
     // Also refresh when the window becomes visible
-    const handleFocus = () => refreshSession();
+    const handleFocus = () => {
+      if (suppressFocusRefreshRef.current) return;
+      refreshSession();
+    };
     window.addEventListener("focus", handleFocus);
 
     let unlisten: () => void;
@@ -718,6 +722,7 @@ function App() {
   };
 
   const addDefaultLocation = async () => {
+    suppressFocusRefreshRef.current = true;
     const path = await openFolderPicker();
 
     // Bring window back to focus after folder picker
@@ -725,6 +730,7 @@ function App() {
     const mainWindow = getCurrentWindow();
     await mainWindow.show();
     await mainWindow.setFocus();
+    suppressFocusRefreshRef.current = false;
 
     if (path) {
       // Check if this path already exists
