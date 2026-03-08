@@ -832,13 +832,32 @@ function App() {
       `}</style>
 
       <div
-        className={`w-full h-full rounded-[26px] border overflow-hidden bg-[#1c1c1e] transition-all duration-300 ${
+        className={`relative w-full h-full rounded-[26px] border overflow-hidden bg-[#1c1c1e] transition-all duration-300 ${
           backupState === "success" && isCollapsed
             ? "animate-completion-pulse"
             : "border-white/10"
         }`}
         style={{display: 'grid', gridTemplateRows: 'auto 1fr auto'}}
       >
+        {/* Ambient gradient glow — syncing = blue, idle = green */}
+        {view === "main" && (
+          <>
+            <div
+              className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-500"
+              style={{
+                backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(34,197,94,0.04) 0%, transparent 100%)',
+                opacity: backupState === "running" ? 0 : 1,
+              }}
+            />
+            <div
+              className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-500"
+              style={{
+                backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(59,130,246,0.05) 0%, transparent 100%)',
+                opacity: backupState === "running" ? 1 : 0,
+              }}
+            />
+          </>
+        )}
         {/* VIEW: MAIN APP */}
         {view === "main" && (
           <>
