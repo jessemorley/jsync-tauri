@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion } from "framer-motion";
 import { Tooltip } from "./components/Tooltip";
 import { ScrollContainer } from "./components/ScrollContainer";
 import { LocationDetail } from "./components/LocationDetail";
@@ -971,24 +970,23 @@ function App() {
               >
                 <div className="px-3 space-y-5 pb-4 pt-3" ref={contentRef}>
                 {/* Locations Section */}
-                <div className="rounded-[24px] bg-neutral-950 shadow-[inset_0_4px_12px_rgba(0,0,0,1)] border border-neutral-900 overflow-hidden">
-                  <div className="relative z-10 bg-neutral-950">
-                    <div className="flex items-center justify-between px-4 pt-3.5 pb-3.5">
-                      <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
-                        Locations
-                      </span>
-                      <Tooltip content="Add new backup location" disabled={!tooltipsEnabled}>
-                        <button
-                          onClick={addDefaultLocation}
-                          className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </Tooltip>
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
+                      Locations
+                    </span>
+                    <Tooltip content="Add new backup location" disabled={!tooltipsEnabled}>
+                      <button
+                        onClick={addDefaultLocation}
+                        className="p-1 rounded-md transition-colors hover:bg-white/10 text-blue-400"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </Tooltip>
                   </div>
 
-                  <div className="pb-2">
+                  <div className="rounded-[24px] bg-black/40 shadow-[inset_0_4px_8px_rgba(0,0,0,0.4)] border border-neutral-900 overflow-hidden">
+                  <div>
                     {destinations.length > 0 ? (
                       destinations.map((dest, index) => {
                         const isInaccessible = inaccessibleDests.has(dest.id);
@@ -1012,7 +1010,7 @@ function App() {
                                 setSelectedDestId(dest.id);
                                 setView("location-detail");
                               }}
-                              className={`group relative overflow-hidden flex items-center justify-between px-3.5 py-2.5 transition-all cursor-pointer ${
+                              className={`group relative overflow-hidden flex items-center justify-between px-3.5 py-3.5 transition-all cursor-pointer ${
                                 isInaccessible
                                   ? "opacity-40 cursor-default"
                                   : shouldPulse && !isDuplicate
@@ -1080,6 +1078,7 @@ function App() {
                         </div>
                       </button>
                     )}
+                  </div>
                   </div>
                 </div>
 
