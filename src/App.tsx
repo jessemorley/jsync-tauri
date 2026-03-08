@@ -120,6 +120,7 @@ function App() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
+  const [imageCountAtLastBackup, setImageCountAtLastBackup] = useState<number | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
 
   // Update State
@@ -242,6 +243,7 @@ function App() {
       setDestinations(config.destinations);
       setSelectedPaths(config.selected_paths);
       setLastSynced(config.last_synced);
+      setImageCountAtLastBackup(config.image_count_at_last_backup ?? null);
     } catch (err) {
       console.error("Failed to load session data:", err);
     } finally {
@@ -255,6 +257,7 @@ function App() {
       const config: SessionConfig = {
         version: 1,
         last_synced: lastSynced,
+        image_count_at_last_backup: imageCountAtLastBackup,
         selected_paths: selectedPaths,
         destinations: destinations,
       };
@@ -262,7 +265,7 @@ function App() {
         console.error,
       );
     }
-  }, [session, destinations, selectedPaths, lastSynced, isLoadingConfig]);
+  }, [session, destinations, selectedPaths, lastSynced, imageCountAtLastBackup, isLoadingConfig]);
 
   // Reset backup status when session changes
   useEffect(() => {
@@ -455,6 +458,7 @@ function App() {
       setBackupState(failed > 0 ? "error" : "success");
       setGlobalProgress(100);
       setLastSynced(new Date().toISOString());
+      setImageCountAtLastBackup(sessionRef.current?.image_count ?? null);
 
       if (notificationsEnabledRef.current) {
         const size = sessionRef.current?.size || "Unknown size";
@@ -624,6 +628,11 @@ function App() {
     size: session ? session.size : "Open Capture One to begin backup",
     lastSyncLabel: formatLastSync(lastSynced),
   };
+
+  const newImageCount =
+    session && imageCountAtLastBackup !== null && backupState === "idle"
+      ? Math.max(0, session.image_count - imageCountAtLastBackup)
+      : 0;
 
   // Dynamic tree from session items
   const sessionTree = {
@@ -839,26 +848,16 @@ function App() {
         }`}
         style={{display: 'grid', gridTemplateRows: 'auto 1fr auto'}}
       >
-        {/* Ambient gradient glow — syncing = blue, idle = green */}
+        {/* Ambient gradient glow — blue while syncing only */}
         {view === "main" && (
-          <>
-            <div
-              className="absolute top-0 left-0 right-0 pointer-events-none z-0 transition-opacity duration-500"
-              style={{
-                height: '300px',
-                backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(34,197,94,0.04) 0%, transparent 100%)',
-                opacity: backupState === "running" ? 0 : 1,
-              }}
-            />
-            <div
-              className="absolute top-0 left-0 right-0 pointer-events-none z-0 transition-opacity duration-500"
-              style={{
-                height: '300px',
-                backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(59,130,246,0.05) 0%, transparent 100%)',
-                opacity: backupState === "running" ? 1 : 0,
-              }}
-            />
-          </>
+          <div
+            className="absolute top-0 left-0 right-0 pointer-events-none z-0 transition-opacity duration-500"
+            style={{
+              height: '300px',
+              backgroundImage: 'radial-gradient(ellipse 200% 80% at 0% 0%, rgba(59,130,246,0.05) 0%, transparent 100%)',
+              opacity: backupState === "running" ? 1 : 0,
+            }}
+          />
         )}
         {/* VIEW: MAIN APP */}
         {view === "main" && (
@@ -972,6 +971,19 @@ function App() {
                       </span>
                     </button>
                   </Tooltip>
+                </div>
+              </div>
+
+              {/* New images since last backup */}
+              <div
+                className="overflow-hidden transition-all duration-300 ease-out"
+                style={{ maxHeight: newImageCount > 0 ? '32px' : '0px' }}
+              >
+                <div className="flex items-center gap-1.5 px-5 pb-3">
+                  <div className="w-1 h-1 rounded-full bg-amber-400/60" />
+                  <span className="text-[10px] font-semibold tracking-wide uppercase text-amber-400/70">
+                    {newImageCount} new {newImageCount === 1 ? 'image' : 'images'} since backup
+                  </span>
                 </div>
               </div>
             </div>

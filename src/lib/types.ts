@@ -10,6 +10,7 @@ export interface Destination {
 export interface SessionConfig {
   version: number;
   last_synced: string | null;
+  image_count_at_last_backup?: number | null;
   selected_paths: string[];
   destinations: Destination[];
 }

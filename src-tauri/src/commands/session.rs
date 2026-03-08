@@ -33,6 +33,8 @@ pub struct BackupDestinationConfig {
 pub struct SessionConfig {
     pub version: u32,
     pub last_synced: Option<String>,
+    #[serde(default)]
+    pub image_count_at_last_backup: Option<u32>,
     pub selected_paths: Vec<String>,
     pub destinations: Vec<BackupDestinationConfig>,
 }
@@ -52,6 +54,7 @@ pub async fn load_session_config(
         return Ok(SessionConfig {
             version: 1,
             last_synced: None,
+            image_count_at_last_backup: None,
             selected_paths: vec![session_path.clone()], // Default to all selected
             destinations: Vec::new(),
         });
