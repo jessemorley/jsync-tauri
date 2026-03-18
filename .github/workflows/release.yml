@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -48,7 +48,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Setup Rust
@@ -81,6 +81,14 @@ jobs:
           fi
           echo "Signing key is set (${#TAURI_SIGNING_PRIVATE_KEY} characters)"
 
+      - name: Get tag annotation
+        id: tag_body
+        run: |
+          BODY=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build and Release
         id: tauri_build
         uses: tauri-apps/tauri-action@v0.5
@@ -91,7 +99,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'JSync ${{ github.ref_name }}'
-          releaseBody: 'See the changelog for details.'
+          releaseBody: ${{ steps.tag_body.outputs.body }}
           releaseDraft: false
           prerelease: false
           updaterJsonPreferNsis: true
