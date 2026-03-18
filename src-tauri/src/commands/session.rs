@@ -27,6 +27,8 @@ pub struct BackupDestinationConfig {
     pub destination_type: String, // 'external' | 'cloud' | 'local' | 'network'
     pub enabled: bool,
     pub has_existing_backup: bool,
+    #[serde(default)]
+    pub image_count_at_last_backup: Option<u32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

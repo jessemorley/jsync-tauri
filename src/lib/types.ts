@@ -5,6 +5,7 @@ export interface Destination {
   destination_type: 'external' | 'cloud' | 'local' | 'network';
   enabled: boolean;
   has_existing_backup: boolean;
+  image_count_at_last_backup?: number | null;
 }
 
 export interface SessionConfig {
@@ -43,6 +44,7 @@ export interface BackupComplete {
   files_copied: number;
   size_transferred: string;
   error?: string;
+  image_count?: number | null;
 }
 
 export interface AppState {

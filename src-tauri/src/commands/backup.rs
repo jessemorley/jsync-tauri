@@ -24,6 +24,7 @@ pub struct BackupComplete {
     pub files_copied: u32,
     pub size_transferred: String,
     pub error: Option<String>,
+    pub image_count: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,6 +34,8 @@ pub struct BackupRequest {
     pub destinations: Vec<BackupDestination>,
     #[allow(dead_code)]
     pub selected_paths: Vec<String>,
+    #[serde(default)]
+    pub image_count: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -100,6 +103,7 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
                     files_copied: 0,
                     size_transferred: "0".to_string(),
                     error: Some(format!("Destination not accessible: {}", dest.path)),
+                    image_count: None,
                 },
             )
             .ok();
@@ -149,6 +153,7 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
             session_dest_str,
             dest.id,
             filters,
+            request.image_count,
         )
         .await
         {
@@ -166,6 +171,7 @@ pub async fn start_backup(app: AppHandle, request: BackupRequest) -> Result<(), 
                     files_copied: 0,
                     size_transferred: "0".to_string(),
                     error: Some(e),
+                    image_count: None,
                 },
             )
             .ok();
@@ -205,6 +211,7 @@ async fn run_rclone_backup(
     dest_path: &str,
     dest_id: u64,
     filters: Vec<String>,
+    image_count: Option<u32>,
 ) -> Result<(), String> {
     // Ensure source and destination have trailing slashes for rclone sync
     let src = format!("{}/", source.trim_end_matches('/'));
@@ -355,6 +362,7 @@ async fn run_rclone_backup(
             files_copied: total_files,
             size_transferred: String::new(), // Will be shown in final progress update
             error: None,
+            image_count,
         },
     );
 

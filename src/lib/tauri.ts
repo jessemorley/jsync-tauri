@@ -48,14 +48,16 @@ export async function startBackup(
   sessionPath: string,
   sessionName: string,
   destinations: Destination[],
-  selectedPaths: string[]
+  selectedPaths: string[],
+  imageCount?: number | null
 ): Promise<void> {
   return invoke('start_backup', {
-    request: { 
-      session_path: sessionPath, 
+    request: {
+      session_path: sessionPath,
       session_name: sessionName,
-      destinations, 
-      selected_paths: selectedPaths 
+      destinations,
+      selected_paths: selectedPaths,
+      image_count: imageCount ?? null,
     }
   });
 }

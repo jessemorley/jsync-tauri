@@ -502,7 +502,7 @@ function App() {
           setDestinations((prev) =>
             prev.map((d) =>
               d.id === result.destination_id
-                ? { ...d, has_existing_backup: true }
+                ? { ...d, has_existing_backup: true, image_count_at_last_backup: result.image_count ?? null }
                 : d,
             ),
           );
@@ -584,6 +584,7 @@ function App() {
         session.name,
         destinations,
         selectedPaths,
+        session.image_count,
       );
       updateLastBackup();
     } catch (error) {
@@ -1035,6 +1036,16 @@ function App() {
                           !isCollapsed &&
                           backedUpDestinations.has(dest.id);
                         const isDuplicate = pulsingLocationId === dest.id;
+                        const backupStatus = (() => {
+                          if (!dest.has_existing_backup) return null;
+                          const newImages =
+                            dest.image_count_at_last_backup != null && session?.image_count != null
+                              ? Math.max(0, session.image_count - dest.image_count_at_last_backup)
+                              : 0;
+                          if (newImages >= 50) return "red";
+                          if (newImages > 0) return "orange";
+                          return "green";
+                        })();
                         return (
                           <div key={dest.id}>
                             {index > 0 && (
@@ -1089,6 +1100,18 @@ function App() {
                               </div>
 
                               <div className="flex items-center gap-2 relative z-10">
+                                {backupStatus && !isBackingUp && !isInaccessible && (
+                                  <CheckCircle2
+                                    size={14}
+                                    className={
+                                      backupStatus === "green"
+                                        ? "text-green-400"
+                                        : backupStatus === "orange"
+                                        ? "text-orange-400"
+                                        : "text-red-400"
+                                    }
+                                  />
+                                )}
                                 {isInaccessible ? (
                                   <Unplug size={12} className="text-orange-400/70" />
                                 ) : isBackingUp ? (
