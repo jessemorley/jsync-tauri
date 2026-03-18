@@ -630,7 +630,14 @@ function App() {
     if (diffMins < 1) return "Last backup just now";
     if (diffMins < 60) return `Last backup ${diffMins}m ago`;
 
-    return `Last backup ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Last backup ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `Last backup ${diffDays}d ago`;
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    return `Last backup ${diffWeeks}w ago`;
   };
 
   const sessionInfo = {
@@ -1446,11 +1453,6 @@ function App() {
                   ? `v${appVersion}`
                   : backupState === "running"
                   ? "Syncing"
-                  : scheduledBackup && lastSynced
-                  ? (() => {
-                      const minsUntil = intervalMinutes - Math.floor((Date.now() - new Date(lastSynced).getTime()) / 60000);
-                      return minsUntil > 0 ? `Auto backup in ${minsUntil}m` : "Auto backup due soon";
-                    })()
                   : formatLastSync(lastSynced)}
               </span>
             </div>
