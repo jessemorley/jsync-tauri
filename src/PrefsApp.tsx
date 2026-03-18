@@ -11,7 +11,6 @@ import {
   Clock,
   Loader2,
   RefreshCw,
-  ChevronRight,
   Settings,
   RefreshCcw,
 } from "lucide-react";
@@ -205,8 +204,6 @@ function PrefsApp() {
     }
   };
 
-  const [treeExpanded, setTreeExpanded] = useState(false);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeWindow = useCallback(() => {
     if (!containerRef.current) return;
@@ -266,8 +263,8 @@ function PrefsApp() {
             {/* Backup Interval */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
-                <Clock size={12} className="text-gray-500" />
-                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
+                <Clock size={12} className="text-white/20" />
+                <span className="text-[9px] font-bold uppercase text-white/20 tracking-[0.12em]">
                   Backup Interval
                 </span>
               </div>
@@ -279,7 +276,7 @@ function PrefsApp() {
                     className={`flex-1 py-2 text-[11px] rounded-xl border transition-all ${
                       intervalMinutes === min && !isEditingCustom
                         ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
-                        : "bg-white/[0.03] border-white/[0.02] text-gray-500 hover:bg-white/[0.05]"
+                        : "bg-transparent border-white/[0.08] text-white/40 hover:bg-white/[0.04]"
                     }`}
                   >
                     {min}m
@@ -307,7 +304,7 @@ function PrefsApp() {
                       className={`w-full py-2 text-[11px] rounded-xl border transition-all ${
                         ![5, 15, 30].includes(intervalMinutes)
                           ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
-                          : "bg-white/[0.03] border-white/[0.02] text-gray-500 hover:bg-white/[0.05]"
+                          : "bg-transparent border-white/[0.08] text-white/40 hover:bg-white/[0.04]"
                       }`}
                     >
                       {![5, 15, 30].includes(intervalMinutes) ? `${intervalMinutes}m` : "Custom"}
@@ -317,42 +314,38 @@ function PrefsApp() {
               </div>
             </div>
 
-            <div className="h-px bg-white/5" />
-
             {/* Notifications & Tooltips */}
-            <div className="space-y-2">
+            <div className="bg-transparent border border-white/[0.08] rounded-2xl overflow-hidden">
               <button
                 onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.04] border-b border-white/[0.06] transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`transition-colors duration-200 ${notificationsEnabled ? "text-amber-400" : "text-gray-400"}`}>
-                    {notificationsEnabled ? <Bell size={14} /> : <BellOff size={14} />}
+                  <div className={`transition-colors duration-200 ${notificationsEnabled ? "text-amber-400" : "text-white/20"}`}>
+                    {notificationsEnabled ? <Bell size={13} /> : <BellOff size={13} />}
                   </div>
-                  <div className="text-left">
-                    <p className="text-[11px] font-bold text-white">System Notifications</p>
-                    <p className="text-[9px] text-gray-500">Alert when backup completes</p>
-                  </div>
+                  <span className="text-[12px] font-semibold text-white/60 group-hover:text-white/80 transition-colors">
+                    System Notifications
+                  </span>
                 </div>
-                <div className={`w-9 h-5 rounded-full relative transition-colors ${notificationsEnabled ? "bg-blue-500" : "bg-gray-600"}`}>
+                <div className={`w-9 h-5 rounded-full relative transition-colors ${notificationsEnabled ? "bg-blue-500" : "bg-white/10"}`}>
                   <div className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${notificationsEnabled ? "left-[18px]" : "left-[2px]"}`} />
                 </div>
               </button>
 
               <button
                 onClick={() => setTooltipsEnabled(!tooltipsEnabled)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.04] transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`transition-colors duration-200 ${tooltipsEnabled ? "text-blue-400" : "text-gray-400"}`}>
-                    <Settings size={14} />
+                  <div className={`transition-colors duration-200 ${tooltipsEnabled ? "text-blue-400" : "text-white/20"}`}>
+                    <Settings size={13} />
                   </div>
-                  <div className="text-left">
-                    <p className="text-[11px] font-bold text-white">Tooltips</p>
-                    <p className="text-[9px] text-gray-500">Show helpful hints on hover</p>
-                  </div>
+                  <span className="text-[12px] font-semibold text-white/60 group-hover:text-white/80 transition-colors">
+                    Tooltips
+                  </span>
                 </div>
-                <div className={`w-9 h-5 rounded-full relative transition-colors ${tooltipsEnabled ? "bg-blue-500" : "bg-gray-600"}`}>
+                <div className={`w-9 h-5 rounded-full relative transition-colors ${tooltipsEnabled ? "bg-blue-500" : "bg-white/10"}`}>
                   <div className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${tooltipsEnabled ? "left-[18px]" : "left-[2px]"}`} />
                 </div>
               </button>
@@ -363,68 +356,61 @@ function PrefsApp() {
             {/* Selective Sync */}
             <div className="space-y-3 select-none">
               <div className="flex items-center gap-2 px-1">
-                <FolderTree size={12} className="text-gray-500" />
-                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
+                <FolderTree size={12} className="text-white/20" />
+                <span className="text-[9px] font-bold uppercase text-white/20 tracking-[0.12em]">
                   Selective Sync
                 </span>
               </div>
-              <div className="border border-white/[0.02] rounded-2xl overflow-hidden bg-white/[0.03]">
-                <div className="flex items-center justify-between p-3 cursor-pointer" onClick={() => setTreeExpanded((v) => !v)}>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-4 h-4 rounded flex items-center justify-center ${
-                        getFolderStatus(sessionTree.id) !== "none"
-                          ? "bg-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]"
-                          : "border border-white/20"
-                      }`}
-                      onClick={(e) => { e.stopPropagation(); togglePath(sessionTree.id); }}
-                    >
-                      {getFolderStatus(sessionTree.id) === "all" && <Check size={10} strokeWidth={4} />}
-                      {getFolderStatus(sessionTree.id) === "mixed" && <Minus size={10} strokeWidth={4} />}
-                    </div>
-                    <span className="text-[11px] font-bold text-gray-200 truncate">{sessionTree.label}</span>
+              <div className="bg-transparent border border-white/[0.08] rounded-2xl overflow-hidden">
+                <div
+                  className="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.04] border-b border-white/[0.06] transition-all cursor-pointer"
+                  onClick={() => togglePath(sessionTree.id)}
+                >
+                  <div
+                    className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${
+                      getFolderStatus(sessionTree.id) !== "none"
+                        ? "bg-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+                        : "border border-white/20"
+                    }`}
+                    onClick={(e) => { e.stopPropagation(); togglePath(sessionTree.id); }}
+                  >
+                    {getFolderStatus(sessionTree.id) === "all" && <Check size={10} strokeWidth={4} />}
+                    {getFolderStatus(sessionTree.id) === "mixed" && <Minus size={10} strokeWidth={4} />}
                   </div>
-                  <ChevronRight
-                    size={14}
-                    className={`text-white/20 transition-transform ${treeExpanded ? "rotate-90" : ""}`}
-                  />
+                  <span className="text-[12px] font-semibold text-white/60 truncate">{sessionTree.label}</span>
                 </div>
-                {treeExpanded && (
-                  <div className="bg-black/40 border-t border-white/5 py-1">
-                    {sessionTree.children.map((child) => (
-                      <div
-                        key={child.id}
-                        className="flex items-center justify-between p-2 pl-9 cursor-pointer"
-                        onClick={() => togglePath(child.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3.5 h-3.5 rounded flex items-center justify-center ${isSelected(child.id) ? "bg-blue-500/80 text-white" : "border border-white/10"}`}>
-                            {isSelected(child.id) && <Check size={10} strokeWidth={4} />}
-                          </div>
-                          <div className="text-gray-500/80">
-                            {child.type === "folder" ? <Folder size={12} /> : <FileCode size={12} />}
-                          </div>
-                          <span className={`text-[10px] font-medium ${isSelected(child.id) ? "text-gray-300" : "text-gray-500"}`}>
-                            {child.label}
-                          </span>
-                        </div>
+                <div className="py-1">
+                  {sessionTree.children.map((child) => (
+                    <div
+                      key={child.id}
+                      className="flex items-center gap-3 px-4 py-2 pl-10 cursor-pointer hover:bg-white/[0.04] transition-all"
+                      onClick={() => togglePath(child.id)}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 ${isSelected(child.id) ? "bg-blue-500/80 text-white" : "border border-white/10"}`}>
+                        {isSelected(child.id) && <Check size={10} strokeWidth={4} />}
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="text-white/20">
+                        {child.type === "folder" ? <Folder size={12} /> : <FileCode size={12} />}
+                      </div>
+                      <span className={`text-[11px] font-medium ${isSelected(child.id) ? "text-white/60" : "text-white/30"}`}>
+                        {child.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </>}
 
           {activeTab === "updates" && <>
             {/* App Update */}
-            <div className="rounded-2xl border border-white/[0.02] bg-white/[0.03] overflow-hidden">
-              <div className="p-4 flex items-center justify-between">
+            <div className="bg-transparent border border-white/[0.08] rounded-2xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img src="/tray-icon.png" alt="JSync" className="w-5 h-5 opacity-70" style={{ filter: "invert(1)" }} />
+                  <img src="/tray-icon.png" alt="JSync" className="w-5 h-5 opacity-20" style={{ filter: "invert(1)" }} />
                   <div>
-                    <p className="text-[13px] font-semibold text-white">JSync</p>
-                    <p className="text-[11px] text-white/30 mt-0.5">Version {appVersion}</p>
+                    <p className="text-[12px] font-semibold text-white/60">JSync</p>
+                    <p className="text-[10px] text-white/30 mt-0.5">Version {appVersion}</p>
                   </div>
                 </div>
                 {updateReady ? (
@@ -439,7 +425,7 @@ function PrefsApp() {
                   <button
                     onClick={handleCheckForUpdates}
                     disabled={isCheckingUpdate}
-                    className="px-4 py-1.5 rounded-xl border border-white/10 text-white/50 text-[11px] font-medium hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-40 flex items-center gap-2"
+                    className="px-4 py-1.5 rounded-xl border border-white/[0.08] text-white/40 text-[11px] font-semibold hover:bg-white/[0.04] hover:text-white/60 transition-all disabled:opacity-40 flex items-center gap-2"
                   >
                     {isCheckingUpdate ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
                     <span>{isCheckingUpdate ? (updateStatus ?? "Checking...") : "Check for update"}</span>
@@ -447,7 +433,7 @@ function PrefsApp() {
                 )}
               </div>
               {updateStatus && !updateReady && (
-                <div className="px-4 py-2 border-t border-white/5 bg-black/20">
+                <div className="px-4 py-2 border-t border-white/[0.06]">
                   <p className="text-[11px] text-white/40">{updateStatus}</p>
                 </div>
               )}
