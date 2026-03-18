@@ -81,7 +81,7 @@ const completionAnimations = `
   }
 
   .animate-completion-pulse {
-    animation: completion-pulse 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    animation: completion-pulse 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
   }
 
   .animate-duplicate-shake {
@@ -90,7 +90,7 @@ const completionAnimations = `
   }
 
   .animate-fill-fade {
-    animation: fill-fade-out 2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    animation: fill-fade-out 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
   }
 `;
 
@@ -484,7 +484,7 @@ function App() {
       resetTimeoutRef.current = window.setTimeout(() => {
         setBackupState("idle");
         setDestProgress(new Map());
-      }, 3000);
+      }, 1500);
     };
 
     const setupListeners = async () => {
@@ -608,7 +608,7 @@ function App() {
         resetTimeoutRef.current = window.setTimeout(() => {
           setBackupState("idle");
           setDestProgress(new Map());
-        }, 3000);
+        }, 1500);
       }
     }
   }, [session, destinations, selectedPaths, backupState]);
@@ -984,7 +984,7 @@ function App() {
                             className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
                           />
                         )}
-                        <span className="text-[11px] font-bold tracking-wide uppercase text-center w-[38px]">
+                        <span className="text-[11px] font-bold tracking-wide uppercase text-center w-[52px]">
                           {backupState === "running" ? (isHoveringSync ? "Cancel" : "Syncing") : backupState === "success" ? "Done" : scheduledBackup && !isHoveringSync ? "Auto" : "Sync"}
                         </span>
                       </button>
@@ -1089,7 +1089,7 @@ function App() {
                               {/* Backup progress overlay */}
                               {isBackingUp && (
                                 <div
-                                  className={`absolute inset-0 bg-blue-500/5 pointer-events-none ${
+                                  className={`absolute inset-0 bg-blue-500/20 pointer-events-none ${
                                     backupState === "success" ? "animate-fill-fade" : "transition-all duration-300 ease-out"
                                   }`}
                                   style={{ width: backupState === "success" ? "100%" : `${destProgress.get(dest.id) ?? 0}%` }}
