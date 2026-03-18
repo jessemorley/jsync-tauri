@@ -882,42 +882,43 @@ function App() {
                 )}
 
               <div className="px-3 pt-4 pb-4 z-10 space-y-4">
-                <div
-                  className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase cursor-pointer px-1 ${
-                    backupState === "running"
-                      ? "text-blue-400/75 drop-shadow-[0_0_3px_rgba(59,130,246,0.12)]"
-                      : session
-                        ? "text-green-400/75 drop-shadow-[0_0_3px_rgba(34,197,94,0.12)]"
-                        : "text-white/20"
-                  }`}
-                  title={session?.path}
-                  onClick={() => session && openInFinder(session.path)}
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    backupState === "running"
-                      ? "bg-blue-500 shadow-[0_0_3px_rgba(59,130,246,0.12)] animate-pulse"
-                      : "bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.12)]"
-                  }`} />
-                  <span className="truncate">{truncateMiddle(sessionInfo.name)}</span>
-                  <ExternalLink size={10} className="opacity-0 group-hover/session:opacity-60 transition-opacity shrink-0" />
+                <div className="flex items-center justify-between px-1">
+                  <div
+                    className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase cursor-pointer min-w-0 ${
+                      backupState === "running"
+                        ? "text-blue-400/75 drop-shadow-[0_0_3px_rgba(59,130,246,0.12)]"
+                        : session
+                          ? "text-green-400/75 drop-shadow-[0_0_3px_rgba(34,197,94,0.12)]"
+                          : "text-white/20"
+                    }`}
+                    title={session?.path}
+                    onClick={() => session && openInFinder(session.path)}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      backupState === "running"
+                        ? "bg-blue-500 shadow-[0_0_3px_rgba(59,130,246,0.12)] animate-pulse"
+                        : "bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.12)]"
+                    }`} />
+                    <span className="truncate">{truncateMiddle(sessionInfo.name)}</span>
+                    <ExternalLink size={10} className="opacity-0 group-hover/session:opacity-60 transition-opacity shrink-0" />
+                  </div>
+                  <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
+                    <button
+                      onClick={() => setIsCollapsed(!isCollapsed)}
+                      className="transition-all flex-shrink-0 text-white/40 hover:text-white/70 active:text-white/20"
+                    >
+                      {isCollapsed ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronUp size={16} />
+                      )}
+                    </button>
+                  </Tooltip>
                 </div>
 
                 {/* Action Bar */}
                 <div className="flex items-center justify-between bg-white/[0.03] rounded-2xl p-4 border border-white/[0.02]">
                   <div className="flex items-center gap-3 text-[11px] text-white/50 font-medium px-1">
-                    <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
-                      <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="transition-all flex-shrink-0 text-white/40 hover:text-white/70 active:text-white/20 -ml-1"
-                      >
-                        {isCollapsed ? (
-                          <ChevronDown size={16} />
-                        ) : (
-                          <ChevronUp size={16} />
-                        )}
-                      </button>
-                    </Tooltip>
-                    <div className="w-[1px] h-4 bg-white/10" />
                     <div className="flex flex-col">
                       <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
                       <span className="text-white/80">{session ? sessionInfo.size : "—"}</span>
