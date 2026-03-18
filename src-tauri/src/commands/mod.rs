@@ -35,10 +35,11 @@ pub async fn open_preferences(app: tauri::AppHandle) -> Result<(), String> {
         "prefs",
         tauri::WebviewUrl::App("index.html?window=prefs".into()),
     )
-    .title("JSync Preferences")
+    .title("")
     .inner_size(400.0, 520.0)
-    .decorations(false)
     .transparent(true)
+    .title_bar_style(tauri::TitleBarStyle::Overlay)
+    .hidden_title(true)
     .skip_taskbar(true)
     .resizable(false)
     .center()

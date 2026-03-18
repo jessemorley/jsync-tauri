@@ -16,6 +16,13 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64, stat
         let _: () = msg_send![ns_window, setHasShadow: true];
         let _: () = msg_send![ns_window, invalidateShadow];
 
+        // For overlay title bar windows, make the title bar transparent and
+        // movable by background so dragging anywhere in the title bar area works
+        if !stationary {
+            let _: () = msg_send![ns_window, setTitlebarAppearsTransparent: true];
+            let _: () = msg_send![ns_window, setMovableByWindowBackground: true];
+        }
+
         // Set window level: tray popup stays above normal windows (level 20),
         // prefs window uses normal level (0) so it behaves like a regular app window
         let level: i64 = if stationary { 20 } else { 0 };

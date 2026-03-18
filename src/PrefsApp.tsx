@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { LogicalSize } from "@tauri-apps/api/window";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import {
   Settings,
   Bell,
   BellOff,
   FolderTree,
-  X,
   Check,
   Minus,
   Folder,
@@ -25,7 +24,6 @@ import {
   checkForAppUpdates,
 } from "./lib/tauri";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getVersion } from "@tauri-apps/api/app";
 
 function PrefsApp() {
@@ -217,7 +215,6 @@ function PrefsApp() {
 
   const [treeExpanded, setTreeExpanded] = useState(false);
 
-  const closeWindow = () => invoke("close_prefs_window");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeWindow = useCallback(() => {
@@ -249,23 +246,11 @@ function PrefsApp() {
       >
         <div>
           {/* Header */}
-          <div
-            className="relative p-5 flex items-center justify-between border-b border-white/[0.05] cursor-move"
-            onMouseDown={(e) => {
-              if ((e.target as HTMLElement).closest("button")) return;
-              getCurrentWindow().startDragging();
-            }}
-          >
+          <div className="relative pl-20 pr-5 py-5 flex items-center border-b border-white/[0.05]">
             <div className="flex items-center gap-2 text-blue-400 pointer-events-none">
               <Settings size={18} />
               <h1 className="text-[15px] font-semibold text-white">Preferences</h1>
             </div>
-            <button
-              onClick={closeWindow}
-              className="p-1 rounded-lg hover:bg-white/10 text-white/40 transition-colors"
-            >
-              <X size={18} />
-            </button>
           </div>
 
           <div className="p-4 space-y-5">
@@ -531,16 +516,6 @@ function PrefsApp() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-end z-20">
-          <button
-            onClick={closeWindow}
-            className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-[11px] font-bold text-white transition-colors"
-          >
-            Done
-          </button>
         </div>
       </div>
     </div>
