@@ -426,28 +426,42 @@ function PrefsApp() {
                   Updates
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]">
-                <span className="text-[11px] text-white/40">v{appVersion}</span>
-                {updateReady ? (
-                  <button
-                    onClick={() => invoke("relaunch_app")}
-                    className="px-3 py-1 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 text-[11px] font-bold hover:bg-green-500/20 transition-all flex items-center gap-1.5"
-                  >
-                    <span>Restart to update</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleCheckForUpdates}
-                    disabled={isCheckingUpdate}
-                    className="px-3 py-1 rounded-lg border border-white/10 text-white/50 text-[11px] font-medium hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {isCheckingUpdate ? (
-                      <Loader2 size={11} className="animate-spin" />
-                    ) : (
-                      <RefreshCw size={11} />
-                    )}
-                    <span>{updateStatus || "Check for update"}</span>
-                  </button>
+              <div className="rounded-2xl border border-white/[0.02] bg-white/[0.03] overflow-hidden">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src="/tray-icon.png" alt="JSync" className="w-5 h-5 opacity-70" style={{ filter: "invert(1)" }} />
+                    <div>
+                      <p className="text-[13px] font-semibold text-white">JSync</p>
+                      <p className="text-[11px] text-white/30 mt-0.5">Version {appVersion}</p>
+                    </div>
+                  </div>
+                  {updateReady ? (
+                    <button
+                      onClick={() => invoke("relaunch_app")}
+                      className="px-4 py-1.5 rounded-xl border border-green-500/40 bg-green-500/15 text-green-400 text-[11px] font-bold hover:bg-green-500/25 transition-all flex items-center gap-2"
+                    >
+                      <RefreshCw size={12} />
+                      <span>Restart to update</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleCheckForUpdates}
+                      disabled={isCheckingUpdate}
+                      className="px-4 py-1.5 rounded-xl border border-white/10 text-white/50 text-[11px] font-medium hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-40 flex items-center gap-2"
+                    >
+                      {isCheckingUpdate ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <RefreshCw size={12} />
+                      )}
+                      <span>{isCheckingUpdate ? (updateStatus ?? "Checking...") : "Check for update"}</span>
+                    </button>
+                  )}
+                </div>
+                {updateStatus && !updateReady && (
+                  <div className="px-4 py-2 border-t border-white/5 bg-black/20">
+                    <p className="text-[11px] text-white/40">{updateStatus}</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -525,7 +539,7 @@ function PrefsApp() {
             onClick={closeWindow}
             className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-[11px] font-bold text-white transition-colors"
           >
-            DONE
+            Done
           </button>
         </div>
       </div>
