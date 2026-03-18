@@ -920,12 +920,12 @@ function App() {
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-3 px-1">
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-white/30 font-mono mt-0.5">Size</span>
+                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
                       <span className="text-[14px] font-bold text-white tracking-tight">{session ? sessionInfo.size : "—"}</span>
                     </div>
                     <div className="w-[1px] h-4 bg-white/10" />
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-white/30 font-mono mt-0.5">{session && session.image_count === 1 ? "Image" : "Images"}</span>
+                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">{session && session.image_count === 1 ? "Image" : "Images"}</span>
                       <span className="text-[14px] font-bold text-white tracking-tight">{session ? session.image_count : "—"}</span>
                     </div>
                   </div>
