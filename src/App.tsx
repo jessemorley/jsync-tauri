@@ -881,7 +881,7 @@ function App() {
                   />
                 )}
 
-              <div className="px-3 pt-4 pb-4 z-10 space-y-4">
+              <div className="px-3 pt-5.5 pb-4 z-10 space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <div
                     className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase cursor-pointer min-w-0 ${
@@ -918,15 +918,15 @@ function App() {
 
                 {/* Action Bar */}
                 <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-3 text-[13px] text-white/50 font-medium px-1">
+                  <div className="flex items-center gap-3 px-1">
                     <div className="flex flex-col">
-                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
-                      <span className="text-white/80">{session ? sessionInfo.size : "—"}</span>
+                      <span className="text-[10px] text-white/30 font-mono mt-0.5">Size</span>
+                      <span className="text-[14px] font-bold text-white tracking-tight">{session ? sessionInfo.size : "—"}</span>
                     </div>
                     <div className="w-[1px] h-4 bg-white/10" />
                     <div className="flex flex-col">
-                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Files</span>
-                      <span className="text-white/80">{session ? `${session.image_count} ${session.image_count === 1 ? "Image" : "Images"}` : "—"}</span>
+                      <span className="text-[10px] text-white/30 font-mono mt-0.5">{session && session.image_count === 1 ? "Image" : "Images"}</span>
+                      <span className="text-[14px] font-bold text-white tracking-tight">{session ? session.image_count : "—"}</span>
                     </div>
                   </div>
 
@@ -988,6 +988,8 @@ function App() {
                 </div>
               </div>
             </div>
+
+            <div className="h-px bg-white/[0.05]" />
 
             {/* Collapsible Content */}
             <div
