@@ -21,6 +21,8 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64, stat
         if !stationary {
             let _: () = msg_send![ns_window, setTitlebarAppearsTransparent: true];
             let _: () = msg_send![ns_window, setMovableByWindowBackground: true];
+
+
         }
 
         // Set window level: tray popup stays above normal windows (level 20),
