@@ -101,7 +101,7 @@ function App() {
   const [backupState, setBackupState] = useState<
     "idle" | "running" | "success" | "error"
   >("idle");
-  const [globalProgress, setGlobalProgress] = useState(0);
+  const [destProgress, setDestProgress] = useState<Map<number, number>>(new Map());
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [backedUpDestinations, setBackedUpDestinations] = useState<Set<number>>(
     new Set(),
@@ -445,6 +445,7 @@ function App() {
 
   // Setup backup event listeners
   useEffect(() => {
+    let cancelled = false;
     let unlistenProgress: (() => void) | undefined;
     let unlistenComplete: (() => void) | undefined;
     let unlistenError: (() => void) | undefined;
@@ -457,7 +458,6 @@ function App() {
       const succeeded = total - failed;
 
       setBackupState(failed > 0 ? "error" : "success");
-      setGlobalProgress(100);
       setLastSynced(new Date().toISOString());
       setImageCountAtLastBackup(sessionRef.current?.image_count ?? null);
 
@@ -483,14 +483,19 @@ function App() {
 
       resetTimeoutRef.current = window.setTimeout(() => {
         setBackupState("idle");
-        setGlobalProgress(0);
+        setDestProgress(new Map());
       }, 3000);
     };
 
     const setupListeners = async () => {
       unlistenProgress = await onBackupProgress((progress) => {
-        setGlobalProgress(progress.percent);
+        setDestProgress((prev) => {
+          const next = new Map(prev);
+          next.set(progress.destination_id, progress.percent);
+          return next;
+        });
       });
+      if (cancelled) { unlistenProgress(); return; }
 
       unlistenComplete = await onBackupComplete((result) => {
         if (result.success) {
@@ -512,6 +517,7 @@ function App() {
         completedDestCountRef.current += 1;
         checkAllDestinationsComplete();
       });
+      if (cancelled) { unlistenProgress?.(); unlistenComplete(); return; }
 
       unlistenError = await onBackupError((error) => {
         completedDestCountRef.current += 1;
@@ -521,11 +527,13 @@ function App() {
         }
         checkAllDestinationsComplete();
       });
+      if (cancelled) { unlistenProgress?.(); unlistenComplete?.(); unlistenError(); return; }
     };
 
     setupListeners();
 
     return () => {
+      cancelled = true;
       if (unlistenProgress) unlistenProgress();
       if (unlistenComplete) unlistenComplete();
       if (unlistenError) unlistenError();
@@ -541,7 +549,7 @@ function App() {
         await cancelBackup();
         console.log("cancelBackup command sent to backend");
         setBackupState("idle");
-        setGlobalProgress(0);
+        setDestProgress(new Map());
       } catch (error) {
         console.error("Failed to cancel backup:", error);
       }
@@ -564,7 +572,7 @@ function App() {
     }
 
     setBackupState("running");
-    setGlobalProgress(0);
+    setDestProgress(new Map());
     setBackedUpDestinations(new Set());
 
     // Clear stale timeouts from previous backup
@@ -593,13 +601,13 @@ function App() {
       if (error === "Backup cancelled") {
         console.log("Setting state to idle due to cancellation");
         setBackupState("idle");
-        setGlobalProgress(0);
+        setDestProgress(new Map());
       } else {
         console.error("Backup failed:", error);
         setBackupState("error");
         resetTimeoutRef.current = window.setTimeout(() => {
           setBackupState("idle");
-          setGlobalProgress(0);
+          setDestProgress(new Map());
         }, 3000);
       }
     }
@@ -619,10 +627,10 @@ function App() {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return "Last sync just now";
-    if (diffMins < 60) return `Last sync ${diffMins}m ago`;
+    if (diffMins < 1) return "Last backup just now";
+    if (diffMins < 60) return `Last backup ${diffMins}m ago`;
 
-    return `Last sync ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    return `Last backup ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
   };
 
   const sessionInfo = {
@@ -878,7 +886,7 @@ function App() {
                       width:
                         backupState === "success"
                           ? "100%"
-                          : `${globalProgress}%`,
+                          : (() => { const vals = [...destProgress.values()]; return vals.length ? `${vals.reduce((a, b) => a + b, 0) / vals.length}%` : "0%"; })(),
                     }}
                   />
                 )}
@@ -987,6 +995,20 @@ function App() {
 
             </div>
 
+            {/* New images chip */}
+            {newImageCount > 0 && backupState === "idle" && (
+              <div className="px-4 pb-3 -mt-1">
+                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
+                  newImageCount >= 50
+                    ? "bg-amber-400/10 text-amber-400/80"
+                    : "bg-white/5 text-white/40"
+                }`}>
+                  <Info size={10} />
+                  {newImageCount} new {newImageCount === 1 ? "image" : "images"}
+                </div>
+              </div>
+            )}
+
             <div className="h-px bg-white/[0.05]" />
 
             {/* Collapsible Content */}
@@ -1070,7 +1092,7 @@ function App() {
                                   className={`absolute inset-0 bg-blue-500/5 pointer-events-none ${
                                     backupState === "success" ? "animate-fill-fade" : "transition-all duration-300 ease-out"
                                   }`}
-                                  style={{ width: backupState === "success" ? "100%" : `${globalProgress}%` }}
+                                  style={{ width: backupState === "success" ? "100%" : `${destProgress.get(dest.id) ?? 0}%` }}
                                 />
                               )}
 
@@ -1112,7 +1134,7 @@ function App() {
                                 {isInaccessible ? (
                                   <Unplug size={12} className="text-orange-400/70" />
                                 ) : isBackingUp ? (
-                                  <span className="text-[10px] font-mono font-bold text-blue-400">{Math.round(globalProgress)}%</span>
+                                  <span className="text-[10px] font-mono font-bold text-blue-400">{Math.round(destProgress.get(dest.id) ?? 0)}%</span>
                                 ) : (
                                   <ChevronRight size={14} className="text-white/20 group-hover:text-white/50 transition-colors" />
                                 )}
@@ -1418,19 +1440,18 @@ function App() {
         <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between z-20">
           <div className="flex items-center gap-2 text-[11px] font-medium text-white/40">
             <div className="flex items-center gap-1.5">
-              {view === "prefs" ? (
-                <Clock size={12} className="opacity-70" />
-              ) : newImageCount > 0 ? (
-                <Info size={12} className={`flex-shrink-0 ${newImageCount >= 50 ? "text-amber-400/70" : "opacity-70"}`} />
-              ) : (
-                <CheckCircle2 size={12} className="text-green-500/70" />
-              )}
-              <span className={view !== "prefs" && newImageCount >= 50 ? "text-amber-400/70" : ""}>
+              <Info size={12} className="opacity-70 flex-shrink-0" />
+              <span>
                 {view === "prefs"
                   ? `v${appVersion}`
-                  : newImageCount > 0
-                  ? `${newImageCount} New ${newImageCount === 1 ? "image" : "images"}`
-                  : (lastSynced ? "Synced" : sessionInfo.lastSyncLabel)}
+                  : backupState === "running"
+                  ? "Syncing"
+                  : scheduledBackup && lastSynced
+                  ? (() => {
+                      const minsUntil = intervalMinutes - Math.floor((Date.now() - new Date(lastSynced).getTime()) / 60000);
+                      return minsUntil > 0 ? `Auto backup in ${minsUntil}m` : "Auto backup due soon";
+                    })()
+                  : formatLastSync(lastSynced)}
               </span>
             </div>
             {view === "prefs" && (
