@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import {
-  MapPin,
   HardDrive,
   Cloud,
   Network,
   Monitor,
   ExternalLink,
   Trash2,
+  ChevronLeft,
   ChevronRight,
   Pin,
   PinOff,
@@ -82,26 +82,25 @@ export function LocationDetail({
   return (
     <div className="flex flex-col h-full">
 
-      {/* Nav header */}
-      <div className="shrink-0 p-5 flex items-center justify-between border-b border-white/[0.05]">
-        <div className="flex items-center gap-2 text-blue-400">
-          <MapPin size={18} />
-          <h1 className="text-[15px] font-semibold text-white">Location Details</h1>
-        </div>
+      {/* Header */}
+      <div className="shrink-0 px-4 pt-3 pb-3 flex items-center gap-3 border-b border-white/[0.05] bg-black/30">
         <button
           onClick={onBack}
-          className="p-1 rounded-lg hover:bg-white/10 text-white/40 transition-colors"
+          className="p-1 rounded-lg hover:bg-white/10 text-white/40 transition-colors shrink-0"
         >
-          <X size={18} />
+          <ChevronLeft size={18} />
         </button>
+        <h1 className="text-[15px] font-semibold text-white">Details</h1>
       </div>
 
-      {/* Location info */}
-      <div className="shrink-0 px-5 pt-5 pb-4">
-        <div className="flex items-center gap-3">
+      {/* Content */}
+      <div className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
+
+        {/* Location info */}
+        <div className="flex items-center gap-3 px-1">
           <button
             onClick={onToggleEnabled}
-            className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 ${
+            className={`p-2 rounded-xl transition-all hover:scale-105 active:scale-95 shrink-0 ${
               dest.enabled
                 ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
                 : "bg-white/5 text-white/20 hover:bg-white/10"
@@ -119,10 +118,6 @@ export function LocationDetail({
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
 
         {/* Last Synced */}
         <div className="flex items-center justify-between px-1">
