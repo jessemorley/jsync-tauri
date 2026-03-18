@@ -246,10 +246,10 @@ function PrefsApp() {
       >
         <div>
           {/* Header */}
-          <div className="relative pl-20 pr-5 py-5 flex items-center border-b border-white/[0.05]">
-            <div className="flex items-center gap-2 text-blue-400 pointer-events-none">
-              <Settings size={18} />
-              <h1 className="text-[15px] font-semibold text-white">Preferences</h1>
+          <div className="relative px-5 py-3 flex items-center justify-center border-b border-white/[0.05] bg-black/30">
+            <div className="flex items-center gap-1.5 text-blue-400 pointer-events-none">
+              <Settings size={13} />
+              <h1 className="text-[12px] font-semibold text-white">Preferences</h1>
             </div>
           </div>
 
