@@ -932,48 +932,60 @@ function App() {
                     </div>
                   </div>
 
-                  <Tooltip
-                    content={() => {
-                      if (backupState === 'running') return 'Cancel backup';
-                      if (backupState === 'success') return 'Backup complete';
-                      return 'Start backup';
-                    }}
-                    disabled={!tooltipsEnabled}
-                  >
-                    <button
-                      onClick={handleStartBackup}
-                      onMouseEnter={() => setIsHoveringSync(true)}
-                      onMouseLeave={() => setIsHoveringSync(false)}
-                      disabled={enabledCount === 0}
-                      className={`relative group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
-                        backupState === "running"
-                          ? isHoveringSync
-                            ? "bg-red-500/20 text-red-500"
-                            : "bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                          : backupState === "success"
-                            ? "bg-blue-600 text-white shadow-lg"
-                            : "bg-white/10 hover:bg-white/20 text-white active:scale-95"
-                      } disabled:opacity-30 disabled:grayscale`}
+                  <div className="flex items-center gap-2">
+                    <Tooltip content="Auto sync" disabled={!tooltipsEnabled}>
+                      <button
+                        onClick={() => setScheduledBackup(!scheduledBackup)}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <div className={`w-5 h-[34px] rounded-full relative transition-colors ${scheduledBackup ? "bg-blue-500" : "bg-white/10"}`}>
+                          <div className={`absolute left-[3px] w-[14px] h-[14px] bg-white rounded-full transition-all ${scheduledBackup ? "top-[3px]" : "top-[17px]"}`} />
+                        </div>
+                      </button>
+                    </Tooltip>
+                    <Tooltip
+                      content={() => {
+                        if (backupState === 'running') return 'Cancel backup';
+                        if (backupState === 'success') return 'Backup complete';
+                        return 'Start backup';
+                      }}
+                      disabled={!tooltipsEnabled}
                     >
-                      {backupState === "running" ? (
-                        isHoveringSync ? (
-                          <X size={14} />
+                      <button
+                        onClick={handleStartBackup}
+                        onMouseEnter={() => setIsHoveringSync(true)}
+                        onMouseLeave={() => setIsHoveringSync(false)}
+                        disabled={enabledCount === 0}
+                        className={`relative group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                          backupState === "running"
+                            ? isHoveringSync
+                              ? "bg-red-500/20 text-red-500"
+                              : "bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                            : backupState === "success"
+                              ? "bg-blue-600 text-white shadow-lg"
+                              : "bg-white/10 hover:bg-white/20 text-white active:scale-95"
+                        } disabled:opacity-30 disabled:grayscale`}
+                      >
+                        {backupState === "running" ? (
+                          isHoveringSync ? (
+                            <X size={14} />
+                          ) : (
+                            <RefreshCw size={14} className="animate-spin" />
+                          )
+                        ) : backupState === "success" ? (
+                          <CheckCircle2 size={14} />
                         ) : (
-                          <RefreshCw size={14} className="animate-spin" />
-                        )
-                      ) : backupState === "success" ? (
-                        <CheckCircle2 size={14} />
-                      ) : (
-                        <RefreshCw
-                          size={14}
-                          className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
-                        />
-                      )}
-                      <span className="text-[11px] font-bold tracking-wide uppercase">
-                        {backupState === "running" ? (isHoveringSync ? "Cancel" : "Syncing") : backupState === "success" ? "Done" : "Sync"}
-                      </span>
-                    </button>
-                  </Tooltip>
+                          <RefreshCw
+                            size={14}
+                            className="transition-transform duration-500 group-hover:rotate-180 ease-in-out"
+                          />
+                        )}
+                        <span className="text-[11px] font-bold tracking-wide uppercase text-center w-[38px]">
+                          {backupState === "running" ? (isHoveringSync ? "Cancel" : "Syncing") : backupState === "success" ? "Done" : scheduledBackup && !isHoveringSync ? "Auto" : "Sync"}
+                        </span>
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
 
@@ -1135,35 +1147,6 @@ function App() {
                   </div>
                 </div>
 
-                <div className="h-px -mx-3 bg-white/5" />
-
-                {/* Schedule Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-2">
-                    <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
-                      Schedule
-                    </span>
-                  </div>
-
-                  <div className="bg-white/[0.03] rounded-2xl p-4 flex items-center justify-between group hover:bg-white/[0.05] transition-colors border border-white/[0.02]">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${scheduledBackup ? 'bg-green-500/10 text-green-400' : 'bg-orange-500/10 text-orange-400'}`}>
-                        <Clock size={16} />
-                      </div>
-                      <span className="text-[13px] font-medium text-white/90">
-                        {scheduledBackup ? "Auto-Sync" : "Paused"}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setScheduledBackup(!scheduledBackup)}
-                      className={`w-9 h-5 rounded-full relative transition-colors ${scheduledBackup ? "bg-blue-500" : "bg-gray-600"}`}
-                    >
-                      <div
-                        className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${scheduledBackup ? "left-[18px]" : "left-[2px]"}`}
-                      />
-                    </button>
-                  </div>
-                </div>
               </div>
               </ScrollContainer>
             </div>
