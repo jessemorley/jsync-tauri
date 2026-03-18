@@ -233,6 +233,14 @@ function PrefsApp() {
       `}</style>
       <div ref={containerRef} className="relative w-full overflow-hidden bg-[#1c1c1e]">
 
+        {/* Header */}
+        <div className="relative px-5 pt-[6px] pb-3 flex items-center justify-center bg-black/30">
+          <div className="flex items-center gap-1.5 text-blue-400 pointer-events-none">
+            <Settings size={13} />
+            <h1 className="text-[12px] font-semibold text-white">Preferences</h1>
+          </div>
+        </div>
+
         {/* Tab Bar */}
         <div className="flex border-b border-white/[0.06] bg-black/30">
           {TABS.map((tab) => (
