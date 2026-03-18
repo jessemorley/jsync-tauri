@@ -1027,12 +1027,12 @@ function App() {
                         const isDuplicate = pulsingLocationId === dest.id;
                         const backupStatus = (() => {
                           if (!dest.has_existing_backup) return null;
-                          const newImages =
-                            dest.image_count_at_last_backup != null && session?.image_count != null
-                              ? Math.max(0, session.image_count - dest.image_count_at_last_backup)
-                              : 0;
-                          if (newImages >= 50) return "red";
-                          if (newImages > 0) return "orange";
+                          if (session?.image_count == null) return "green";
+                          const countAtBackup = dest.image_count_at_last_backup ?? imageCountAtLastBackup;
+                          if (countAtBackup == null) return "green";
+                          const newImages = Math.max(0, session.image_count - countAtBackup);
+                          if (newImages >= 50) return "orange";
+                          if (newImages > 0) return "grey";
                           return "green";
                         })();
                         return (
@@ -1097,7 +1097,7 @@ function App() {
                                         ? "text-green-400"
                                         : backupStatus === "orange"
                                         ? "text-orange-400"
-                                        : "text-red-400"
+                                        : "text-white/25"
                                     }
                                   />
                                 )}
@@ -1442,15 +1442,15 @@ function App() {
               {view === "prefs" ? (
                 <Clock size={12} className="opacity-70" />
               ) : newImageCount > 0 ? (
-                <Info size={12} className="text-amber-400/70 flex-shrink-0" />
+                <Info size={12} className={`flex-shrink-0 ${newImageCount >= 50 ? "text-amber-400/70" : "opacity-70"}`} />
               ) : (
                 <CheckCircle2 size={12} className="text-green-500/70" />
               )}
-              <span className={view !== "prefs" && newImageCount > 0 ? "text-amber-400/70" : ""}>
+              <span className={view !== "prefs" && newImageCount >= 50 ? "text-amber-400/70" : ""}>
                 {view === "prefs"
                   ? `v${appVersion}`
                   : newImageCount > 0
-                  ? `${newImageCount} new ${newImageCount === 1 ? "image" : "images"}`
+                  ? `${newImageCount} New ${newImageCount === 1 ? "image" : "images"}`
                   : (lastSynced ? "Synced" : sessionInfo.lastSyncLabel)}
               </span>
             </div>
