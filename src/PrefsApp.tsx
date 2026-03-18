@@ -13,6 +13,7 @@ import {
   Clock,
   Loader2,
   RefreshCw,
+  ChevronRight,
 } from "lucide-react";
 import type { SessionItem } from "./lib/types";
 import { usePersistedState } from "./hooks/useStore";
@@ -214,6 +215,8 @@ function PrefsApp() {
     }
   };
 
+  const [treeExpanded, setTreeExpanded] = useState(false);
+
   const closeWindow = () => invoke("close_prefs_window");
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -271,16 +274,13 @@ function PrefsApp() {
               <div className="flex items-center gap-2 px-1">
                 <FolderTree size={12} className="text-gray-500" />
                 <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
-                  Session Contents
+                  Selective Sync
                 </span>
               </div>
 
               <div className="border border-white/[0.02] rounded-2xl overflow-hidden bg-white/[0.03]">
                 {/* Root Level */}
-                <div
-                  className="flex items-center justify-between p-3 cursor-pointer"
-                  onClick={() => togglePath(sessionTree.id)}
-                >
+                <div className="flex items-center justify-between p-3 cursor-pointer" onClick={() => setTreeExpanded((v) => !v)}>
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-4 h-4 rounded flex items-center justify-center ${
@@ -288,6 +288,7 @@ function PrefsApp() {
                           ? "bg-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]"
                           : "border border-white/20"
                       }`}
+                      onClick={(e) => { e.stopPropagation(); togglePath(sessionTree.id); }}
                     >
                       {getFolderStatus(sessionTree.id) === "all" && (
                         <Check size={10} strokeWidth={4} />
@@ -300,10 +301,14 @@ function PrefsApp() {
                       {sessionTree.label}
                     </span>
                   </div>
+                  <ChevronRight
+                    size={14}
+                    className={`text-white/20 transition-transform ${treeExpanded ? "rotate-90" : ""}`}
+                  />
                 </div>
 
                 {/* Children with Darker BG */}
-                <div className="bg-black/40 border-t border-white/5 py-1">
+                {treeExpanded && <div className="bg-black/40 border-t border-white/5 py-1">
                   {sessionTree.children.map((child) => (
                     <div
                       key={child.id}
@@ -337,7 +342,7 @@ function PrefsApp() {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
               </div>
             </div>
 
