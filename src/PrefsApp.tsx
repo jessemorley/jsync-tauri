@@ -12,6 +12,7 @@ import {
   FileCode,
   Clock,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import type { SessionItem } from "./lib/types";
 import { usePersistedState } from "./hooks/useStore";
@@ -412,6 +413,42 @@ function PrefsApp() {
 
             <div className="h-px bg-white/5" />
 
+            {/* App Update */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <RefreshCw size={12} className="text-gray-500" />
+                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
+                  Updates
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]">
+                <span className="text-[11px] text-white/40">v{appVersion}</span>
+                {updateReady ? (
+                  <button
+                    onClick={() => invoke("relaunch_app")}
+                    className="px-3 py-1 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 text-[11px] font-bold hover:bg-green-500/20 transition-all flex items-center gap-1.5"
+                  >
+                    <span>Restart to update</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCheckForUpdates}
+                    disabled={isCheckingUpdate}
+                    className="px-3 py-1 rounded-lg border border-white/10 text-white/50 text-[11px] font-medium hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {isCheckingUpdate ? (
+                      <Loader2 size={11} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={11} />
+                    )}
+                    <span>{updateStatus || "Check for update"}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="h-px bg-white/5" />
+
             {/* Notifications Toggle */}
             <div className="space-y-3">
               <button
@@ -478,29 +515,7 @@ function PrefsApp() {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between z-20">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-white/40">
-            <span>v{appVersion}</span>
-            {updateReady ? (
-              <button
-                onClick={() => invoke("relaunch_app")}
-                className="ml-1 px-2 py-0.5 rounded-md border border-green-500/30 bg-green-500/10 text-green-400 text-[8px] font-bold uppercase tracking-wider hover:bg-green-500/20 transition-all flex items-center gap-1.5"
-              >
-                <span>Restart to update</span>
-              </button>
-            ) : (
-              <button
-                onClick={handleCheckForUpdates}
-                disabled={isCheckingUpdate}
-                className="ml-1 px-2 py-0.5 rounded-md border border-white/10 text-[8px] font-bold uppercase tracking-wider hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {isCheckingUpdate && (
-                  <Loader2 size={10} className="animate-spin" />
-                )}
-                <span>{updateStatus || "Check for update"}</span>
-              </button>
-            )}
-          </div>
+        <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-end z-20">
           <button
             onClick={closeWindow}
             className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-[11px] font-bold text-white transition-colors"
