@@ -34,19 +34,21 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64, stat
         let collection_behavior: u64 = if stationary { 81 } else { 65 };
         let _: () = msg_send![ns_window, setCollectionBehavior: collection_behavior];
 
-        let content_view: id = msg_send![ns_window, contentView];
+        if stationary {
+            let content_view: id = msg_send![ns_window, contentView];
 
-        // Enable layer-backed view
-        let _: () = msg_send![content_view, setWantsLayer: true];
+            // Enable layer-backed view
+            let _: () = msg_send![content_view, setWantsLayer: true];
 
-        // Get the layer
-        let layer: id = msg_send![content_view, layer];
+            // Get the layer
+            let layer: id = msg_send![content_view, layer];
 
-        // Set corner radius
-        let _: () = msg_send![layer, setCornerRadius: radius];
+            // Set corner radius
+            let _: () = msg_send![layer, setCornerRadius: radius];
 
-        // Set mask to bounds to clip the corners
-        let _: () = msg_send![layer, setMasksToBounds: true];
+            // Set mask to bounds to clip the corners
+            let _: () = msg_send![layer, setMasksToBounds: true];
+        }
     }
 }
 

@@ -242,7 +242,7 @@ function PrefsApp() {
       `}</style>
       <div
         ref={containerRef}
-        className="relative w-full rounded-[26px] border border-white/10 overflow-hidden bg-[#1c1c1e]"
+        className="relative w-full overflow-hidden bg-[#1c1c1e]"
       >
         <div>
           {/* Header */}
