@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { ScrollContainer } from "./components/ScrollContainer";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { LogicalSize } from "@tauri-apps/api/window";
 import {
   Settings,
   Bell,
@@ -215,18 +215,35 @@ function PrefsApp() {
 
   const closeWindow = () => invoke("close_prefs_window");
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const resizeWindow = useCallback(() => {
+    if (!containerRef.current) return;
+    const win = getCurrentWindow();
+    if (win.label !== "prefs") return;
+    const h = containerRef.current.getBoundingClientRect().height;
+    win.setSize(new LogicalSize(400, Math.ceil(h)));
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(resizeWindow);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [resizeWindow]);
+
   return (
-    <div className="w-full h-full text-white font-sans select-none">
+    <div className="w-full text-white font-sans select-none">
       <style>{`
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
       `}</style>
       <div
-        className="relative w-full h-full rounded-[26px] border border-white/10 overflow-hidden bg-[#1c1c1e]"
-        style={{ display: "grid", gridTemplateRows: "1fr auto" }}
+        ref={containerRef}
+        className="relative w-full rounded-[26px] border border-white/10 overflow-hidden bg-[#1c1c1e]"
       >
-        <ScrollContainer style={{ minHeight: 0 }}>
+        <div>
           {/* Header */}
           <div
             className="relative p-5 flex items-center justify-between border-b border-white/[0.05] cursor-move"
@@ -458,7 +475,7 @@ function PrefsApp() {
               </button>
             </div>
           </div>
-        </ScrollContainer>
+        </div>
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between z-20">
