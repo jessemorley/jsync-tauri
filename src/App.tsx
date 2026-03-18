@@ -101,6 +101,7 @@ function App() {
 
   // Session State
   const [session, setSession] = useState<SessionInfo | null>(null);
+  const [lastSession, setLastSession] = useState<SessionInfo | null>(null);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
@@ -278,6 +279,7 @@ function App() {
           !sessionRef.current ||
           newSession.path !== sessionRef.current.path
         ) {
+          setLastSession(null);
           setSession(newSession);
           loadSessionData(newSession);
         } else {
@@ -296,10 +298,8 @@ function App() {
       .catch((err) => {
         if (sessionRef.current) {
           console.error("Failed to get Capture One session:", err);
+          setLastSession(sessionRef.current);
           setSession(null);
-          setDestinations([]);
-          setSelectedPaths([]);
-          setLastSynced(null);
         }
       });
   }, [loadSessionData]);
@@ -536,8 +536,9 @@ function App() {
     return `Last backup ${diffWeeks}w ago`;
   };
 
+  const sessionClosed = !session && !!lastSession;
   const sessionInfo = {
-    name: session?.name || "No Session",
+    name: session?.name || lastSession?.name || "No Session",
     size: session ? session.size : "Open Capture One to begin backup",
     lastSyncLabel: formatLastSync(lastSynced),
   };
@@ -714,17 +715,24 @@ function App() {
                 <div className="flex items-center justify-between px-1 cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
                   <div
                     className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase min-w-0 ${
-                      session ? "text-white" : "text-white/20"
+                      session ? "text-white" : sessionClosed ? "text-white/50" : "text-white/20"
                     }`}
-                    title={session?.path}
+                    title={session?.path ?? lastSession?.path}
                     onClick={(e) => { if (session) { e.stopPropagation(); openInFinder(session.path); } }}
                   >
                     <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      backupState === "running"
+                      session && backupState === "running"
                         ? "bg-blue-500 shadow-[0_0_3px_rgba(59,130,246,0.12)] animate-pulse"
-                        : "bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.12)]"
+                        : session
+                          ? "bg-green-500 shadow-[0_0_3px_rgba(34,197,94,0.12)]"
+                          : "bg-white/20"
                     }`} />
                     <span className="truncate">{truncateMiddle(sessionInfo.name)}</span>
+                    {sessionClosed && (
+                      <span className="flex-shrink-0 px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-white/10 text-white/40 tracking-wider">
+                        Closed
+                      </span>
+                    )}
                     <ExternalLink size={10} className="opacity-0 group-hover/session:opacity-60 transition-opacity shrink-0" />
                   </div>
                   <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
@@ -746,12 +754,12 @@ function App() {
                   <div className="flex items-center gap-3 px-1">
                     <div className="flex flex-col">
                       <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
-                      <span className="text-[14px] font-bold text-white tracking-tight">{session ? sessionInfo.size : "—"}</span>
+                      <span className="text-[14px] font-bold text-white tracking-tight">{session ? sessionInfo.size : lastSession ? lastSession.size : "—"}</span>
                     </div>
                     <div className="w-[1px] h-4 bg-white/10" />
                     <div className="flex flex-col">
-                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">{session && session.image_count === 1 ? "Image" : "Images"}</span>
-                      <span className="text-[14px] font-bold text-white tracking-tight">{session ? session.image_count : "—"}</span>
+                      <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">{(session ?? lastSession)?.image_count === 1 ? "Image" : "Images"}</span>
+                      <span className="text-[14px] font-bold text-white tracking-tight">{session ? session.image_count : lastSession ? lastSession.image_count : "—"}</span>
                     </div>
                   </div>
 
@@ -778,7 +786,7 @@ function App() {
                         onClick={handleStartBackup}
                         onMouseEnter={() => setIsHoveringSync(true)}
                         onMouseLeave={() => setIsHoveringSync(false)}
-                        disabled={enabledCount === 0}
+                        disabled={enabledCount === 0 || sessionClosed}
                         className={`relative group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
                           backupState === "running"
                             ? isHoveringSync
