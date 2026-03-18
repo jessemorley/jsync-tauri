@@ -27,6 +27,7 @@ import {
   Unplug,
   ChevronRight,
   ExternalLink,
+  Info,
 } from "lucide-react";
 import "./App.css";
 import type {
@@ -976,18 +977,6 @@ function App() {
                 </div>
               </div>
 
-              {/* New images since last backup */}
-              <div
-                className="overflow-hidden transition-all duration-300 ease-out"
-                style={{ maxHeight: newImageCount > 0 ? '32px' : '0px' }}
-              >
-                <div className="flex items-center gap-1.5 px-5 pb-3">
-                  <div className="w-1 h-1 rounded-full bg-amber-400/60" />
-                  <span className="text-[10px] font-semibold tracking-wide uppercase text-amber-400/70">
-                    {newImageCount} new {newImageCount === 1 ? 'image' : 'images'} since backup
-                  </span>
-                </div>
-              </div>
             </div>
 
             <div className="h-px bg-white/[0.05]" />
@@ -1452,11 +1441,17 @@ function App() {
             <div className="flex items-center gap-1.5">
               {view === "prefs" ? (
                 <Clock size={12} className="opacity-70" />
+              ) : newImageCount > 0 ? (
+                <Info size={12} className="text-amber-400/70 flex-shrink-0" />
               ) : (
                 <CheckCircle2 size={12} className="text-green-500/70" />
               )}
-              <span>
-                {view === "prefs" ? `v${appVersion}` : (lastSynced ? "Synced" : sessionInfo.lastSyncLabel)}
+              <span className={view !== "prefs" && newImageCount > 0 ? "text-amber-400/70" : ""}>
+                {view === "prefs"
+                  ? `v${appVersion}`
+                  : newImageCount > 0
+                  ? `${newImageCount} new ${newImageCount === 1 ? "image" : "images"}`
+                  : (lastSynced ? "Synced" : sessionInfo.lastSyncLabel)}
               </span>
             </div>
             {view === "prefs" && (
