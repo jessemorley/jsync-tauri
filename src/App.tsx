@@ -884,17 +884,13 @@ function App() {
                 )}
 
               <div className="px-3 pt-5.5 pb-4 z-10 space-y-4">
-                <div className="flex items-center justify-between px-1">
+                <div className="flex items-center justify-between px-1 cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
                   <div
-                    className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase cursor-pointer min-w-0 ${
-                      backupState === "running"
-                        ? "text-blue-400/75 drop-shadow-[0_0_3px_rgba(59,130,246,0.12)]"
-                        : session
-                          ? "text-green-400/75 drop-shadow-[0_0_3px_rgba(34,197,94,0.12)]"
-                          : "text-white/20"
+                    className={`group/session inline-flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase min-w-0 ${
+                      session ? "text-white" : "text-white/20"
                     }`}
                     title={session?.path}
-                    onClick={() => session && openInFinder(session.path)}
+                    onClick={(e) => { if (session) { e.stopPropagation(); openInFinder(session.path); } }}
                   >
                     <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                       backupState === "running"
@@ -906,7 +902,7 @@ function App() {
                   </div>
                   <Tooltip content={isCollapsed ? 'Expand view' : 'Collapse view'} disabled={!tooltipsEnabled}>
                     <button
-                      onClick={() => setIsCollapsed(!isCollapsed)}
+                      onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }}
                       className="transition-all flex-shrink-0 text-white/40 hover:text-white/70 active:text-white/20"
                     >
                       {isCollapsed ? (
