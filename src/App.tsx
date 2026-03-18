@@ -1074,7 +1074,12 @@ function App() {
                                   {getDestinationIcon(dest.destination_type, dest.enabled)}
                                 </button>
                                 <span className={`text-[12px] font-bold truncate ${dest.enabled ? "text-white/80" : "text-white/30"}`}>
-                                  {dest.label}
+                                  {dest.destination_type === "local"
+                                    ? dest.path.split("/")[3] ?? dest.label
+                                    : dest.label}
+                                  <span className={`font-normal ${dest.enabled ? "text-white/30" : "text-white/15"}`}>
+                                    <span className="ml-1.5">{"/"}{dest.path.split("/").pop()}</span>
+                                  </span>
                                 </span>
                                 {isDefault(dest.id) && (
                                   <Pin size={10} strokeWidth={3} className="text-blue-400 flex-shrink-0" />
