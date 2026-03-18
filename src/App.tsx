@@ -917,8 +917,8 @@ function App() {
                 </div>
 
                 {/* Action Bar */}
-                <div className="flex items-center justify-between bg-white/[0.03] rounded-2xl p-4 border border-white/[0.02]">
-                  <div className="flex items-center gap-3 text-[11px] text-white/50 font-medium px-1">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-3 text-[13px] text-white/50 font-medium px-1">
                     <div className="flex flex-col">
                       <span className="text-white/30 text-[9px] uppercase font-bold tracking-wider">Size</span>
                       <span className="text-white/80">{session ? sessionInfo.size : "—"}</span>
