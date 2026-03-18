@@ -10,20 +10,11 @@ import {
   Network,
   Monitor,
   CheckCircle2,
-  Clock,
   ChevronDown,
   ChevronUp,
   Settings,
-  Bell,
-  BellOff,
-  FolderTree,
   X,
-  Check,
-  Minus,
-  Folder,
-  FileCode,
   Pin,
-  Loader2,
   Unplug,
   ChevronRight,
   ExternalLink,
@@ -33,14 +24,12 @@ import "./App.css";
 import type {
   Destination,
   SessionInfo,
-  SessionItem,
   SessionConfig,
 } from "./lib/types";
 import { usePersistedState } from "./hooks/useStore";
 import { useScheduler } from "./hooks/useScheduler";
 import {
   getCaptureOneSession,
-  getSessionContents,
   loadSessionConfig,
   saveSessionConfig,
   openFolderPicker,
@@ -56,11 +45,9 @@ import {
   sendBackupNotification,
   onRefreshSession,
   requestNotificationPermission,
-  checkForAppUpdates,
   openInFinder,
 } from "./lib/tauri";
 import { invoke } from "@tauri-apps/api/core";
-import { getVersion } from "@tauri-apps/api/app";
 
 const completionAnimations = `
   @keyframes completion-pulse {
@@ -96,7 +83,7 @@ const completionAnimations = `
 
 function App() {
   // Application State
-  const [view, setView] = useState<"main" | "prefs" | "location-detail">("main");
+  const [view, setView] = useState<"main" | "location-detail">("main");
   const [selectedDestId, setSelectedDestId] = useState<number | null>(null);
   const [backupState, setBackupState] = useState<
     "idle" | "running" | "success" | "error"
@@ -106,29 +93,19 @@ function App() {
   const [backedUpDestinations, setBackedUpDestinations] = useState<Set<number>>(
     new Set(),
   );
-  const [isEditingCustom, setIsEditingCustom] = useState(false);
-  const [customValue, setCustomValue] = useState("");
   const [isHoveringSync, setIsHoveringSync] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [measuredContentHeight, setMeasuredContentHeight] = useState(480); // Initialize to max cap to prevent overflow on first expand
   const [dynamicHeight, setDynamicHeight] = useState(480);
-  const customInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Session State
   const [session, setSession] = useState<SessionInfo | null>(null);
-  const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [imageCountAtLastBackup, setImageCountAtLastBackup] = useState<number | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
-
-  // Update State
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
-  const [updateReady, setUpdateReady] = useState(false);
-  const [appVersion, setAppVersion] = useState("");
 
   // Options Menu State
   const [pulsingLocationId, setPulsingLocationId] = useState<number | null>(
@@ -144,18 +121,9 @@ function App() {
   const [defaultDestinationIds, setDefaultDestinationIds] = usePersistedState<
     number[]
   >("defaultDestinations", []);
-  const [intervalMinutes, setIntervalMinutes] = usePersistedState(
-    "intervalMinutes",
-    15,
-  );
-  const [notificationsEnabled, setNotificationsEnabled] = usePersistedState(
-    "notificationsEnabled",
-    true,
-  );
-  const [tooltipsEnabled, setTooltipsEnabled] = usePersistedState(
-    "tooltipsEnabled",
-    true,
-  );
+  const [intervalMinutes] = usePersistedState("intervalMinutes", 15);
+  const [notificationsEnabled] = usePersistedState("notificationsEnabled", true);
+  const [tooltipsEnabled] = usePersistedState("tooltipsEnabled", true);
 
   const notificationsEnabledRef = useRef(notificationsEnabled);
   const sessionRef = useRef(session);
@@ -170,10 +138,6 @@ function App() {
   const failedErrorsRef = useRef<string[]>([]);
   const resetTimeoutRef = useRef<number | undefined>(undefined);
   const suppressFocusRefreshRef = useRef(false);
-
-  useEffect(() => {
-    getVersion().then(setAppVersion);
-  }, []);
 
   useEffect(() => {
     notificationsEnabledRef.current = notificationsEnabled;
@@ -237,9 +201,6 @@ function App() {
   const loadSessionData = useCallback(async (newSession: SessionInfo) => {
     setIsLoadingConfig(true);
     try {
-      const items = await getSessionContents(newSession.path);
-      setSessionItems(items);
-
       const config = await loadSessionConfig(newSession.path, newSession.name);
       setDestinations(config.destinations);
       setSelectedPaths(config.selected_paths);
@@ -299,13 +260,6 @@ function App() {
     }
   }, []);
 
-  // Focus input when entering custom mode
-  useEffect(() => {
-    if (isEditingCustom && customInputRef.current) {
-      customInputRef.current.focus();
-    }
-  }, [isEditingCustom]);
-
   // Auto-clear pulsing location highlight
   useEffect(() => {
     if (pulsingLocationId) {
@@ -343,7 +297,6 @@ function App() {
         if (sessionRef.current) {
           console.error("Failed to get Capture One session:", err);
           setSession(null);
-          setSessionItems([]);
           setDestinations([]);
           setSelectedPaths([]);
           setLastSynced(null);
@@ -375,63 +328,6 @@ function App() {
       if (unlisten) unlisten();
     };
   }, [refreshSession]);
-
-  // Update check handler
-  const handleCheckForUpdates = async () => {
-    setIsCheckingUpdate(true);
-    setUpdateReady(false);
-    setUpdateStatus("Checking for update...");
-    try {
-      const update = await checkForAppUpdates();
-      if (update) {
-        const confirmed = window.confirm(
-          `Update available: v${update.version}\n\nDo you want to download and install it now?`,
-        );
-        if (confirmed) {
-          let totalBytes = 0;
-          let downloadedBytes = 0;
-          setUpdateStatus(`Downloading v${update.version}...`);
-          await update.downloadAndInstall((event) => {
-            switch (event.event) {
-              case "Started":
-                totalBytes = event.data.contentLength ?? 0;
-                downloadedBytes = 0;
-                setUpdateStatus("Downloading...");
-                break;
-              case "Progress":
-                downloadedBytes += event.data.chunkLength;
-                if (totalBytes > 0) {
-                  const pct = Math.round((downloadedBytes / totalBytes) * 100);
-                  setUpdateStatus(`Downloading... ${pct}%`);
-                } else {
-                  setUpdateStatus(
-                    `Downloading... ${(downloadedBytes / 1024 / 1024).toFixed(1)}MB`,
-                  );
-                }
-                break;
-              case "Finished":
-                setUpdateStatus("Installing...");
-                break;
-            }
-          });
-          setUpdateStatus("Update complete!");
-          setUpdateReady(true);
-          setIsCheckingUpdate(false);
-        } else {
-          setUpdateStatus(null);
-        }
-      } else {
-        setUpdateStatus("Up to date");
-        setTimeout(() => setUpdateStatus(null), 3000);
-      }
-    } catch (error) {
-      console.error("Update check failed:", error);
-      setUpdateStatus("Check failed");
-      setTimeout(() => setUpdateStatus(null), 3000);
-    } finally {
-      setIsCheckingUpdate(false);
-    }
-  };
 
   // Inject completion animations CSS
   useEffect(() => {
@@ -651,18 +547,6 @@ function App() {
       ? Math.max(0, session.image_count - imageCountAtLastBackup)
       : 0;
 
-  // Dynamic tree from session items
-  const sessionTree = {
-    id: session?.path || "session",
-    label: session?.name || "Session",
-    type: "root",
-    children: sessionItems.map((item) => ({
-      id: item.id,
-      label: item.label,
-      type: item.item_type,
-    })),
-  };
-
   const truncateMiddle = (str: string, startLen = 18, endLen = 8) => {
     if (str.length <= startLen + endLen) return str;
     return (
@@ -775,78 +659,6 @@ function App() {
       };
       setDestinations((prev) => [...prev, newDest]);
     }
-  };
-
-  const isSelected = (id: string) => {
-    const rootPath = session?.path || "";
-    // If root is selected, everything is implicitly selected
-    if (selectedPaths.includes(rootPath)) return true;
-    return selectedPaths.includes(id);
-  };
-
-  const getFolderStatus = (folderId: string) => {
-    const rootPath = session?.path || "";
-    if (folderId === rootPath) {
-      if (selectedPaths.includes(rootPath)) return "all";
-
-      const childrenIds = sessionItems.map((i) => i.id);
-      if (childrenIds.length === 0) return "none";
-
-      const selectedChildren = childrenIds.filter((id) =>
-        selectedPaths.includes(id),
-      );
-
-      if (selectedChildren.length === 0) return "none";
-      if (selectedChildren.length === childrenIds.length) return "all";
-      return "mixed";
-    }
-    return isSelected(folderId) ? "all" : "none";
-  };
-
-  const togglePath = (id: string) => {
-    const rootPath = session?.path || "";
-    const allChildrenIds = sessionItems.map((i) => i.id);
-
-    setSelectedPaths((prev) => {
-      const isRoot = id === rootPath;
-
-      if (isRoot) {
-        // If root is currently selected (directly or via all children), deselect everything
-        if (getFolderStatus(rootPath) === "all") {
-          return [];
-        } else {
-          // Select only the root (which implies all children)
-          return [rootPath];
-        }
-      }
-
-      // Toggling a child
-      let newPaths = [...prev];
-      const isRootSelected = newPaths.includes(rootPath);
-
-      if (isRootSelected) {
-        // If root was selected, we are now deselecting one child.
-        // We must switch from "root only" to "all children minus this one".
-        newPaths = allChildrenIds.filter((childId) => childId !== id);
-      } else {
-        // Root not selected, just toggle the child normally
-        if (newPaths.includes(id)) {
-          newPaths = newPaths.filter((p) => p !== id);
-        } else {
-          newPaths.push(id);
-        }
-
-        // Check if all children are now selected
-        const allSelected =
-          allChildrenIds.length > 0 &&
-          allChildrenIds.every((childId) => newPaths.includes(childId));
-        if (allSelected) {
-          return [rootPath];
-        }
-      }
-
-      return newPaths;
-    });
   };
 
   return (
@@ -1207,302 +1019,32 @@ function App() {
           );
         })()}
 
-        {/* VIEW: PREFERENCES */}
-        {view === "prefs" && (
-          <ScrollContainer
-            className=""
-            style={{minHeight: 0, gridRow: '1 / 3'}}
-          >
-            <div className="p-5 flex items-center justify-between border-b border-white/[0.05]">
-              <div className="flex items-center gap-2 text-blue-400">
-                <Settings size={18} />
-                <h1 className="text-[15px] font-semibold text-white">Preferences</h1>
-              </div>
-              <button
-                onClick={() => setView("main")}
-                className="p-1 rounded-lg hover:bg-white/10 text-white/40 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-4 space-y-5">
-
-            {/* Session File Tree Selection */}
-            <div className="space-y-3 select-none">
-              <div className="flex items-center gap-2 px-1">
-                <FolderTree size={12} className="text-gray-500" />
-                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
-                  Session Contents
-                </span>
-              </div>
-
-              <div className="border border-white/[0.02] rounded-2xl overflow-hidden bg-white/[0.03]">
-                {/* Root Level */}
-                <div
-                  className="flex items-center justify-between p-3 cursor-pointer"
-                  onClick={() => togglePath(sessionTree.id)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-4 h-4 rounded flex items-center justify-center ${
-                        getFolderStatus(sessionTree.id) !== "none"
-                          ? "bg-blue-500 text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]"
-                          : "border border-white/20"
-                      }`}
-                    >
-                      {getFolderStatus(sessionTree.id) === "all" && (
-                        <Check size={10} strokeWidth={4} />
-                      )}
-                      {getFolderStatus(sessionTree.id) === "mixed" && (
-                        <Minus size={10} strokeWidth={4} />
-                      )}
-                    </div>
-                    <span className="text-[11px] font-bold text-gray-200 truncate">
-                      {sessionTree.label}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Children with Darker BG */}
-                <div className="bg-black/40 border-t border-white/5 py-1">
-                  {sessionTree.children.map((child) => (
-                    <div
-                      key={child.id}
-                      className="flex items-center justify-between p-2 pl-9 cursor-pointer"
-                      onClick={() => togglePath(child.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-3.5 h-3.5 rounded flex items-center justify-center ${
-                            isSelected(child.id)
-                              ? "bg-blue-500/80 text-white"
-                              : "border border-white/10"
-                          }`}
-                        >
-                          {isSelected(child.id) && (
-                            <Check size={10} strokeWidth={4} />
-                          )}
-                        </div>
-
-                        {/* File Type Icons */}
-                        <div className="text-gray-500/80">
-                          {child.type === "folder" ? (
-                            <Folder size={12} />
-                          ) : (
-                            <FileCode size={12} />
-                          )}
-                        </div>
-
-                        <span
-                          className={`text-[10px] font-medium ${isSelected(child.id) ? "text-gray-300" : "text-gray-500"}`}
-                        >
-                          {child.label}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            {/* Backup Interval */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 px-1">
-                <Clock size={12} className="text-gray-500" />
-                <span className="text-[10px] font-bold uppercase text-white/30 tracking-[0.08em]">
-                  Backup Interval
-                </span>
-              </div>
-              <div className="flex gap-1.5">
-                {[5, 15, 30].map((min) => (
-                  <button
-                    key={min}
-                    onClick={() => {
-                      setIntervalMinutes(min);
-                      setIsEditingCustom(false);
-                    }}
-                    className={`flex-1 py-2 text-[11px] rounded-xl border transition-all ${
-                      intervalMinutes === min && !isEditingCustom
-                        ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
-                        : "bg-white/[0.03] border-white/[0.02] text-gray-500 hover:bg-white/[0.05]"
-                    }`}
-                  >
-                    {min}m
-                  </button>
-                ))}
-                <div className="flex-1 relative">
-                  {isEditingCustom ? (
-                    <input
-                      ref={customInputRef}
-                      type="number"
-                      min="1"
-                      value={customValue}
-                      onChange={(e) => setCustomValue(e.target.value)}
-                      onBlur={() => {
-                        const val = parseInt(customValue);
-                        if (!isNaN(val) && val > 0) {
-                          setIntervalMinutes(val);
-                        }
-                        setIsEditingCustom(false);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          customInputRef.current?.blur();
-                        }
-                      }}
-                      className="w-full py-2 text-[11px] text-center rounded-xl border bg-blue-600/20 border-blue-500 text-blue-400 font-bold focus:outline-none"
-                    />
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setCustomValue("");
-                        setIsEditingCustom(true);
-                      }}
-                      className={`w-full py-2 text-[11px] rounded-xl border transition-all ${
-                        ![5, 15, 30].includes(intervalMinutes)
-                          ? "bg-blue-600 border-blue-500 text-white font-bold shadow-md"
-                          : "bg-white/[0.03] border-white/[0.02] text-gray-500 hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      {![5, 15, 30].includes(intervalMinutes)
-                        ? `${intervalMinutes}m`
-                        : "Custom"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            {/* Notifications Toggle */}
-            <div className="space-y-3">
-              <button
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`transition-colors duration-200 ${notificationsEnabled ? "text-amber-400" : "text-gray-400"}`}
-                  >
-                    {notificationsEnabled ? (
-                      <Bell size={14} />
-                    ) : (
-                      <BellOff size={14} />
-                    )}
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[11px] font-bold text-white">
-                      System Notifications
-                    </p>
-                    <p className="text-[9px] text-gray-500">
-                      Alert when backup completes
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className={`w-9 h-5 rounded-full relative transition-colors ${notificationsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
-                >
-                  <div
-                    className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${notificationsEnabled ? "left-[18px]" : "left-[2px]"}`}
-                  />
-                </div>
-              </button>
-
-              <button
-                onClick={() => setTooltipsEnabled(!tooltipsEnabled)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-white/[0.02] bg-white/[0.03]"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`transition-colors duration-200 ${tooltipsEnabled ? "text-blue-400" : "text-gray-400"}`}
-                  >
-                    <Settings size={14} />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[11px] font-bold text-white">
-                      Tooltips
-                    </p>
-                    <p className="text-[9px] text-gray-500">
-                      Show helpful hints on hover
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className={`w-9 h-5 rounded-full relative transition-colors ${tooltipsEnabled ? "bg-blue-500" : "bg-gray-600"}`}
-                >
-                  <div
-                    className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all ${tooltipsEnabled ? "left-[18px]" : "left-[2px]"}`}
-                  />
-                </div>
-              </button>
-            </div>
-            </div>
-          </ScrollContainer>
-        )}
-
         {/* Footer */}
         <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between z-20">
           <div className="flex items-center gap-2 text-[11px] font-medium text-white/40">
             <div className="flex items-center gap-1.5">
               <Info size={12} className="opacity-70 flex-shrink-0" />
               <span>
-                {view === "prefs"
-                  ? `v${appVersion}`
-                  : backupState === "running"
+                {backupState === "running"
                   ? "Syncing"
                   : formatLastSync(lastSynced)}
               </span>
             </div>
-            {view === "prefs" && (
-              updateReady ? (
-                <button
-                  onClick={() => invoke("relaunch_app")}
-                  className="ml-1 px-2 py-0.5 rounded-md border border-green-500/30 bg-green-500/10 text-green-400 text-[8px] font-bold uppercase tracking-wider hover:bg-green-500/20 transition-all flex items-center gap-1.5"
-                >
-                  <span>Restart to update</span>
-                </button>
-              ) : (
-                <button
-                  onClick={handleCheckForUpdates}
-                  disabled={isCheckingUpdate}
-                  className="ml-1 px-2 py-0.5 rounded-md border border-white/10 text-[8px] font-bold uppercase tracking-wider hover:bg-white/5 hover:border-white/20 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {isCheckingUpdate && (
-                    <Loader2 size={10} className="animate-spin" />
-                  )}
-                  <span>{updateStatus || "Check for update"}</span>
-                </button>
-              )
-            )}
           </div>
           <div className="flex items-center gap-4">
-            {view === "prefs" ? (
-              <button
-                onClick={() => setView("main")}
-                className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-[11px] font-bold text-white transition-colors"
-              >
-                DONE
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setView("prefs")}
-                  className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-white/60 hover:text-white transition-colors"
-                >
-                  <Settings size={14} />
-                  SETTINGS
-                </button>
-                <button
-                  onClick={() => invoke("quit_app")}
-                  className="text-[11px] uppercase font-bold text-red-400/80 hover:text-red-400 transition-colors"
-                >
-                  Quit
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => invoke("open_preferences")}
+              className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-white/60 hover:text-white transition-colors"
+            >
+              <Settings size={14} />
+              SETTINGS
+            </button>
+            <button
+              onClick={() => invoke("quit_app")}
+              className="text-[11px] uppercase font-bold text-red-400/80 hover:text-red-400 transition-colors"
+            >
+              Quit
+            </button>
           </div>
         </div>
       </div>

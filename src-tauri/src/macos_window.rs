@@ -1,5 +1,5 @@
 #[cfg(target_os = "macos")]
-pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64) {
+pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64, stationary: bool) {
     use cocoa::base::id;
     use objc::{class, msg_send, sel, sel_impl};
 
@@ -16,14 +16,16 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64) {
         let _: () = msg_send![ns_window, setHasShadow: true];
         let _: () = msg_send![ns_window, invalidateShadow];
 
-        // Set window level to stay above normal windows but below the menubar
-        // NSMainMenuWindowLevel = 24, so we use 20 to stay just below it
-        let _: () = msg_send![ns_window, setLevel: 20];
+        // Set window level: tray popup stays above normal windows (level 20),
+        // prefs window uses normal level (0) so it behaves like a regular app window
+        let level: i64 = if stationary { 20 } else { 0 };
+        let _: () = msg_send![ns_window, setLevel: level];
 
         // Ensure window behaves correctly with full-screen apps and spaces
-        // NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorStationary | NSWindowCollectionBehaviorIgnoresCycle
-        // 1 | 16 | 64 = 81
-        let _: () = msg_send![ns_window, setCollectionBehavior: 81];
+        // NSWindowCollectionBehaviorCanJoinAllSpaces (1) | NSWindowCollectionBehaviorIgnoresCycle (64) = 65
+        // Add NSWindowCollectionBehaviorStationary (16) for tray popup (non-draggable)
+        let collection_behavior: u64 = if stationary { 81 } else { 65 };
+        let _: () = msg_send![ns_window, setCollectionBehavior: collection_behavior];
 
         let content_view: id = msg_send![ns_window, contentView];
 
@@ -42,6 +44,6 @@ pub fn set_window_corner_radius(window: &tauri::WebviewWindow, radius: f64) {
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn set_window_corner_radius(_window: &tauri::WebviewWindow, _radius: f64) {
+pub fn set_window_corner_radius(_window: &tauri::WebviewWindow, _radius: f64, _stationary: bool) {
     // No-op on non-macOS platforms
 }

@@ -50,7 +50,7 @@ pub fn run() {
 
             // Apply rounded corners to main window
             if let Some(window) = app.get_webview_window("main") {
-                macos_window::set_window_corner_radius(&window, 16.0);
+                macos_window::set_window_corner_radius(&window, 16.0, true);
                 info!("Applied rounded corners to main window");
             }
 
@@ -59,8 +59,9 @@ pub fn run() {
         .on_window_event(|window, event| {
             match event {
                 tauri::WindowEvent::Focused(is_focused) => {
-                    // Auto-hide when window loses focus
-                    if !is_focused {
+                    // Auto-hide the main window when it loses focus
+                    // The prefs window stays open until explicitly closed
+                    if !is_focused && window.label() == "main" {
                         let _ = window.hide();
                     }
                 }
@@ -89,6 +90,8 @@ pub fn run() {
             commands::quit_app,
             commands::relaunch_app,
             commands::send_notification,
+            commands::open_preferences,
+            commands::close_prefs_window,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

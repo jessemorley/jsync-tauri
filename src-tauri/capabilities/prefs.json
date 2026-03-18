@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "prefs",
+  "description": "Capabilities for the JSync Preferences window",
+  "windows": ["prefs"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-start-dragging",
+    "core:event:default",
+    "store:default",
+    "log:default",
+    "updater:default"
+  ]
+}
